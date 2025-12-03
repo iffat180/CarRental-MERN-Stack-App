@@ -16,7 +16,7 @@ const CarCard = ({ car }) => {
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
 
-        {car.isAvaliable && (
+        {car.isAvailable && (
           <p className="absolute top-4 left-4 bg-primary/90 text-white text-xs px-2.5 py-1 rounded-full">
             Available Now
           </p>
@@ -63,7 +63,37 @@ const CarCard = ({ car }) => {
             <img src={assets.location_icon} alt="" className="h-4 mr-2" />
             <span>{car.location}</span>
           </div>
+
+          {/* MPG - fuel efficiency for trip cost estimation and AI reasoning */}
+          {car.mpg && (
+            <div className="flex items-center text-sm text-muted-foreground">
+              <span className="font-medium mr-1">MPG:</span>
+              <span>{car.mpg}</span>
+            </div>
+          )}
+
+          {/* Trunk capacity in liters - luggage space for trip suitability matching */}
+          {car.trunk_capacity && (
+            <div className="flex items-center text-sm text-muted-foreground">
+              <span className="font-medium mr-1">Trunk (L):</span>
+              <span>{car.trunk_capacity}</span>
+            </div>
+          )}
         </div>
+
+        {/* Tags - semantic attributes for future AI similarity matching */}
+        {(car.tags && car.tags.length > 0) && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {(car.tags || []).map((tag, index) => (
+              <span
+                key={index}
+                className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Title from "../../components/owner/Title";
 import { assets } from "../../assets/assets";
 import { useAppContext } from "../../context/AppContext";
@@ -8,6 +8,8 @@ const AddCar = () => {
   const { axios, currency } = useAppContext();
 
   const [image, setImage] = useState(null);
+  const [cities, setCities] = useState([]);
+  const [isLoadingCities, setIsLoadingCities] = useState(false);
   const [car, setCar] = useState({
     brand: "",
     model: "",
@@ -19,7 +21,43 @@ const AddCar = () => {
     seating_capacity: 0,
     location: "",
     description: "",
+    mpg: "",
+    trunk_capacity: "",
+    tags: "",
+    tagsArray: [],
   });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "mpg" || name === "trunk_capacity") {
+      const numericValue = value === "" ? "" : Math.max(0, Number(value));
+      setCar((prev) => ({
+        ...prev,
+        [name]: numericValue,
+      }));
+      return;
+    }
+
+    if (name === "tags") {
+      const tagsArray = value
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean);
+
+      setCar((prev) => ({
+        ...prev,
+        tags: value,
+        tagsArray,
+      }));
+      return;
+    }
+
+    setCar((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -31,7 +69,16 @@ const AddCar = () => {
     try {
       const formData = new FormData();
       formData.append("image", image);
-      formData.append("carData", JSON.stringify(car));
+      const payload = {
+        ...car,
+        mpg: car.mpg === "" ? undefined : Number(car.mpg),
+        trunk_capacity:
+          car.trunk_capacity === "" ? undefined : Number(car.trunk_capacity),
+        tags: car.tagsArray && car.tagsArray.length ? car.tagsArray : [],
+      };
+      delete payload.tagsArray;
+
+      formData.append("carData", JSON.stringify(payload));
 
       const { data } = await axios.post("/api/owner/add-car", formData);
       if (data.success) {
@@ -48,6 +95,10 @@ const AddCar = () => {
           seating_capacity: 0,
           location: "",
           description: "",
+          mpg: "",
+          trunk_capacity: "",
+          tags: "",
+          tagsArray: [],
         });
       } else {
         toast.error("Please fill all fields");
@@ -57,18 +108,27 @@ const AddCar = () => {
     } finally {
       setIsLoading(false);
     }
-
-    // Build payload (swap console.log with your POST)
-    const formData = new FormData();
-    if (image) formData.append("image", image);
-    Object.entries(car).forEach(([k, v]) => formData.append(k, v));
-
-    console.log("Submitting car:", {
-      ...car,
-      image: image ? image.name : null,
-    });
-    // await fetch('/api/cars', { method: 'POST', body: formData })
   };
+
+  // Fetch cities on component mount
+  useEffect(() => {
+    const fetchCities = async () => {
+      setIsLoadingCities(true);
+      try {
+        const { data } = await axios.get("/api/user/cities");
+        if (data.success) {
+          setCities(data.cities);
+        }
+      } catch (error) {
+        console.error("Failed to fetch cities:", error);
+        // Fallback to empty array if fetch fails
+        setCities([]);
+      } finally {
+        setIsLoadingCities(false);
+      }
+    };
+    fetchCities();
+  }, [axios]);
 
   return (
     <div className="px-4 py-10 md:px-10 flex-1">
@@ -219,19 +279,65 @@ const AddCar = () => {
           </div>
         </div>
 
+        {/* Efficiency & Capacity Specs */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          <div className="flex flex-col w-full">
+            <label>MPG</label>
+            <input
+              type="number"
+              name="mpg"
+              min={0}
+              placeholder="E.g. 22"
+              className="px-3 py-2 mt-1 border border-borderColor rounded-md outline-none"
+              value={car.mpg}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="flex flex-col w-full">
+            <label>Trunk (L)</label>
+            <input
+              type="number"
+              name="trunk_capacity"
+              min={0}
+              placeholder="E.g. 450"
+              className="px-3 py-2 mt-1 border border-borderColor rounded-md outline-none"
+              value={car.trunk_capacity}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="flex flex-col w-full sm:col-span-2 md:col-span-1">
+            <label>Tags</label>
+            <input
+              type="text"
+              name="tags"
+              placeholder="Luxury, AWD, Fuel Efficient"
+              className="px-3 py-2 mt-1 border border-borderColor rounded-md outline-none"
+              value={car.tags}
+              onChange={handleChange}
+            />
+            <span className="text-xs text-gray-400 mt-1">
+              Comma-separated tags help describe trip suitability
+            </span>
+          </div>
+        </div>
+
         {/* Car Location */}
         <div className="flex flex-col w-full">
           <label>Location</label>
           <select
             onChange={(e) => setCar({ ...car, location: e.target.value })}
             value={car.location}
+            disabled={isLoadingCities}
             className="px-3 py-2 mt-1 border border-borderColor rounded-md outline-none"
           >
             <option value="">Select a location</option>
-            <option value="New York">New York</option>
-            <option value="Los Angeles">Los Angeles</option>
-            <option value="Houston">Houston</option>
-            <option value="Chicago">Chicago</option>
+            {cities.map((city) => (
+              <option key={city} value={city}>
+                {city}
+              </option>
+            ))}
           </select>
         </div>
 

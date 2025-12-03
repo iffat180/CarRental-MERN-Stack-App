@@ -1,6 +1,5 @@
 import React from "react";
 import Title from "./Title";
-import { dummyCarData } from "../assets/assets";
 import { useNavigate } from "react-router-dom";
 import CarCard from "./CarCard";
 import { assets } from "../assets/assets";

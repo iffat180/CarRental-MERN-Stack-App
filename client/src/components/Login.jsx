@@ -1,35 +1,184 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useAppContext } from "../context/AppContext";
 import { toast } from "react-hot-toast";
 
-const Login = () => {
-  const { setShowLogin, axios, setToken, navigate } = useAppContext();
+// Validation utility functions
+const validateEmail = (email) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
 
-  const [state, setState] = React.useState("login");
-  const [name, setName] = React.useState("");
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
+const validatePassword = (password) => {
+  const requirements = {
+    minLength: password.length >= 8,
+  };
+  return {
+    isValid: requirements.minLength,
+    requirements,
+  };
+};
+
+// Redirect utility functions
+const getRedirectPath = () => sessionStorage.getItem("redirectPath");
+
+const redirectBack = (navigate) => {
+  const path = getRedirectPath();
+  if (path) {
+    try {
+      navigate(path);
+      sessionStorage.removeItem("redirectPath");
+    } catch (error) {
+      console.log(`[Login] Navigation failed`, {
+        path,
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
+      // Keep redirectPath for retry - don't remove it on failure
+    }
+  }
+};
+
+const Login = () => {
+  const { showLogin, setShowLogin, axios, setToken, navigate } = useAppContext();
+
+  const [state, setState] = useState("login");
+  
+  // Check for initial mode when modal opens
+  useEffect(() => {
+    if (showLogin) {
+      const initialMode = sessionStorage.getItem("loginInitialMode");
+      if (initialMode) {
+        setState(initialMode);
+        sessionStorage.removeItem("loginInitialMode");
+      } else {
+        setState("login"); // Reset to login mode when opening normally
+      }
+    }
+  }, [showLogin]);
+  
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [passwordRequirements, setPasswordRequirements] = useState({
+    minLength: false,
+  });
+
+  // Real-time validation handlers
+  const handleNameChange = (e) => {
+    const value = e.target.value;
+    setName(value);
+    
+    if (value && value.trim().length < 2) {
+      setErrors(prev => ({ ...prev, name: "Name must be at least 2 characters" }));
+    } else {
+      setErrors(prev => ({ ...prev, name: "" }));
+    }
+  };
+
+  const handleEmailChange = (e) => {
+    const value = e.target.value;
+    setEmail(value);
+    
+    if (value && !validateEmail(value)) {
+      setErrors(prev => ({ ...prev, email: "Please enter a valid email address" }));
+    } else {
+      setErrors(prev => ({ ...prev, email: "" }));
+    }
+  };
+
+  const handlePasswordChange = (e) => {
+    const value = e.target.value;
+    setPassword(value);
+    
+    const validation = validatePassword(value);
+    setPasswordRequirements(validation.requirements);
+    
+    if (value && !validation.isValid) {
+      setErrors(prev => ({ ...prev, password: "Password must be at least 8 characters" }));
+    } else {
+      setErrors(prev => ({ ...prev, password: "" }));
+    }
+  };
 
   const onSubmitHandler = async (event) => {
+    event.preventDefault();
+    
+    // Reset errors
+    setErrors({ name: "", email: "", password: "" });
+    
+    // Client-side validation BEFORE API call
+    const validationErrors = {};
+    
+    if (state === "register") {
+      if (!name.trim() || name.trim().length < 2) {
+        validationErrors.name = "Name must be at least 2 characters";
+      }
+    }
+    
+    // Validate email format
+    if (!email || !validateEmail(email)) {
+      validationErrors.email = "Please enter a valid email address";
+    }
+    
+    // Validate password - minimum 8 characters
+    if (!password) {
+      validationErrors.password = "Password is required";
+    } else {
+      const passwordValidation = validatePassword(password);
+      if (!passwordValidation.isValid) {
+        validationErrors.password = "Password must be at least 8 characters";
+      }
+    }
+    
+    // If validation errors exist, show them and return
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+    
+    // Set loading state to disable button while submitting
+    setIsLoading(true);
+    
     try {
-      event.preventDefault();
       const { data } = await axios.post(`/api/user/${state}`, {
-        name,
+        name: state === "register" ? name : undefined,
         email,
         password,
       });
 
       if (data.success) {
-        navigate("/");
+        // Save token to localStorage
         setToken(data.token);
-
         localStorage.setItem("token", data.token);
+        
+        // Close modal
         setShowLogin(false);
+        
+        // Show success message
+        toast.success(state === "register" ? "Account created successfully!" : "Login successful!");
+        
+        // Redirect back to stored path if it exists
+        redirectBack(navigate);
       } else {
         toast.error(data.message);
       }
     } catch (error) {
-      toast.error(error.message);
+      // Better error handling
+      const errorMessage = error.response?.data?.message || error.message || "An error occurred. Please try again.";
+      toast.error(errorMessage);
+      
+      // Set specific field errors if available
+      if (error.response?.data?.errors) {
+        setErrors(error.response.data.errors);
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -51,36 +200,67 @@ const Login = () => {
           <div className="w-full">
             <p>Name</p>
             <input
-              onChange={(e) => setName(e.target.value)}
+              onChange={handleNameChange}
               value={name}
               placeholder="type here"
-              className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary"
+              className={`border rounded w-full p-2 mt-1 outline-primary ${
+                errors.name ? "border-red-500" : "border-gray-200"
+              }`}
               type="text"
               required
+              disabled={isLoading}
             />
+            {errors.name && (
+              <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+            )}
           </div>
         )}
-        <div className="w-full ">
+        <div className="w-full">
           <p>Email</p>
           <input
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={handleEmailChange}
             value={email}
             placeholder="type here"
-            className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary"
+            className={`border rounded w-full p-2 mt-1 outline-primary ${
+              errors.email ? "border-red-500" : "border-gray-200"
+            }`}
             type="email"
             required
+            disabled={isLoading}
           />
+          {errors.email && (
+            <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+          )}
         </div>
-        <div className="w-full ">
+        <div className="w-full">
           <p>Password</p>
           <input
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={handlePasswordChange}
             value={password}
             placeholder="type here"
-            className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary"
+            className={`border rounded w-full p-2 mt-1 outline-primary ${
+              errors.password ? "border-red-500" : "border-gray-200"
+            }`}
             type="password"
             required
+            disabled={isLoading}
           />
+          {errors.password && (
+            <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+          )}
+          {state === "register" && password && (
+            <div className="mt-2 text-xs">
+              <p className="text-gray-600 mb-1">Password requirements:</p>
+              <ul className="list-none space-y-1">
+                <li className={`flex items-center gap-2 ${
+                  passwordRequirements.minLength ? "text-green-600" : "text-gray-400"
+                }`}>
+                  <span>{passwordRequirements.minLength ? "✓" : "○"}</span>
+                  <span>At least 8 characters</span>
+                </li>
+              </ul>
+            </div>
+          )}
         </div>
         {state === "register" ? (
           <p>
@@ -103,8 +283,21 @@ const Login = () => {
             </span>
           </p>
         )}
-        <button className="bg-primary hover:bg-blue-800 transition-all text-white w-full py-2 rounded-md cursor-pointer">
-          {state === "register" ? "Create Account" : "Login"}
+        <button
+          type="submit"
+          disabled={isLoading}
+          className={`bg-primary hover:bg-blue-800 transition-all text-white w-full py-2 rounded-md ${
+            isLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+          }`}
+        >
+          {isLoading ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="animate-spin">⏳</span>
+              {state === "register" ? "Creating Account..." : "Logging in..."}
+            </span>
+          ) : (
+            state === "register" ? "Create Account" : "Login"
+          )}
         </button>
       </form>
     </div>

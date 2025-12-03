@@ -1,31 +1,83 @@
 import React, { useState } from "react";
 import { assets, menuLinks } from "../assets/assets";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
+import OwnerOnboardingModal from "./owner/OwnerOnboardingModal";
 import { toast } from "react-hot-toast";
 
 const Navbar = () => {
-  const { setShowLogin, user, logout, isOwner, axios, setIsOwner } =
-    useAppContext();
+  const { setShowLogin, user, logout, navigate, upgradeToOwner } = useAppContext();
 
   const location = useLocation();
   const [open, setOpen] = useState(false);
-  const navigate = useNavigate();
+  const [showOwnerOnboarding, setShowOwnerOnboarding] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const changeRole = async () => {
-    try {
-        const { data } = await axios.post('/api/owner/change-role');
-        if (data.success) {
-            setIsOwner(true);
-            toast.success(data.message);
-        } else {
-            toast.error("Please Login");
-        }
-    } catch (error) {
-        toast.error(error.message);
+  const handleListYourCarClick = () => {
+    // User not logged in: store redirect path and show login modal
+    if (!user) {
+      const redirectPath = "/owner/add-car";
+      sessionStorage.setItem("redirectPath", redirectPath);
+      setShowLogin(true);
+      return;
     }
-}
+    
+    // User is already an owner: navigate directly to add-car
+    if (user.role === "owner") {
+      navigate("/owner/add-car");
+      return;
+    }
+    
+    // User logged in but not owner: show onboarding modal
+    if (user.role === "user") {
+      setShowOwnerOnboarding(true);
+      return;
+    }
+  };
 
+  const handleBecomeOwner = async () => {
+    setIsSubmitting(true);
+    
+    try {
+      const result = await upgradeToOwner();
+      
+      if (result?.success) {
+        // Close modal
+        setShowOwnerOnboarding(false);
+        
+        // Show success toast
+        toast.success("You're now registered as an owner");
+        
+        // Navigate to add car page - preserve redirectPath on navigation failure
+        try {
+          navigate("/owner/add-car");
+          sessionStorage.removeItem("redirectPath");
+        } catch (error) {
+          console.log(`[Navbar] Navigation failed`, {
+            path: "/owner/add-car",
+            error: error.message,
+            timestamp: new Date().toISOString()
+          });
+          // Keep redirectPath for retry
+        }
+      }
+    } catch (error) {
+      // On failure: show toast error, leave modal open
+      toast.error(error.message || "Failed to become an owner. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    const trimmed = searchQuery.trim();
+    if (trimmed) {
+      navigate(`/cars?search=${encodeURIComponent(trimmed)}`);
+      setSearchQuery("");
+    }
+  };
 
   return (
     <div
@@ -51,15 +103,27 @@ const Navbar = () => {
         <div className="hidden lg:flex items-center text-sm gap-2 border border-borderColor px-3 rounded-full max-w-56">
           <input
             type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleSearchSubmit(e);
+              }
+            }}
             className="py-1.5 w-full bg-transparent outline-none placeholder-gray-500"
-            placeholder="Search products"
+            placeholder="Search cars by brand, model..."
           />
-          <img src={assets.search_icon} alt="search" />
+          <img 
+            src={assets.search_icon} 
+            alt="search" 
+            onClick={handleSearchSubmit}
+            className="cursor-pointer"
+          />
         </div>
 
         <div className="flex max-sm:flex-col items-start sm:items-center gap-6">
-          <button onClick={() => (isOwner ? navigate("/owner") : changeRole())} className="cursor-pointer">
-            {isOwner ? "Dashboard" : "List your car"}
+          <button onClick={handleListYourCarClick} className="cursor-pointer">
+            {user?.role === "owner" ? "Dashboard" : "List your car"}
           </button>
 
           <button
@@ -80,6 +144,13 @@ const Navbar = () => {
       >
         <img src={open ? assets.close_icon : assets.menu_icon} alt="menu" />
       </button>
+
+      <OwnerOnboardingModal
+        isOpen={showOwnerOnboarding}
+        onClose={() => setShowOwnerOnboarding(false)}
+        onBecomeOwner={handleBecomeOwner}
+        isSubmitting={isSubmitting}
+      />
     </div>
   );
 };
