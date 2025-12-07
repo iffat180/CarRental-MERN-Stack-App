@@ -1,12 +1,11 @@
 import User from "../models/User.js";
-import fs from "fs";
-import imagekit from "../configs/imageKit.js";
 import Car from "../models/Car.js";
 import Booking from "../models/Booking.js";
+import { uploadToS3, deleteFromS3 } from "../configs/aws.js";
 
 export const changeRoleToOwner = async (req, res) => {
   try {
-    const { _id } = req.user; // Get user ID from the request
+    const { _id } = req.user;
     const updatedUser = await User.findByIdAndUpdate(_id, { role: "owner" }, { new: true });
     if (!updatedUser) {
       return res.status(404).json({ success: false, message: "User not found" });
@@ -23,8 +22,7 @@ export const changeRoleToOwner = async (req, res) => {
   }
 };
 
-//API to list cars
-
+// API to add car
 export const addCar = async (req, res) => {
   try {
     // Log incoming request for debugging
@@ -32,19 +30,17 @@ export const addCar = async (req, res) => {
       userId: req.user?._id?.toString(),
       hasFile: !!req.file,
       hasCarData: !!req.body?.carData,
-      reqBody: req.body, // Full request body
       bodyKeys: Object.keys(req.body || {}),
       fileInfo: req.file ? {
         originalname: req.file.originalname,
         mimetype: req.file.mimetype,
         size: req.file.size,
         hasBuffer: !!req.file.buffer,
-        hasPath: !!req.file.path
       } : null,
       timestamp: new Date().toISOString()
     });
 
-    const { _id } = req.user; // Get user ID from the request
+    const { _id } = req.user;
     
     // Parse carData with prototype pollution protection
     let car;
@@ -124,26 +120,8 @@ export const addCar = async (req, res) => {
       });
     }
 
-    //upload image to ImageKit
-    // Use buffer directly from memory storage (multer memoryStorage)
-    // Primary: use buffer from memory storage
-    // Fallback: only if buffer missing AND path exists (disk storage)
-    let fileBuffer = imageFile.buffer;
-    
-    if (!fileBuffer && imageFile.path) {
-      try {
-        fileBuffer = fs.readFileSync(imageFile.path);
-      } catch (pathError) {
-        console.error(`[addCar] Failed to read file from path`, {
-          userId: _id?.toString(),
-          path: imageFile.path,
-          error: pathError.message,
-          timestamp: new Date().toISOString()
-        });
-      }
-    }
-    
-    if (!fileBuffer) {
+    // Verify file buffer exists
+    if (!imageFile.buffer) {
       console.error(`[addCar] No file buffer available`, {
         userId: _id?.toString(),
         fileInfo: {
@@ -151,7 +129,6 @@ export const addCar = async (req, res) => {
           mimetype: imageFile.mimetype,
           size: imageFile.size,
           hasBuffer: !!imageFile.buffer,
-          hasPath: !!imageFile.path
         },
         timestamp: new Date().toISOString()
       });
@@ -161,24 +138,16 @@ export const addCar = async (req, res) => {
       });
     }
 
-    const response = await imagekit.upload({
-      file: fileBuffer,
-      fileName: imageFile.originalname,
-      folder: "/cars",
-    });
+    // Upload image to S3
+    const imageUrl = await uploadToS3(
+      imageFile.buffer,
+      imageFile.originalname,
+      'cars',
+      imageFile.mimetype
+    );
 
-    /// optimization through imagekit URL transformation
-    var optimizedImageUrl = imagekit.url({
-      path: response.filePath,
-      transformation: [
-        { width: "1280" }, // Width resizing
-        { quality: "auto" }, // Auto compression
-        { format: "webp" }, // Convert to modern format
-      ],
-    });
-
-    const image = optimizedImageUrl;
-    await Car.create({ ...car, owner: _id, image }); // Save car data to the database
+    // Save car data to database with S3 URL
+    await Car.create({ ...car, owner: _id, image: imageUrl });
 
     res.json({ success: true, message: "Car added successfully" });
   } catch (error) {
@@ -199,7 +168,7 @@ export const addCar = async (req, res) => {
   }
 };
 
-//API to get all cars of a specific owner
+// API to get all cars of a specific owner
 export const getOwnerCars = async (req, res) => {
   try {
     const { _id } = req.user;
@@ -247,7 +216,7 @@ export const toggleCarAvailability = async (req, res) => {
   }
 };
 
-// API to delete a car
+// API to delete a car (with optional S3 cleanup)
 export const deleteCar = async (req, res) => {
   try {
     const { _id } = req.user;
@@ -261,6 +230,12 @@ export const deleteCar = async (req, res) => {
     // Checking if the car belongs to the user
     if (car.owner.toString() !== _id.toString()) {
       return res.status(403).json({ success: false, message: "Unauthorized" });
+    }
+
+    // Optional: Delete image from S3
+    // Only delete if it's not a seed car image
+    if (car.image && !car.image.includes('/cars/car')) {
+      await deleteFromS3(car.image);
     }
 
     car.owner = null; // Remove owner reference
@@ -329,37 +304,18 @@ export const getDashboardData = async (req, res) => {
   }
 };
 
-//Api to update user image
+// API to update user image
 export const updateUserImage = async (req, res) => {
   try {
     const { _id } = req.user;
-
     const imageFile = req.file;
 
     if (!imageFile) {
       return res.status(400).json({ success: false, message: "Image file is required" });
     }
 
-    //upload image to ImageKit
-    // Use buffer directly from memory storage (multer memoryStorage)
-    // Primary: use buffer from memory storage
-    // Fallback: only if buffer missing AND path exists (disk storage)
-    let fileBuffer = imageFile.buffer;
-    
-    if (!fileBuffer && imageFile.path) {
-      try {
-        fileBuffer = fs.readFileSync(imageFile.path);
-      } catch (pathError) {
-        console.error(`[updateUserImage] Failed to read file from path`, {
-          userId: _id?.toString(),
-          path: imageFile.path,
-          error: pathError.message,
-          timestamp: new Date().toISOString()
-        });
-      }
-    }
-    
-    if (!fileBuffer) {
+    // Verify file buffer exists
+    if (!imageFile.buffer) {
       console.error(`[updateUserImage] No file buffer available`, {
         userId: _id?.toString(),
         fileInfo: {
@@ -367,7 +323,6 @@ export const updateUserImage = async (req, res) => {
           mimetype: imageFile.mimetype,
           size: imageFile.size,
           hasBuffer: !!imageFile.buffer,
-          hasPath: !!imageFile.path
         },
         timestamp: new Date().toISOString()
       });
@@ -377,25 +332,26 @@ export const updateUserImage = async (req, res) => {
       });
     }
 
-    const response = await imagekit.upload({
-      file: fileBuffer,
-      fileName: imageFile.originalname,
-      folder: "/users",
-    });
+    // Get current user to delete old image
+    const user = await User.findById(_id);
+    const oldImageUrl = user?.image;
 
-    /// optimization through imagekit URL transformation
-    var optimizedImageUrl = imagekit.url({
-      path: response.filePath,
-      transformation: [
-        { width: "400" }, // Width resizing
-        { quality: "auto" }, // Auto compression
-        { format: "webp" }, // Convert to modern format
-      ],
-    });
+    // Upload new image to S3
+    const imageUrl = await uploadToS3(
+      imageFile.buffer,
+      imageFile.originalname,
+      'users',
+      imageFile.mimetype
+    );
 
-    const image = optimizedImageUrl;
+    // Update user with new image URL
+    await User.findByIdAndUpdate(_id, { image: imageUrl });
 
-    await User.findByIdAndUpdate(_id, { image });
+    // Delete old image from S3 (if exists and not default)
+    if (oldImageUrl && oldImageUrl.includes(process.env.AWS_S3_BUCKET_NAME)) {
+      await deleteFromS3(oldImageUrl);
+    }
+
     res.json({ success: true, message: "User image updated successfully" });
   } catch (error) {
     console.error(`[updateUserImage] Error:`, {
