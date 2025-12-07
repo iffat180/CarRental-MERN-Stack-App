@@ -1,1 +1,11 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# OS files
 .DS_Store
+
+# Local uploads (if they existed before S3)
+uploads/
