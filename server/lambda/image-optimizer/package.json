@@ -1,0 +1,10 @@
+{
+  "name": "image-optimizer",
+  "version": "1.0.0",
+  "description": "Lambda function to optimize uploaded car images",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.948.0",
+    "jimp": "^0.16.13"
+  }
+}

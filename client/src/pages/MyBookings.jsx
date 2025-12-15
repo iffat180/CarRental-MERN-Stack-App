@@ -4,6 +4,7 @@ import Title from "../components/Title";
 import toast from "react-hot-toast";
 import { useAppContext } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
+import invoiceService from "../services/invoiceService";
 
 // Helper function to format time (HH:MM to 12-hour format)
 const formatTime = (time24) => {
@@ -25,6 +26,7 @@ const MyBookings = () => {
   const [error, setError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
   const [cancellingBookingId, setCancellingBookingId] = useState(null);
+  const [generatingInvoiceId, setGeneratingInvoiceId] = useState(null);
 
   const fetchMyBookings = async () => {
     setIsLoading(true);
@@ -95,6 +97,31 @@ const MyBookings = () => {
       `/booking-details/${carId}?pickupDate=${pickupDate}&returnDate=${returnDate}`,
       { state: { bookingId } }
     );
+  };
+
+  const handleDownloadInvoice = async (bookingId) => {
+    if (!bookingId) {
+      toast.error("Booking ID is missing");
+      return;
+    }
+
+    setGeneratingInvoiceId(bookingId);
+    
+    try {
+      const { invoiceUrl } = await invoiceService.generateInvoice(bookingId);
+      
+      if (invoiceUrl) {
+        // Open PDF in new tab
+        window.open(invoiceUrl, "_blank");
+        toast.success("Invoice opened in new tab");
+      } else {
+        toast.error("Invoice URL not received");
+      }
+    } catch (error) {
+      toast.error(error.message || "Failed to generate invoice. Please try again.");
+    } finally {
+      setGeneratingInvoiceId(null);
+    }
   };
 
   useEffect(() => {
@@ -290,6 +317,40 @@ const MyBookings = () => {
               
               {/* Action Buttons */}
               <div className="flex flex-col gap-2 mt-4">
+                {booking.status !== "cancelled" && (
+                  <button
+                    onClick={() => handleDownloadInvoice(booking._id)}
+                    disabled={generatingInvoiceId === booking._id}
+                    className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 border border-blue-200/30 bg-transparent hover:bg-blue-50/50 hover:border-blue-300/50 transition-all rounded-lg ${
+                      generatingInvoiceId === booking._id ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                  >
+                    {generatingInvoiceId === booking._id ? (
+                      <>
+                        <div className="animate-spin rounded-full h-3 w-3 border-2 border-blue-600 border-t-transparent"></div>
+                        <span>Generating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                          />
+                        </svg>
+                        <span>Download Invoice</span>
+                      </>
+                    )}
+                  </button>
+                )}
                 {(booking.status === "pending" || booking.status === "confirmed") && (
                   <>
                     <button

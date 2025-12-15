@@ -4,6 +4,7 @@ import { assets } from "../assets/assets";
 import Loader from "../components/Loader";
 import { useAppContext } from "../context/AppContext";
 import { toast } from "react-hot-toast";
+import invoiceService from "../services/invoiceService";
 
 // Helper function to format date
 const formatDate = (dateString) => {
@@ -42,6 +43,7 @@ const BookingSuccess = () => {
   
   const [booking, setBooking] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
   
   // Fetch booking data
   useEffect(() => {
@@ -75,6 +77,32 @@ const BookingSuccess = () => {
   
   const rentalDays = calculateDays(booking.pickupDate, booking.returnDate);
   const totalCost = booking.price || (booking.car?.pricePerDay || 0) * rentalDays;
+  
+  // Handle invoice download
+  const handleDownloadInvoice = async () => {
+    if (!bookingId) {
+      toast.error("Booking ID is missing");
+      return;
+    }
+
+    setIsGeneratingInvoice(true);
+    
+    try {
+      const { invoiceUrl } = await invoiceService.generateInvoice(bookingId);
+      
+      if (invoiceUrl) {
+        // Open PDF in new tab
+        window.open(invoiceUrl, "_blank");
+        toast.success("Invoice opened in new tab");
+      } else {
+        toast.error("Invoice URL not received");
+      }
+    } catch (error) {
+      toast.error(error.message || "Failed to generate invoice. Please try again.");
+    } finally {
+      setIsGeneratingInvoice(false);
+    }
+  };
   
   return (
     <div className="px-6 md:px-16 lg:px-24 xl:px-32 mt-16">
@@ -203,14 +231,50 @@ const BookingSuccess = () => {
           </div>
         </div>
         
-        {/* Action Button */}
-        <div className="text-center pb-8">
-          <button
-            onClick={() => navigate("/my-bookings")}
-            className="bg-primary hover:bg-primary-dull transition-all px-8 py-3 font-medium text-white rounded-xl"
-          >
-            View My Bookings
-          </button>
+        {/* Action Buttons */}
+        <div className="text-center pb-8 space-y-4">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            {booking.status !== "cancelled" && (
+              <button
+                onClick={handleDownloadInvoice}
+                disabled={isGeneratingInvoice}
+                className={`flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-blue-600 border border-blue-200/30 bg-transparent hover:bg-blue-50/50 hover:border-blue-300/50 transition-all rounded-lg ${
+                  isGeneratingInvoice ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+              >
+                {isGeneratingInvoice ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                    <span>Generating...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                      />
+                    </svg>
+                    <span>Download Invoice</span>
+                  </>
+                )}
+              </button>
+            )}
+            <button
+              onClick={() => navigate("/my-bookings")}
+              className="bg-primary hover:bg-primary-dull transition-all px-8 py-3 font-medium text-white rounded-xl"
+            >
+              View My Bookings
+            </button>
+          </div>
         </div>
       </div>
     </div>

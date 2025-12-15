@@ -1,7 +1,7 @@
 import User from "../models/User.js";
 import Car from "../models/Car.js";
 import Booking from "../models/Booking.js";
-import { uploadToS3, deleteFromS3 } from "../configs/aws.js";
+import { uploadToS3, uploadCarImageToS3, deleteFromS3 } from "../configs/aws.js"; // ✅ Import new function
 
 export const changeRoleToOwner = async (req, res) => {
   try {
@@ -22,21 +22,13 @@ export const changeRoleToOwner = async (req, res) => {
   }
 };
 
-// API to add car
+// ✅ UPDATED: API to add car with Lambda optimization
 export const addCar = async (req, res) => {
   try {
-    // Log incoming request for debugging
     console.log(`[addCar] Request received`, {
       userId: req.user?._id?.toString(),
       hasFile: !!req.file,
       hasCarData: !!req.body?.carData,
-      bodyKeys: Object.keys(req.body || {}),
-      fileInfo: req.file ? {
-        originalname: req.file.originalname,
-        mimetype: req.file.mimetype,
-        size: req.file.size,
-        hasBuffer: !!req.file.buffer,
-      } : null,
       timestamp: new Date().toISOString()
     });
 
@@ -46,7 +38,6 @@ export const addCar = async (req, res) => {
     let car;
     try {
       car = JSON.parse(req.body.carData);
-      // Protect against prototype pollution
       if (car && typeof car === 'object' && !Array.isArray(car)) {
         if (car.constructor && car.constructor.name !== 'Object') {
           return res.status(400).json({
@@ -79,35 +70,29 @@ export const addCar = async (req, res) => {
     // Validate car data against model schema
     const validationErrors = [];
 
-    // Validate year (1900 to currentYear + 1)
     if (!car.year || typeof car.year !== 'number' || car.year < 1900 || car.year > new Date().getFullYear() + 1) {
       validationErrors.push("Year must be a number between 1900 and " + (new Date().getFullYear() + 1));
     }
 
-    // Validate category enum
     const validCategories = ['Sedan', 'SUV', 'Van'];
     if (!car.category || !validCategories.includes(car.category)) {
       validationErrors.push(`Category must be one of: ${validCategories.join(', ')}`);
     }
 
-    // Validate fuel_type enum
     const validFuelTypes = ['Petrol', 'Diesel', 'Electric', 'Hybrid', 'Gas'];
     if (!car.fuel_type || !validFuelTypes.includes(car.fuel_type)) {
       validationErrors.push(`Fuel type must be one of: ${validFuelTypes.join(', ')}`);
     }
 
-    // Validate transmission enum
     const validTransmissions = ['Automatic', 'Manual', 'Semi-Automatic'];
     if (!car.transmission || !validTransmissions.includes(car.transmission)) {
       validationErrors.push(`Transmission must be one of: ${validTransmissions.join(', ')}`);
     }
 
-    // Validate seating_capacity (1-20)
     if (!car.seating_capacity || typeof car.seating_capacity !== 'number' || car.seating_capacity < 1 || car.seating_capacity > 20) {
       validationErrors.push("Seating capacity must be a number between 1 and 20");
     }
 
-    // Validate pricePerDay (min 1)
     if (!car.pricePerDay || typeof car.pricePerDay !== 'number' || car.pricePerDay < 1) {
       validationErrors.push("Price per day must be a number greater than 0");
     }
@@ -120,16 +105,9 @@ export const addCar = async (req, res) => {
       });
     }
 
-    // Verify file buffer exists
     if (!imageFile.buffer) {
       console.error(`[addCar] No file buffer available`, {
         userId: _id?.toString(),
-        fileInfo: {
-          originalname: imageFile.originalname,
-          mimetype: imageFile.mimetype,
-          size: imageFile.size,
-          hasBuffer: !!imageFile.buffer,
-        },
         timestamp: new Date().toISOString()
       });
       return res.status(400).json({ 
@@ -138,16 +116,23 @@ export const addCar = async (req, res) => {
       });
     }
 
-    // Upload image to S3
-    const imageUrl = await uploadToS3(
+    // ✅ USE NEW FUNCTION: Upload and optimize car image
+    const { optimizedUrl } = await uploadCarImageToS3(
       imageFile.buffer,
       imageFile.originalname,
-      'cars',
       imageFile.mimetype
     );
 
-    // Save car data to database with S3 URL
-    await Car.create({ ...car, owner: _id, image: imageUrl });
+    console.log('💾 Saving car to MongoDB with optimized image URL...');
+
+    // Save car data to database with OPTIMIZED S3 URL
+    await Car.create({ 
+      ...car, 
+      owner: _id, 
+      image: optimizedUrl  // ✅ Using optimized URL
+    });
+    
+    console.log('✅ Car added successfully with optimized image');
 
     res.json({ success: true, message: "Car added successfully" });
   } catch (error) {
@@ -157,8 +142,6 @@ export const addCar = async (req, res) => {
       code: error.code,
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       userId: req.user?._id?.toString(),
-      hasFile: !!req.file,
-      hasCarData: !!req.body?.carData,
       timestamp: new Date().toISOString()
     });
     res.status(500).json({ 

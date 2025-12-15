@@ -4,6 +4,7 @@ import { assets } from "../assets/assets";
 import Loader from "../components/Loader";
 import { useAppContext } from "../context/AppContext";
 import { toast } from "react-hot-toast";
+import { getLocationsForCity } from "../utils/locationData";
 
 // Generate time options for dropdown (8:00 AM to 10:00 PM in 30-minute intervals)
 const generateTimeOptions = () => {
@@ -61,6 +62,7 @@ const BookingDetails = () => {
   const [car, setCar] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [locationOptions, setLocationOptions] = useState([]);
   
   // Use params if available, otherwise fallback to context
   const pickupDate = pickupDateParam || contextPickupDate;
@@ -105,6 +107,9 @@ const BookingDetails = () => {
       
       if (carFromContext) {
         setCar(carFromContext);
+        // Set location options based on car location
+        const locations = getLocationsForCity(carFromContext.location);
+        setLocationOptions(locations);
         setIsLoading(false);
         return;
       }
@@ -114,6 +119,9 @@ const BookingDetails = () => {
         const { data } = await axios.get(`/api/user/cars/${carId}`);
         if (data.success) {
           setCar(data.car);
+          // Set location options based on car location
+          const locations = getLocationsForCity(data.car.location);
+          setLocationOptions(locations);
         } else {
           toast.error(data.message || "Car not found");
           navigate("/cars");
@@ -519,17 +527,23 @@ const BookingDetails = () => {
                 <h3 className="text-lg font-medium mb-4">Pickup</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="pickupAddress" className="text-sm text-gray-600">Pickup Address *</label>
-                    <input
+                    <label htmlFor="pickupAddress" className="text-sm text-gray-600">Pickup Location *</label>
+                    <select
                       id="pickupAddress"
-                      type="text"
                       value={formData.pickupDetails.address}
                       onChange={(e) => handleFieldChange("pickupDetails", "address", e.target.value)}
                       className={`border px-3 py-2 rounded-lg ${
                         errors["pickupDetails.address"] ? "border-red-500" : "border-borderColor"
                       }`}
                       required
-                    />
+                    >
+                      <option value="">Select pickup location</option>
+                      {locationOptions.map((location, index) => (
+                        <option key={index} value={location}>
+                          {location}
+                        </option>
+                      ))}
+                    </select>
                     {errors["pickupDetails.address"] && (
                       <p className="text-red-500 text-xs">{errors["pickupDetails.address"]}</p>
                     )}
@@ -564,17 +578,23 @@ const BookingDetails = () => {
                 <h3 className="text-lg font-medium mb-4">Return</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="returnAddress" className="text-sm text-gray-600">Return Address *</label>
-                    <input
+                    <label htmlFor="returnAddress" className="text-sm text-gray-600">Return Location *</label>
+                    <select
                       id="returnAddress"
-                      type="text"
                       value={formData.returnDetails.address}
                       onChange={(e) => handleFieldChange("returnDetails", "address", e.target.value)}
                       className={`border px-3 py-2 rounded-lg ${
                         errors["returnDetails.address"] ? "border-red-500" : "border-borderColor"
                       }`}
                       required
-                    />
+                    >
+                      <option value="">Select return location</option>
+                      {locationOptions.map((location, index) => (
+                        <option key={index} value={location}>
+                          {location}
+                        </option>
+                      ))}
+                    </select>
                     {errors["returnDetails.address"] && (
                       <p className="text-red-500 text-xs">{errors["returnDetails.address"]}</p>
                     )}

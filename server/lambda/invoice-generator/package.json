@@ -1,0 +1,10 @@
+{
+  "name": "invoice-generator",
+  "version": "1.0.0",
+  "description": "Lambda function to generate PDF invoices for bookings",
+  "main": "index.js",
+  "dependencies": {
+    "pdfkit": "^0.14.0",
+    "mongoose": "^8.0.0"
+  }
+}
