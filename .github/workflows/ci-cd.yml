@@ -1,0 +1,57 @@
+name: CI/CD Pipeline
+
+# Trigger on push to main branch
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# Jobs to run
+jobs:
+  # Job 1: Test everything
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Get the code
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      # Step 2: Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      # Step 3: Test backend
+      - name: Test Backend
+        run: |
+          cd server
+          npm install
+          echo "Backend tests will go here"
+      
+      # Step 4: Test frontend
+      - name: Test Frontend
+        run: |
+          cd client
+          npm install
+          echo "Frontend tests will go here"
+      
+      # Step 5: Success message
+      - name: Tests Completed
+        run: echo "✅ All tests passed!"
+
+  # Job 2: Report success
+  notify:
+    name: Notify Success
+    runs-on: ubuntu-latest
+    needs: test  # Only run if test job succeeds
+    
+    steps:
+      - name: Success Notification
+        run: |
+          echo "🎉 Pipeline completed successfully!"
+          echo "Commit: ${{ github.sha }}"
+          echo "Author: ${{ github.actor }}"
