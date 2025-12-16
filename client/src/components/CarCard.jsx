@@ -7,12 +7,24 @@ const CarCard = ({ car }) => {
   const navigate = useNavigate();
 
   return (
-    <div onClick={() => {navigate(`/car-details/${car._id}`); scrollTo(0, 0)}}
-    className="group rounded-xl overflow-hidden shadow-lg hover:-translate-y-1 transition-all duration-500 cursor-pointer">
+    <article 
+      onClick={() => {navigate(`/car-details/${car._id}`); scrollTo(0, 0)}}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          navigate(`/car-details/${car._id}`);
+          scrollTo(0, 0);
+        }
+      }}
+      tabIndex={0}
+      role="button"
+      aria-label={`View details for ${car.brand} ${car.model} ${car.year}`}
+      className="group rounded-xl overflow-hidden shadow-lg hover:-translate-y-1 transition-all duration-500 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+    >
       <div className="relative h-48 overflow-hidden">
         <img
           src={car.image}
-          alt="Car Image"
+          alt={`${car.brand} ${car.model} ${car.year} - ${car.category}`}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
 
@@ -45,22 +57,22 @@ const CarCard = ({ car }) => {
 
         <div className="mt-4 grid grid-cols-2 gap-y-2 text-gray-600">
           <div className="flex items-center text-sm text-muted-foreground">
-            <img src={assets.users_icon} alt="" className="h-4 mr-2" />
+            <img src={assets.users_icon} alt="" className="h-4 mr-2" aria-hidden="true" />
             <span>{car.seating_capacity} Seats</span>
           </div>
 
           <div className="flex items-center text-sm text-muted-foreground">
-            <img src={assets.fuel_icon} alt="" className="h-4 mr-2" />
+            <img src={assets.fuel_icon} alt="" className="h-4 mr-2" aria-hidden="true" />
             <span>{car.fuel_type}</span>
           </div>
 
           <div className="flex items-center text-sm text-muted-foreground">
-            <img src={assets.car_icon} alt="" className="h-4 mr-2" />
+            <img src={assets.car_icon} alt="" className="h-4 mr-2" aria-hidden="true" />
             <span>{car.transmission}</span>
           </div>
 
           <div className="flex items-center text-sm text-muted-foreground">
-            <img src={assets.location_icon} alt="" className="h-4 mr-2" />
+            <img src={assets.location_icon} alt="" className="h-4 mr-2" aria-hidden="true" />
             <span>{car.location}</span>
           </div>
 
@@ -95,7 +107,7 @@ const CarCard = ({ car }) => {
           </div>
         )}
       </div>
-    </div>
+    </article>
   );
 };
 

@@ -80,29 +80,46 @@ const Navbar = () => {
   };
 
   return (
-    <div
+    <nav
       className={`flex items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32 py-4 text-gray-600 border-b border-borderColor relative transition-all ${
         location.pathname === "/" && "bg-light"
       }`}
+      role="navigation"
+      aria-label="Main navigation"
     >
-      <Link to="/">
-        <img src={assets.logo} alt="logo" className="h-8" />
+      <Link to="/" aria-label="Car Rental Home">
+        <img src={assets.logo} alt="Car Rental Logo" className="h-8" />
       </Link>
 
       <div
         className={`max-sm:fixed max-sm:h-screen max-sm:w-full max-sm:top-16 max-sm:border-t border-borderColor right-0 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8 max-sm:p-4 transition-all duration-300 z-50 ${
           location.pathname === "/" ? "bg-light" : "bg-white"
         } ${open ? "max-sm:translate-x-0" : "max-sm:translate-x-full"}`}
+        role="menu"
+        aria-label="Navigation menu"
+        id="mobile-menu"
       >
         {menuLinks.map((link, index) => (
-          <Link key={index} to={link.path}>
+          <Link 
+            key={index} 
+            to={link.path}
+            aria-current={location.pathname === link.path ? "page" : undefined}
+            className="hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded px-2 py-1"
+          >
             {link.name}
           </Link>
         ))}
 
-        <div className="hidden lg:flex items-center text-sm gap-2 border border-borderColor px-3 rounded-full max-w-56">
+        <form 
+          onSubmit={handleSearchSubmit}
+          className="hidden lg:flex items-center text-sm gap-2 border border-borderColor px-3 rounded-full max-w-56"
+          role="search"
+          aria-label="Search cars"
+        >
+          <label htmlFor="navbar-search" className="sr-only">Search cars by brand, model</label>
           <input
-            type="text"
+            id="navbar-search"
+            type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => {
@@ -112,17 +129,28 @@ const Navbar = () => {
             }}
             className="py-1.5 w-full bg-transparent outline-none placeholder-gray-500"
             placeholder="Search cars by brand, model..."
+            aria-label="Search cars by brand, model"
           />
-          <img 
-            src={assets.search_icon} 
-            alt="search" 
-            onClick={handleSearchSubmit}
-            className="cursor-pointer"
-          />
-        </div>
+          <button 
+            type="submit"
+            aria-label="Submit search"
+            className="cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
+          >
+            <img 
+              src={assets.search_icon} 
+              alt="" 
+              className="w-4 h-4"
+              aria-hidden="true"
+            />
+          </button>
+        </form>
 
         <div className="flex max-sm:flex-col items-start sm:items-center gap-6">
-          <button onClick={handleListYourCarClick} className="cursor-pointer">
+          <button 
+            onClick={handleListYourCarClick} 
+            className="cursor-pointer hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded px-2 py-1"
+            aria-label={user?.role === "owner" ? "Go to owner dashboard" : "List your car for rent"}
+          >
             {user?.role === "owner" ? "Dashboard" : "List your car"}
           </button>
 
@@ -130,7 +158,8 @@ const Navbar = () => {
             onClick={() => {
               user ? logout() : setShowLogin(true);
             }}
-            className="cursor-pointer px-8 py-2 bg-primary hover:bg-primary-dull transition-all text-white rounded-lg"
+            className="cursor-pointer px-8 py-2 bg-primary hover:bg-primary-dull transition-all text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            aria-label={user ? "Logout" : "Login"}
           >
             {user ? "Logout" : "Login"}
           </button>
@@ -138,11 +167,18 @@ const Navbar = () => {
       </div>
 
       <button
-        className="sm:hidden cursor-pointer"
-        aria-label="Menu"
+        className="sm:hidden cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded p-1"
+        aria-label={open ? "Close menu" : "Open menu"}
+        aria-expanded={open}
+        aria-controls="mobile-menu"
         onClick={() => setOpen(!open)}
       >
-        <img src={open ? assets.close_icon : assets.menu_icon} alt="menu" />
+        <img 
+          src={open ? assets.close_icon : assets.menu_icon} 
+          alt="" 
+          className="w-6 h-6"
+          aria-hidden="true"
+        />
       </button>
 
       <OwnerOnboardingModal
@@ -151,7 +187,7 @@ const Navbar = () => {
         onBecomeOwner={handleBecomeOwner}
         isSubmitting={isSubmitting}
       />
-    </div>
+    </nav>
   );
 };
 

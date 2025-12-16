@@ -355,9 +355,10 @@ const BookingDetails = () => {
     <div className="px-6 md:px-16 lg:px-24 xl:px-32 mt-16">
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-2 mb-6 text-gray-500 cursor-pointer"
+        className="flex items-center gap-2 mb-6 text-gray-500 cursor-pointer hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded px-2 py-1"
+        aria-label="Go back to previous page"
       >
-        <img src={assets.arrow_icon} alt="" className="rotate-180 opacity-65" />
+        <img src={assets.arrow_icon} alt="" className="rotate-180 opacity-65" aria-hidden="true" />
         Back
       </button>
       
@@ -367,175 +368,236 @@ const BookingDetails = () => {
           {car.brand} {car.model} • {pickupDate} to {returnDate}
         </p>
         
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-8" noValidate>
           {/* User Identity Section */}
-          <div className="bg-white rounded-xl p-6 shadow-md border border-borderColor">
-            <h2 className="text-xl font-semibold mb-4">User Identity</h2>
+          <fieldset className="bg-white rounded-xl p-6 shadow-md border border-borderColor">
+            <legend className="text-xl font-semibold mb-4">User Identity</legend>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
-                <label htmlFor="fullName" className="text-sm text-gray-600">Full Name *</label>
+                <label htmlFor="fullName" className="text-sm text-gray-600">
+                  Full Name <span className="text-red-500" aria-label="required">*</span>
+                </label>
                 <input
                   id="fullName"
                   type="text"
                   value={formData.userDetails.fullName}
                   onChange={(e) => handleFieldChange("userDetails", "fullName", e.target.value)}
-                  className={`border px-3 py-2 rounded-lg ${
+                  className={`border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                     errors["userDetails.fullName"] ? "border-red-500" : "border-borderColor"
                   }`}
                   required
+                  aria-required="true"
+                  aria-invalid={errors["userDetails.fullName"] ? "true" : "false"}
+                  aria-describedby={errors["userDetails.fullName"] ? "fullName-error" : undefined}
                 />
                 {errors["userDetails.fullName"] && (
-                  <p className="text-red-500 text-xs">{errors["userDetails.fullName"]}</p>
+                  <p id="fullName-error" className="text-red-500 text-xs" role="alert">
+                    {errors["userDetails.fullName"]}
+                  </p>
                 )}
               </div>
               
               <div className="flex flex-col gap-2">
-                <label htmlFor="email" className="text-sm text-gray-600">Email *</label>
+                <label htmlFor="email" className="text-sm text-gray-600">
+                  Email <span className="text-red-500" aria-label="required">*</span>
+                </label>
                 <input
                   id="email"
                   type="email"
                   value={formData.userDetails.email}
                   onChange={(e) => handleFieldChange("userDetails", "email", e.target.value)}
                   disabled={!!user?.email}
-                  className={`border px-3 py-2 rounded-lg ${
+                  className={`border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                     errors["userDetails.email"] ? "border-red-500" : "border-borderColor"
                   } ${user?.email ? "bg-gray-100" : ""}`}
                   required
+                  aria-required="true"
+                  aria-invalid={errors["userDetails.email"] ? "true" : "false"}
+                  aria-describedby={errors["userDetails.email"] ? "email-error" : undefined}
                 />
                 {errors["userDetails.email"] && (
-                  <p className="text-red-500 text-xs">{errors["userDetails.email"]}</p>
+                  <p id="email-error" className="text-red-500 text-xs" role="alert">
+                    {errors["userDetails.email"]}
+                  </p>
                 )}
               </div>
               
               <div className="flex flex-col gap-2">
-                <label htmlFor="phone" className="text-sm text-gray-600">Phone Number *</label>
+                <label htmlFor="phone" className="text-sm text-gray-600">
+                  Phone Number <span className="text-red-500" aria-label="required">*</span>
+                </label>
                 <input
                   id="phone"
                   type="tel"
                   value={formData.userDetails.phone}
                   onChange={(e) => handleFieldChange("userDetails", "phone", e.target.value)}
-                  className={`border px-3 py-2 rounded-lg ${
+                  className={`border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                     errors["userDetails.phone"] ? "border-red-500" : "border-borderColor"
                   }`}
                   required
+                  aria-required="true"
+                  aria-invalid={errors["userDetails.phone"] ? "true" : "false"}
+                  aria-describedby={errors["userDetails.phone"] ? "phone-error" : undefined}
                 />
                 {errors["userDetails.phone"] && (
-                  <p className="text-red-500 text-xs">{errors["userDetails.phone"]}</p>
+                  <p id="phone-error" className="text-red-500 text-xs" role="alert">
+                    {errors["userDetails.phone"]}
+                  </p>
                 )}
               </div>
               
               <div className="flex flex-col gap-2">
-                <label htmlFor="dateOfBirth" className="text-sm text-gray-600">Date of Birth *</label>
+                <label htmlFor="dateOfBirth" className="text-sm text-gray-600">
+                  Date of Birth <span className="text-red-500" aria-label="required">*</span>
+                </label>
                 <input
                   id="dateOfBirth"
                   type="date"
                   value={formData.userDetails.dateOfBirth}
                   onChange={(e) => handleFieldChange("userDetails", "dateOfBirth", e.target.value)}
                   max={new Date().toISOString().split("T")[0]}
-                  className={`border px-3 py-2 rounded-lg ${
+                  className={`border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                     errors["userDetails.dateOfBirth"] ? "border-red-500" : "border-borderColor"
                   }`}
                   required
+                  aria-required="true"
+                  aria-invalid={errors["userDetails.dateOfBirth"] ? "true" : "false"}
+                  aria-describedby={errors["userDetails.dateOfBirth"] ? "dateOfBirth-error" : undefined}
                 />
                 {errors["userDetails.dateOfBirth"] && (
-                  <p className="text-red-500 text-xs">{errors["userDetails.dateOfBirth"]}</p>
+                  <p id="dateOfBirth-error" className="text-red-500 text-xs" role="alert">
+                    {errors["userDetails.dateOfBirth"]}
+                  </p>
                 )}
               </div>
               
               <div className="flex flex-col gap-2">
-                <label htmlFor="nationality" className="text-sm text-gray-600">Nationality *</label>
+                <label htmlFor="nationality" className="text-sm text-gray-600">
+                  Nationality <span className="text-red-500" aria-label="required">*</span>
+                </label>
                 <input
                   id="nationality"
                   type="text"
                   value={formData.userDetails.nationality}
                   onChange={(e) => handleFieldChange("userDetails", "nationality", e.target.value)}
-                  className={`border px-3 py-2 rounded-lg ${
+                  className={`border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                     errors["userDetails.nationality"] ? "border-red-500" : "border-borderColor"
                   }`}
                   required
+                  aria-required="true"
+                  aria-invalid={errors["userDetails.nationality"] ? "true" : "false"}
+                  aria-describedby={errors["userDetails.nationality"] ? "nationality-error" : undefined}
                 />
                 {errors["userDetails.nationality"] && (
-                  <p className="text-red-500 text-xs">{errors["userDetails.nationality"]}</p>
+                  <p id="nationality-error" className="text-red-500 text-xs" role="alert">
+                    {errors["userDetails.nationality"]}
+                  </p>
                 )}
               </div>
             </div>
-          </div>
+          </fieldset>
           
           {/* Driving License Section */}
-          <div className="bg-white rounded-xl p-6 shadow-md border border-borderColor">
-            <h2 className="text-xl font-semibold mb-4">Driving License</h2>
+          <fieldset className="bg-white rounded-xl p-6 shadow-md border border-borderColor">
+            <legend className="text-xl font-semibold mb-4">Driving License</legend>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
-                <label htmlFor="licenseNumber" className="text-sm text-gray-600">License Number *</label>
+                <label htmlFor="licenseNumber" className="text-sm text-gray-600">
+                  License Number <span className="text-red-500" aria-label="required">*</span>
+                </label>
                 <input
                   id="licenseNumber"
                   type="text"
                   value={formData.userDetails.licenseNumber}
                   onChange={(e) => handleFieldChange("userDetails", "licenseNumber", e.target.value)}
-                  className={`border px-3 py-2 rounded-lg ${
+                  className={`border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                     errors["userDetails.licenseNumber"] ? "border-red-500" : "border-borderColor"
                   }`}
                   required
+                  aria-required="true"
+                  aria-invalid={errors["userDetails.licenseNumber"] ? "true" : "false"}
+                  aria-describedby={errors["userDetails.licenseNumber"] ? "licenseNumber-error" : undefined}
                 />
                 {errors["userDetails.licenseNumber"] && (
-                  <p className="text-red-500 text-xs">{errors["userDetails.licenseNumber"]}</p>
+                  <p id="licenseNumber-error" className="text-red-500 text-xs" role="alert">
+                    {errors["userDetails.licenseNumber"]}
+                  </p>
                 )}
               </div>
               
               <div className="flex flex-col gap-2">
-                <label htmlFor="licenseExpiry" className="text-sm text-gray-600">License Expiry Date *</label>
+                <label htmlFor="licenseExpiry" className="text-sm text-gray-600">
+                  License Expiry Date <span className="text-red-500" aria-label="required">*</span>
+                </label>
                 <input
                   id="licenseExpiry"
                   type="date"
                   value={formData.userDetails.licenseExpiry}
                   onChange={(e) => handleFieldChange("userDetails", "licenseExpiry", e.target.value)}
                   min={new Date().toISOString().split("T")[0]}
-                  className={`border px-3 py-2 rounded-lg ${
+                  className={`border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                     errors["userDetails.licenseExpiry"] ? "border-red-500" : "border-borderColor"
                   }`}
                   required
+                  aria-required="true"
+                  aria-invalid={errors["userDetails.licenseExpiry"] ? "true" : "false"}
+                  aria-describedby={errors["userDetails.licenseExpiry"] ? "licenseExpiry-error" : undefined}
                 />
                 {errors["userDetails.licenseExpiry"] && (
-                  <p className="text-red-500 text-xs">{errors["userDetails.licenseExpiry"]}</p>
+                  <p id="licenseExpiry-error" className="text-red-500 text-xs" role="alert">
+                    {errors["userDetails.licenseExpiry"]}
+                  </p>
                 )}
               </div>
               
               <div className="flex flex-col gap-2">
-                <label htmlFor="licenseCountry" className="text-sm text-gray-600">Country of Issue *</label>
+                <label htmlFor="licenseCountry" className="text-sm text-gray-600">
+                  Country of Issue <span className="text-red-500" aria-label="required">*</span>
+                </label>
                 <input
                   id="licenseCountry"
                   type="text"
                   value={formData.userDetails.licenseCountry}
                   onChange={(e) => handleFieldChange("userDetails", "licenseCountry", e.target.value)}
-                  className={`border px-3 py-2 rounded-lg ${
+                  className={`border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                     errors["userDetails.licenseCountry"] ? "border-red-500" : "border-borderColor"
                   }`}
                   required
+                  aria-required="true"
+                  aria-invalid={errors["userDetails.licenseCountry"] ? "true" : "false"}
+                  aria-describedby={errors["userDetails.licenseCountry"] ? "licenseCountry-error" : undefined}
                 />
                 {errors["userDetails.licenseCountry"] && (
-                  <p className="text-red-500 text-xs">{errors["userDetails.licenseCountry"]}</p>
+                  <p id="licenseCountry-error" className="text-red-500 text-xs" role="alert">
+                    {errors["userDetails.licenseCountry"]}
+                  </p>
                 )}
               </div>
             </div>
-          </div>
+          </fieldset>
           
           {/* Pickup/Dropoff Details Section */}
-          <div className="bg-white rounded-xl p-6 shadow-md border border-borderColor">
-            <h2 className="text-xl font-semibold mb-4">Pickup & Dropoff Details</h2>
+          <fieldset className="bg-white rounded-xl p-6 shadow-md border border-borderColor">
+            <legend className="text-xl font-semibold mb-4">Pickup & Dropoff Details</legend>
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-medium mb-4">Pickup</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="pickupAddress" className="text-sm text-gray-600">Pickup Location *</label>
+                    <label htmlFor="pickupAddress" className="text-sm text-gray-600">
+                      Pickup Location <span className="text-red-500" aria-label="required">*</span>
+                    </label>
                     <select
                       id="pickupAddress"
                       value={formData.pickupDetails.address}
                       onChange={(e) => handleFieldChange("pickupDetails", "address", e.target.value)}
-                      className={`border px-3 py-2 rounded-lg ${
+                      className={`border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                         errors["pickupDetails.address"] ? "border-red-500" : "border-borderColor"
                       }`}
                       required
+                      aria-required="true"
+                      aria-invalid={errors["pickupDetails.address"] ? "true" : "false"}
+                      aria-describedby={errors["pickupDetails.address"] ? "pickupAddress-error" : undefined}
                     >
                       <option value="">Select pickup location</option>
                       {locationOptions.map((location, index) => (
@@ -545,20 +607,27 @@ const BookingDetails = () => {
                       ))}
                     </select>
                     {errors["pickupDetails.address"] && (
-                      <p className="text-red-500 text-xs">{errors["pickupDetails.address"]}</p>
+                      <p id="pickupAddress-error" className="text-red-500 text-xs" role="alert">
+                        {errors["pickupDetails.address"]}
+                      </p>
                     )}
                   </div>
                   
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="pickupTime" className="text-sm text-gray-600">Pickup Time *</label>
+                    <label htmlFor="pickupTime" className="text-sm text-gray-600">
+                      Pickup Time <span className="text-red-500" aria-label="required">*</span>
+                    </label>
                     <select
                       id="pickupTime"
                       value={formData.pickupDetails.time}
                       onChange={(e) => handleFieldChange("pickupDetails", "time", e.target.value)}
-                      className={`border px-3 py-2 rounded-lg ${
+                      className={`border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                         errors["pickupDetails.time"] ? "border-red-500" : "border-borderColor"
                       }`}
                       required
+                      aria-required="true"
+                      aria-invalid={errors["pickupDetails.time"] ? "true" : "false"}
+                      aria-describedby={errors["pickupDetails.time"] ? "pickupTime-error" : undefined}
                     >
                       <option value="">Select time</option>
                       {TIME_OPTIONS.map((option) => (
@@ -568,7 +637,9 @@ const BookingDetails = () => {
                       ))}
                     </select>
                     {errors["pickupDetails.time"] && (
-                      <p className="text-red-500 text-xs">{errors["pickupDetails.time"]}</p>
+                      <p id="pickupTime-error" className="text-red-500 text-xs" role="alert">
+                        {errors["pickupDetails.time"]}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -578,15 +649,20 @@ const BookingDetails = () => {
                 <h3 className="text-lg font-medium mb-4">Return</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="returnAddress" className="text-sm text-gray-600">Return Location *</label>
+                    <label htmlFor="returnAddress" className="text-sm text-gray-600">
+                      Return Location <span className="text-red-500" aria-label="required">*</span>
+                    </label>
                     <select
                       id="returnAddress"
                       value={formData.returnDetails.address}
                       onChange={(e) => handleFieldChange("returnDetails", "address", e.target.value)}
-                      className={`border px-3 py-2 rounded-lg ${
+                      className={`border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                         errors["returnDetails.address"] ? "border-red-500" : "border-borderColor"
                       }`}
                       required
+                      aria-required="true"
+                      aria-invalid={errors["returnDetails.address"] ? "true" : "false"}
+                      aria-describedby={errors["returnDetails.address"] ? "returnAddress-error" : undefined}
                     >
                       <option value="">Select return location</option>
                       {locationOptions.map((location, index) => (
@@ -596,20 +672,27 @@ const BookingDetails = () => {
                       ))}
                     </select>
                     {errors["returnDetails.address"] && (
-                      <p className="text-red-500 text-xs">{errors["returnDetails.address"]}</p>
+                      <p id="returnAddress-error" className="text-red-500 text-xs" role="alert">
+                        {errors["returnDetails.address"]}
+                      </p>
                     )}
                   </div>
                   
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="returnTime" className="text-sm text-gray-600">Return Time *</label>
+                    <label htmlFor="returnTime" className="text-sm text-gray-600">
+                      Return Time <span className="text-red-500" aria-label="required">*</span>
+                    </label>
                     <select
                       id="returnTime"
                       value={formData.returnDetails.time}
                       onChange={(e) => handleFieldChange("returnDetails", "time", e.target.value)}
-                      className={`border px-3 py-2 rounded-lg ${
+                      className={`border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                         errors["returnDetails.time"] ? "border-red-500" : "border-borderColor"
                       }`}
                       required
+                      aria-required="true"
+                      aria-invalid={errors["returnDetails.time"] ? "true" : "false"}
+                      aria-describedby={errors["returnDetails.time"] ? "returnTime-error" : undefined}
                     >
                       <option value="">Select time</option>
                       {TIME_OPTIONS.map((option) => (
@@ -619,39 +702,44 @@ const BookingDetails = () => {
                       ))}
                     </select>
                     {errors["returnDetails.time"] && (
-                      <p className="text-red-500 text-xs">{errors["returnDetails.time"]}</p>
+                      <p id="returnTime-error" className="text-red-500 text-xs" role="alert">
+                        {errors["returnDetails.time"]}
+                      </p>
                     )}
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </fieldset>
           
           {/* Extras Section */}
-          <div className="bg-white rounded-xl p-6 shadow-md border border-borderColor">
-            <h2 className="text-xl font-semibold mb-4">Extras</h2>
+          <fieldset className="bg-white rounded-xl p-6 shadow-md border border-borderColor">
+            <legend className="text-xl font-semibold mb-4">Extras</legend>
             <div className="flex items-center gap-3">
               <input
                 id="extraDriver"
                 type="checkbox"
                 checked={formData.extras.extraDriver}
                 onChange={(e) => handleFieldChange("extras", "extraDriver", e.target.checked)}
-                className="w-4 h-4 text-primary"
+                className="w-4 h-4 text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                aria-label="Add extra driver to booking"
               />
               <label htmlFor="extraDriver" className="text-sm text-gray-600">Extra Driver</label>
             </div>
-          </div>
+          </fieldset>
           
           {/* Notes Section */}
           <div className="bg-white rounded-xl p-6 shadow-md border border-borderColor">
             <h2 className="text-xl font-semibold mb-4">Notes</h2>
+            <label htmlFor="notes" className="sr-only">Additional notes or special requests</label>
             <textarea
               id="notes"
               value={formData.notes}
               onChange={(e) => handleNotesChange(e.target.value)}
               rows={4}
-              className="w-full border border-borderColor px-3 py-2 rounded-lg"
+              className="w-full border border-borderColor px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               placeholder="Any additional notes or special requests..."
+              aria-label="Additional notes or special requests"
             />
           </div>
           
@@ -660,14 +748,17 @@ const BookingDetails = () => {
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="flex-1 border border-borderColor px-6 py-3 rounded-lg hover:bg-gray-50"
+              className="flex-1 border border-borderColor px-6 py-3 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              aria-label="Cancel and go back"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`flex-1 bg-primary hover:bg-primary-dull transition-all py-3 font-medium text-white rounded-xl ${
+              aria-disabled={isSubmitting}
+              aria-busy={isSubmitting}
+              className={`flex-1 bg-primary hover:bg-primary-dull transition-all py-3 font-medium text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                 isSubmitting ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
               }`}
             >

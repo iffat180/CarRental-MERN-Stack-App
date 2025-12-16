@@ -127,22 +127,31 @@ const Hero = () => {
   }, [axios]);
 
   return (
-    <div className="h-screen flex flex-col items-center justify-center gap-14 bg-light text-center">
-      <h1 className="text-4xl md:text-5xl font-semibold">
+    <section className="h-screen flex flex-col items-center justify-center gap-14 bg-light text-center" aria-labelledby="hero-title">
+      <h1 id="hero-title" className="text-4xl md:text-5xl font-semibold">
         Luxury Cars On Rent
       </h1>
 
       <form
         onSubmit={handleSearch}
         className="flex flex-col md:flex-row items-start md:items-center justify-between p-6 rounded-lg md:rounded-full w-full max-w-80 md:max-w-200 bg-white shadow-[0px_8px_20px_rgba(0,0,0,0.1)]"
+        aria-label="Search for available cars"
+        noValidate
       >
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-10 min-md:ml-8">
+        <fieldset className="flex flex-col md:flex-row items-start md:items-center gap-10 min-md:ml-8 border-0 p-0 m-0">
+          <legend className="sr-only">Search criteria</legend>
           <div className="flex flex-col items-start gap-2">
+            <label htmlFor="hero-pickup-location" className="sr-only">Pickup Location</label>
             <select
+              id="hero-pickup-location"
               required
               value={pickupLocation}
               onChange={(e) => setPickupLocation(e.target.value)}
               disabled={isLoadingCities}
+              aria-required="true"
+              aria-busy={isLoadingCities}
+              aria-label="Select pickup location"
+              className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
             >
               <option value="">Pickup Location</option>
               {cities.map((city) => (
@@ -151,46 +160,56 @@ const Hero = () => {
                 </option>
               ))}
             </select>
-            <p className="px-1 text-sm text-gray-500">
+            <p className="px-1 text-sm text-gray-500" aria-live="polite">
               {pickupLocation ? pickupLocation : "Please select location"}
             </p>
           </div>
           <div className="flex flex-col items-start gap-2">
-            <label htmlFor="pickup-date">Pick-up Date</label>
+            <label htmlFor="hero-pickup-date">Pick-up Date <span className="text-red-500" aria-label="required">*</span></label>
             <input
               value={pickupDate}
               onChange={handlePickupDateChange}
               type="date"
-              id="pickup-date"
+              id="hero-pickup-date"
               min={new Date().toISOString().split("T")[0]}
-              className={`text-sm text-gray-500 ${
+              className={`text-sm text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded ${
                 dateErrors.pickupDate ? "border-red-500" : ""
               }`}
               required
+              aria-required="true"
+              aria-invalid={dateErrors.pickupDate ? "true" : "false"}
+              aria-describedby={dateErrors.pickupDate ? "pickup-date-error" : undefined}
             />
             {dateErrors.pickupDate && (
-              <p className="text-red-500 text-xs">{dateErrors.pickupDate}</p>
+              <p id="pickup-date-error" className="text-red-500 text-xs" role="alert">
+                {dateErrors.pickupDate}
+              </p>
             )}
           </div>
 
           <div className="flex flex-col items-start gap-2">
-            <label htmlFor="return-date">Return Date</label>
+            <label htmlFor="hero-return-date">Return Date <span className="text-red-500" aria-label="required">*</span></label>
             <input
               value={returnDate}
               onChange={handleReturnDateChange}
               type="date"
-              id="return-date"
+              id="hero-return-date"
               min={pickupDate || new Date().toISOString().split("T")[0]}
-              className={`text-sm text-gray-500 ${
+              className={`text-sm text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded ${
                 dateErrors.returnDate ? "border-red-500" : ""
               }`}
               required
+              aria-required="true"
+              aria-invalid={dateErrors.returnDate ? "true" : "false"}
+              aria-describedby={dateErrors.returnDate ? "return-date-error" : dateErrors.general ? "date-general-error" : undefined}
             />
             {dateErrors.returnDate && (
-              <p className="text-red-500 text-xs">{dateErrors.returnDate}</p>
+              <p id="return-date-error" className="text-red-500 text-xs" role="alert">
+                {dateErrors.returnDate}
+              </p>
             )}
           </div>
-        </div>
+        </fieldset>
         <div className="flex flex-col items-center gap-2">
           <button
             type="submit"
@@ -200,7 +219,13 @@ const Hero = () => {
               !pickupLocation ||
               !validateDates(pickupDate, returnDate).isValid
             }
-            className={`flex items-center justify-center gap-1 px-9 py-3 max-sm:mt-4 bg-primary hover:bg-primary-dull text-white rounded-full ${
+            aria-disabled={
+              !pickupDate ||
+              !returnDate ||
+              !pickupLocation ||
+              !validateDates(pickupDate, returnDate).isValid
+            }
+            className={`flex items-center justify-center gap-1 px-9 py-3 max-sm:mt-4 bg-primary hover:bg-primary-dull text-white rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
               !pickupDate ||
               !returnDate ||
               !pickupLocation ||
@@ -211,19 +236,22 @@ const Hero = () => {
           >
             <img
               src={assets.search_icon}
-              alt="search"
+              alt=""
               className="brightness-300"
+              aria-hidden="true"
             />
             Search
           </button>
           {dateErrors.general && (
-            <p className="text-red-500 text-xs">{dateErrors.general}</p>
+            <p id="date-general-error" className="text-red-500 text-xs" role="alert">
+              {dateErrors.general}
+            </p>
           )}
         </div>
       </form>
 
-      <img src={assets.main_car} alt="car" className="max-h-74" />
-    </div>
+      <img src={assets.main_car} alt="Luxury car available for rent" className="max-h-74" />
+    </section>
   );
 };
 

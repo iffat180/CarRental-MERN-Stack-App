@@ -32,10 +32,11 @@ const FeaturedSection = () => {
           navigate("/cars");
           scrollTo(0, 0);
         }}
-        className="flex items-center justify-center gap-2 px-6 py-2 border border-borderColor hover:bg-gray-50 rounded-md mt-18 cursor-pointer"
+        className="flex items-center justify-center gap-2 px-6 py-2 border border-borderColor hover:bg-gray-50 rounded-md mt-18 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+        aria-label="Explore all available cars"
       >
         Explore all cars
-        <img src={assets.arrow_icon} alt="arrow" />
+        <img src={assets.arrow_icon} alt="" aria-hidden="true" />
       </button>
     </div>
   );

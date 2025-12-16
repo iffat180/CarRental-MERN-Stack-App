@@ -183,15 +183,18 @@ const Cars = () => {
       />
 
       <div className="flex items-center bg-white px-4 mt-6 max-w-140 w-full h-12 rounded-full shadow">
-        <img src={assets.search_icon} alt="" className="w-4.5 h-4.5 mr-2" />
+        <label htmlFor="cars-search" className="sr-only">Search cars by make, model or features</label>
+        <img src={assets.search_icon} alt="" className="w-4.5 h-4.5 mr-2" aria-hidden="true" />
         <input
+          id="cars-search"
           onChange={(e) => setInput(e.target.value)}
           value={input}
-          type="text"
+          type="search"
           placeholder="Search by make, model or features"
-          className="w-full h-full outline-none text-gray-500"
+          className="w-full h-full outline-none text-gray-500 focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
+          aria-label="Search cars by make, model or features"
         />
-        <img src={assets.filter_icon} alt="" className="w-4.5 h-4.5 ml-2" />
+        <img src={assets.filter_icon} alt="" className="w-4.5 h-4.5 ml-2" aria-hidden="true" />
       </div>
 
       {/* Filter Chips */}
@@ -302,11 +305,13 @@ const Cars = () => {
                 <button
                   onClick={handlePreviousPage}
                   disabled={currentPage === 1}
-                  className={`px-4 py-2 rounded-lg ${
+                  aria-disabled={currentPage === 1}
+                  className={`px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                     currentPage === 1
                       ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                       : "bg-primary text-white hover:bg-primary-dull"
                   }`}
+                  aria-label="Go to previous page"
                 >
                   Previous
                 </button>
@@ -316,7 +321,9 @@ const Cars = () => {
                     <button
                       key={page}
                       onClick={() => handlePageChange(page)}
-                      className={`px-3 py-1 rounded ${
+                      aria-label={`Go to page ${page}`}
+                      aria-current={currentPage === page ? "page" : undefined}
+                      className={`px-3 py-1 rounded focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                         currentPage === page
                           ? "bg-primary text-white"
                           : "bg-gray-200 text-gray-600 hover:bg-gray-300"
@@ -330,11 +337,13 @@ const Cars = () => {
                 <button
                   onClick={handleNextPage}
                   disabled={currentPage === totalPages}
-                  className={`px-4 py-2 rounded-lg ${
+                  aria-disabled={currentPage === totalPages}
+                  className={`px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                     currentPage === totalPages
                       ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                       : "bg-primary text-white hover:bg-primary-dull"
                   }`}
+                  aria-label="Go to next page"
                 >
                   Next
                 </button>

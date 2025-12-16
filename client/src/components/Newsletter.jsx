@@ -60,10 +60,12 @@ const Newsletter = () => {
       <p className="md:text-lg text-gray-500/70 pb-8">
         Subscribe to get the latest offers, new arrivals, and exclusive discounts
       </p>
-      <form onSubmit={handleSubmit} className="flex flex-col items-center justify-between max-w-2xl w-full gap-3">
+      <form onSubmit={handleSubmit} className="flex flex-col items-center justify-between max-w-2xl w-full gap-3" noValidate>
         <div className="flex items-center justify-between w-full md:h-13 h-12">
+          <label htmlFor="newsletter-email" className="sr-only">Enter your email address to subscribe to newsletter</label>
           <input
-            className="border border-gray-300 rounded-md h-full border-r-0 outline-none w-full rounded-r-none px-3 text-gray-500"
+            id="newsletter-email"
+            className="border border-gray-300 rounded-md h-full border-r-0 outline-none w-full rounded-r-none px-3 text-gray-500 focus:ring-2 focus:ring-primary focus:ring-offset-2"
             type="email"
             placeholder="Enter your email id"
             value={email}
@@ -74,11 +76,16 @@ const Newsletter = () => {
             }}
             disabled={isLoading}
             required
+            aria-required="true"
+            aria-invalid={error ? "true" : "false"}
+            aria-describedby={error ? "newsletter-error" : isSuccess ? "newsletter-success" : undefined}
           />
           <button 
             type="submit" 
             disabled={isLoading}
-            className={`md:px-12 px-8 h-full text-white bg-primary hover:bg-primary-dull transition-all rounded-md rounded-l-none ${
+            aria-disabled={isLoading}
+            aria-busy={isLoading}
+            className={`md:px-12 px-8 h-full text-white bg-primary hover:bg-primary-dull transition-all rounded-md rounded-l-none focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
               isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
             }`}
           >
@@ -86,10 +93,14 @@ const Newsletter = () => {
           </button>
         </div>
         {error && (
-          <p className="text-red-500 text-sm w-full text-left px-3">{error}</p>
+          <p id="newsletter-error" className="text-red-500 text-sm w-full text-left px-3" role="alert">
+            {error}
+          </p>
         )}
         {isSuccess && (
-          <p className="text-green-500 text-sm w-full text-left px-3">Successfully subscribed! Check your email for confirmation.</p>
+          <p id="newsletter-success" className="text-green-500 text-sm w-full text-left px-3" role="status" aria-live="polite">
+            Successfully subscribed! Check your email for confirmation.
+          </p>
         )}
       </form>
     </div>

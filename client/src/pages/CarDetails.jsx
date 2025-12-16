@@ -154,29 +154,30 @@ const CarDetails = () => {
     <div className="px-6 md:px-16 lg:px-24 xl:px-32 mt-16">
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-2 mb-6 text-gray-500 cursor-pointer"
+        className="flex items-center gap-2 mb-6 text-gray-500 cursor-pointer hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded px-2 py-1"
+        aria-label="Go back to all cars"
       >
-        <img src={assets.arrow_icon} alt="" className="rotate-180 opacity-65" />
+        <img src={assets.arrow_icon} alt="" className="rotate-180 opacity-65" aria-hidden="true" />
         Back to all cars
       </button>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
         {/* Left: Car Image & Details */}
-        <div className="lg:col-span-2">
+        <article className="lg:col-span-2">
           <img
             src={car.image}
-            alt=""
+            alt={`${car.brand} ${car.model} ${car.year} - ${car.category}`}
             className="w-full h-auto md:max-h-100 object-cover rounded-xl mb-6 shadow-md"
           />
           <div className="space-y-6">
-            <div>
+            <header>
               <h1 className="text-3xl font-bold">
                 {car.brand} {car.model}
               </h1>
               <p className="text-gray-500 text-lg">
                 {car.category} • {car.year}
               </p>
-            </div>
+            </header>
 
             {/* Capacity Specs - MPG, Trunk, Tags for AI reasoning and trip suitability */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-4">
@@ -220,17 +221,17 @@ const CarDetails = () => {
               </div>
             )}
           </div>
-          <hr className="border-borderColor my-6" />
+          <hr className="border-borderColor my-6" aria-hidden="true" />
 
           {/* Description */}
-          <div>
-            <h1 className="text-xl font-medium mb-3">Description</h1>
+          <section>
+            <h2 className="text-xl font-medium mb-3">Description</h2>
             <p className="text-gray-500">{car.description}</p>
-          </div>
+          </section>
 
           {/* Features */}
-          <div>
-            <h1 className="text-xl font-medium mb-3">Features</h1>
+          <section>
+            <h2 className="text-xl font-medium mb-3">Features</h2>
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {[
                 "360 Camera",
@@ -240,78 +241,102 @@ const CarDetails = () => {
                 "Rear View Mirror",
               ].map((item) => (
                 <li key={item} className="flex items-center text-gray-500">
-                  <img src={assets.check_icon} className="h-4 mr-2" alt="" />
+                  <img src={assets.check_icon} className="h-4 mr-2" alt="" aria-hidden="true" />
                   {item}
                 </li>
               ))}
             </ul>
-          </div>
-        </div>
+          </section>
+        </article>
 
         {/* Right: Booking Form */}
-        <div className="shadow-lg h-max sticky top-18 rounded-xl p-6 space-y-6 text-gray-500">
-          <p className="flex items-center justify-between text-2xl text-gray-800 font-semibold">
+        <aside className="shadow-lg h-max sticky top-18 rounded-xl p-6 space-y-6 text-gray-500" aria-label="Booking information">
+          <div className="flex items-center justify-between text-2xl text-gray-800 font-semibold">
+            <span className="sr-only">Price per day:</span>
             {currency}
             {car.pricePerDay}
             <span className="text-base text-gray-400 font-normal">per day</span>
-          </p>
-
-          <hr className="border-borderColor my-6" />
-
-          <div className="flex flex-col gap-2">
-            <label htmlFor="pickup-date">Pickup Date</label>
-            <input
-              value={pickupDate}
-              onChange={handlePickupDateChange}
-              type="date"
-              className={`border px-3 py-2 rounded-lg ${
-                dateErrors.pickupDate ? "border-red-500" : "border-borderColor"
-              }`}
-              required
-              id="pickup-date"
-              min={new Date().toISOString().split("T")[0]}
-            />
-            {dateErrors.pickupDate && (
-              <p className="text-red-500 text-xs">{dateErrors.pickupDate}</p>
-            )}
           </div>
-          <div className="flex flex-col gap-2">
-            <label htmlFor="return-date">Return Date</label>
-            <input
-              value={returnDate}
-              onChange={handleReturnDateChange}
-              type="date"
-              className={`border px-3 py-2 rounded-lg ${
-                dateErrors.returnDate ? "border-red-500" : "border-borderColor"
+
+          <hr className="border-borderColor my-6" aria-hidden="true" />
+
+          <form onSubmit={(e) => { e.preventDefault(); handleBookNow(); }} noValidate>
+            <fieldset className="border-0 p-0 m-0 space-y-6">
+              <legend className="sr-only">Booking dates</legend>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="car-pickup-date">
+                  Pickup Date <span className="text-red-500" aria-label="required">*</span>
+                </label>
+                <input
+                  value={pickupDate}
+                  onChange={handlePickupDateChange}
+                  type="date"
+                  className={`border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                    dateErrors.pickupDate ? "border-red-500" : "border-borderColor"
+                  }`}
+                  required
+                  id="car-pickup-date"
+                  min={new Date().toISOString().split("T")[0]}
+                  aria-required="true"
+                  aria-invalid={dateErrors.pickupDate ? "true" : "false"}
+                  aria-describedby={dateErrors.pickupDate ? "car-pickup-date-error" : undefined}
+                />
+                {dateErrors.pickupDate && (
+                  <p id="car-pickup-date-error" className="text-red-500 text-xs" role="alert">
+                    {dateErrors.pickupDate}
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="car-return-date">
+                  Return Date <span className="text-red-500" aria-label="required">*</span>
+                </label>
+                <input
+                  value={returnDate}
+                  onChange={handleReturnDateChange}
+                  type="date"
+                  className={`border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                    dateErrors.returnDate ? "border-red-500" : "border-borderColor"
+                  }`}
+                  required
+                  id="car-return-date"
+                  min={pickupDate || new Date().toISOString().split("T")[0]}
+                  aria-required="true"
+                  aria-invalid={dateErrors.returnDate ? "true" : "false"}
+                  aria-describedby={dateErrors.returnDate ? "car-return-date-error" : dateErrors.general ? "car-date-general-error" : undefined}
+                />
+                {dateErrors.returnDate && (
+                  <p id="car-return-date-error" className="text-red-500 text-xs" role="alert">
+                    {dateErrors.returnDate}
+                  </p>
+                )}
+              </div>
+              {dateErrors.general && (
+                <p id="car-date-general-error" className="text-red-500 text-sm" role="alert">
+                  {dateErrors.general}
+                </p>
+              )}
+            </fieldset>
+            <div className="mt-6">
+              <button
+              type="submit"
+              disabled={!pickupDate || !returnDate || !validateDates(pickupDate, returnDate).isValid}
+              aria-disabled={!pickupDate || !returnDate || !validateDates(pickupDate, returnDate).isValid}
+              className={`w-full bg-primary hover:bg-primary-dull transition-all py-3 font-medium text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                !pickupDate || !returnDate || !validateDates(pickupDate, returnDate).isValid
+                  ? "opacity-50 cursor-not-allowed"
+                  : "cursor-pointer"
               }`}
-              required
-              id="return-date"
-              min={pickupDate || new Date().toISOString().split("T")[0]}
-            />
-            {dateErrors.returnDate && (
-              <p className="text-red-500 text-xs">{dateErrors.returnDate}</p>
-            )}
-          </div>
-          {dateErrors.general && (
-            <p className="text-red-500 text-sm">{dateErrors.general}</p>
-          )}
-          <button
-            type="button"
-            onClick={handleBookNow}
-            disabled={!pickupDate || !returnDate || !validateDates(pickupDate, returnDate).isValid}
-            className={`w-full bg-primary hover:bg-primary-dull transition-all py-3 font-medium text-white rounded-xl ${
-              !pickupDate || !returnDate || !validateDates(pickupDate, returnDate).isValid
-                ? "opacity-50 cursor-not-allowed"
-                : "cursor-pointer"
-            }`}
-          >
-            Book Now
-          </button>
+            >
+              Book Now
+            </button>
+            </div>
+          </form>
 
           <p className="text-center text-sm">
             No credit card required to reserve
           </p>
-        </div>
+        </aside>
       </div>
     </div>
   ) : (

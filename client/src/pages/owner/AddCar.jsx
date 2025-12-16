@@ -140,14 +140,15 @@ const AddCar = () => {
       <form
         onSubmit={onSubmitHandler}
         className="flex flex-col gap-5 text-gray-500 text-sm mt-6 max-w-xl"
+        noValidate
       >
         {/* Car Image */}
         <div className="flex items-center gap-2 w-full">
-          <label htmlFor="car-image">
+          <label htmlFor="car-image" className="cursor-pointer focus-within:outline-none focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 rounded">
             <img
               src={image ? URL.createObjectURL(image) : assets.upload_icon}
-              alt=""
-              className="h-14 rounded cursor-pointer"
+              alt={image ? "Preview of car image to upload" : "Upload car image icon"}
+              className="h-14 rounded"
             />
             <input
               type="file"
@@ -155,37 +156,47 @@ const AddCar = () => {
               accept="image/*"
               hidden
               onChange={(e) => setImage(e.target.files[0])}
+              aria-label="Upload car image"
             />
           </label>
           <p className="text-sm text-gray-500">Upload a picture of your car</p>
         </div>
 
         {/* Car Brand & Model */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <fieldset className="grid grid-cols-1 md:grid-cols-2 gap-6 border-0 p-0 m-0">
+          <legend className="sr-only">Car Brand and Model</legend>
           <div className="flex flex-col w-full">
-            <label>Brand</label>
+            <label htmlFor="car-brand">
+              Brand <span className="text-red-500" aria-label="required">*</span>
+            </label>
             <input
+              id="car-brand"
               type="text"
               placeholder="e.g. BMW, Mercedes, Audi..."
               required
-              className="px-3 py-2 mt-1 border border-borderColor rounded-md outline-none"
+              className="px-3 py-2 mt-1 border border-borderColor rounded-md outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               value={car.brand}
               onChange={(e) => setCar({ ...car, brand: e.target.value })}
+              aria-required="true"
             />
           </div>
 
           <div className="flex flex-col w-full">
-            <label>Model</label>
+            <label htmlFor="car-model">
+              Model <span className="text-red-500" aria-label="required">*</span>
+            </label>
             <input
+              id="car-model"
               type="text"
               placeholder="e.g. X5, E-Class, M4..."
               required
-              className="px-3 py-2 mt-1 border border-borderColor rounded-md outline-none"
+              className="px-3 py-2 mt-1 border border-borderColor rounded-md outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               value={car.model}
               onChange={(e) => setCar({ ...car, model: e.target.value })}
+              aria-required="true"
             />
           </div>
-        </div>
+        </fieldset>
 
         {/* Car Year, Daily Price, Category */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
@@ -356,9 +367,11 @@ const AddCar = () => {
         {/* Submit */}
         <button
           type="submit"
-          className="mt-2 inline-flex items-center justify-center rounded-md px-4 py-2 bg-primary text-white hover:opacity-90"
+          disabled={isLoading}
+          aria-disabled={isLoading}
+          aria-busy={isLoading}
+          className="mt-2 inline-flex items-center justify-center rounded-md px-4 py-2 bg-primary text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50"
         >
-          
           {isLoading ? 'Listing...' : 'List Your Car'}
         </button>
       </form>

@@ -195,7 +195,7 @@ const MyBookings = () => {
                 <div className="rounded-md overflow-hidden mb-3">
                   <img
                     src={booking.car?.image}
-                    alt=""
+                    alt={`${booking.car?.brand} ${booking.car?.model} ${booking.car?.year}`}
                     className="w-full h-auto aspect-video object-cover"
                   />
                 </div>
@@ -240,6 +240,7 @@ const MyBookings = () => {
                   src={assets.calendar_icon_colored}
                   alt=""
                   className="w-4 h-4 mt-1"
+                  aria-hidden="true"
                 />
                 <div>
                   <p className="text-gray-500">Rental Period</p>
@@ -262,6 +263,7 @@ const MyBookings = () => {
                     src={assets.location_icon_colored}
                     alt=""
                     className="w-4 h-4 mt-1"
+                    aria-hidden="true"
                   />
                   <div>
                     <p className="text-gray-500">Pick-up Location</p>
@@ -277,6 +279,7 @@ const MyBookings = () => {
                     src={assets.location_icon_colored}
                     alt=""
                     className="w-4 h-4 mt-1"
+                    aria-hidden="true"
                   />
                   <div>
                     <p className="text-gray-500">Pick-up Location</p>
@@ -292,6 +295,7 @@ const MyBookings = () => {
                     src={assets.location_icon_colored}
                     alt=""
                     className="w-4 h-4 mt-1"
+                    aria-hidden="true"
                   />
                   <div>
                     <p className="text-gray-500">Return Location</p>

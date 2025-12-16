@@ -26,6 +26,14 @@ const App = () => {
   return (
     <>
     <Toaster />
+      {/* Skip to main content link for keyboard navigation */}
+      <a 
+        href="#main-content" 
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+      >
+        Skip to main content
+      </a>
+      
       {showLogin && <Login/>}
       {showLoginRequired && (
         <LoginRequiredModal
@@ -36,21 +44,23 @@ const App = () => {
 
       {!isOwnerPath && <Navbar/>}
 
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/car-details/:id" element={<CarDetails />} />
-        <Route path="/cars" element={<Cars />} />
-        <Route path="/my-bookings" element={<MyBookings />} />
-        <Route path="/booking-details/:carId" element={<BookingDetails />} />
-        <Route path="/booking-summary/:bookingId" element={<BookingSummary />} />
-        <Route path="/booking-success/:bookingId" element={<BookingSuccess />} />
-        <Route path="/owner" element={<Layout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="add-car" element={<AddCar />} />
-          <Route path="manage-cars" element={<ManageCars />} />
-          <Route path="manage-bookings" element={<ManageBookings />} />
-        </Route>
-      </Routes>
+      <main id="main-content" role="main">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/car-details/:id" element={<CarDetails />} />
+          <Route path="/cars" element={<Cars />} />
+          <Route path="/my-bookings" element={<MyBookings />} />
+          <Route path="/booking-details/:carId" element={<BookingDetails />} />
+          <Route path="/booking-summary/:bookingId" element={<BookingSummary />} />
+          <Route path="/booking-success/:bookingId" element={<BookingSuccess />} />
+          <Route path="/owner" element={<Layout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="add-car" element={<AddCar />} />
+            <Route path="manage-cars" element={<ManageCars />} />
+            <Route path="manage-bookings" element={<ManageBookings />} />
+          </Route>
+        </Routes>
+      </main>
 
       {!isOwnerPath && <Footer />}
     </>
