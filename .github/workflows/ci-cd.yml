@@ -74,7 +74,7 @@ jobs:
       - name: Test AWS CLI Access
         run: |
           echo "Testing AWS S3 access..."
-          aws s3 ls s3://${{ secrets.S3_BUCKET_NAME }} --max-items 5
+          aws s3 ls s3://${{ secrets.S3_BUCKET_NAME }} | head -5
           echo "✅ AWS credentials verified!"
 
   # Job 3: Summary
