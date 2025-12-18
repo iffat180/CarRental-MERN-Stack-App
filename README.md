@@ -25,6 +25,13 @@ A full-stack car rental platform built with the MERN stack, featuring AI-powered
 ### Owner Dashboard
 ![Dashboard](./docs/screenshots/dashboard.png)
 
+### Invoice Generation
+![Invoice](./docs/screenshots/invoice.png)
+
+### Lighthouse Score
+![Lighthouse](./docs/screenshots/lighthouse.png)
+
+
 ## ✨ Key Features
 
 ### User Features
