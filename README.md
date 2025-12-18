@@ -2,7 +2,7 @@
 
 A full-stack car rental platform built with the MERN stack, featuring AI-powered search, serverless architecture, and WCAG 2.1 Level AA accessibility compliance.     
 
-[![CI/CD Pipeline](https://github.com/iffat180/car-rental-platform/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/iffat180/car-rental-platform/actions)
+[![CI/CD Pipeline](https://github.com/iffat180/car-rental-platform/actions/workflows/ci-cd.yml/badge.svg)]([https://github.com/iffat180/car-rental-platform/actions](https://github.com/iffat180/CarRental-MERN-Stack-App/actions))
 [![Accessibility](https://img.shields.io/badge/WCAG-2.1%20Level%20AA-green.svg)](https://www.w3.org/WAI/WCAG21/quickref/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
