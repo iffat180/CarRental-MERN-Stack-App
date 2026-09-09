@@ -30,7 +30,17 @@ jobs:
         run: |
           cd server
           npm ci
-      
+
+      - name: Typecheck Backend (tsc)
+        run: |
+          cd server
+          npm run typecheck
+
+      - name: Build Backend (tsc)
+        run: |
+          cd server
+          npm run build
+
       - name: Run Backend Unit Tests
         run: |
           cd server

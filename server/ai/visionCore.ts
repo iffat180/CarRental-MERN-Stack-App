@@ -64,7 +64,7 @@
  * //   requiresInspection: false
  * // }
  */
-export const analyzeCarImages = async (images) => {
+export const analyzeCarImages = async (images: string[]): Promise<never> => {
   // Validate that images is an array
   if (!Array.isArray(images)) {
     throw new Error("Images must be an array");

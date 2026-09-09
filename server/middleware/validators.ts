@@ -1,15 +1,17 @@
 import { body, param, validationResult } from "express-validator";
+import type { RequestHandler } from "express";
 import mongoose from "mongoose";
 
 // Middleware to handle validation errors
-export const handleValidationErrors = (req, res, next) => {
+export const handleValidationErrors: RequestHandler = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
       message: "Validation failed",
       errors: errors.array(),
     });
+    return;
   }
   next();
 };
@@ -54,11 +56,11 @@ export const validateLogin = [
 ];
 
 // Validate MongoDB ObjectId (reusable)
-export const validateObjectId = (fieldName) => [
+export const validateObjectId = (fieldName: string) => [
   body(fieldName)
     .notEmpty()
     .withMessage(`${fieldName} is required`)
-    .custom((value) => {
+    .custom((value: any) => {
       if (!mongoose.Types.ObjectId.isValid(value)) {
         throw new Error(`Invalid ${fieldName} format`);
       }
@@ -105,7 +107,7 @@ export const validateChangeBookingStatus = [
   param("id")
     .notEmpty()
     .withMessage("Booking ID is required")
-    .custom((value) => {
+    .custom((value: any) => {
       if (!mongoose.Types.ObjectId.isValid(value)) {
         throw new Error("Invalid booking ID format");
       }
@@ -124,7 +126,7 @@ export const validateCarData = [
   body("carData")
     .notEmpty()
     .withMessage("Car data is required")
-    .custom((value) => {
+    .custom((value: any) => {
       try {
         const car = JSON.parse(value);
         
@@ -151,7 +153,8 @@ export const validateCarData = [
         }
         return true;
       } catch (error) {
-        if (error.message.startsWith("Unexpected token") || error.message.startsWith("Unexpected end")) {
+        const msg = error instanceof Error ? error.message : String(error);
+        if (msg.startsWith("Unexpected token") || msg.startsWith("Unexpected end")) {
           throw new Error("Invalid JSON format in carData");
         }
         throw error;
@@ -174,7 +177,7 @@ export const validateNewsletter = [
 ];
 
 // Validate Time Range (8:00 AM to 10:00 PM)
-const validateTimeRange = (value) => {
+const validateTimeRange = (value: string) => {
   if (!/^\d{2}:\d{2}$/.test(value)) {
     throw new Error("Time must be in HH:MM format");
   }
@@ -242,7 +245,7 @@ export const validateCreateBookingDetails = [
     .withMessage("License expiry date is required")
     .isISO8601()
     .withMessage("License expiry date must be a valid ISO 8601 date")
-    .custom((value) => {
+    .custom((value: any) => {
       const expiryDate = new Date(value);
       const today = new Date();
       today.setHours(0, 0, 0, 0);

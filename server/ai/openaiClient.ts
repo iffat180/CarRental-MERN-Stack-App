@@ -10,7 +10,7 @@ import OpenAI from "openai";
  * and error handling across all AI features (embeddings, chat, vision).
  */
 
-let openaiClient = null;
+let openaiClient: OpenAI | null = null;
 
 /**
  * Gets or creates the OpenAI client instance (singleton pattern).

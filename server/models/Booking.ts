@@ -1,5 +1,9 @@
-import mongoose from "mongoose";
+import mongoose, { type InferSchemaType, type HydratedDocument } from "mongoose";
 const { ObjectId } = mongoose.Schema.Types;
+
+export const ACTIVE_BOOKING_STATUSES = ["pending", "confirmed"] as const;
+export const BOOKING_STATUSES = [...ACTIVE_BOOKING_STATUSES, "cancelled", "completed"] as const;
+export type BookingStatus = (typeof BOOKING_STATUSES)[number];
 
 const bookingSchema = new mongoose.Schema({
   car: { type: ObjectId, ref: "Car", required: true },
@@ -9,7 +13,7 @@ const bookingSchema = new mongoose.Schema({
     type: Date,
     required: [true, "Pickup date is required"],
     validate: {
-      validator: function(value) {
+      validator: function (value: Date): boolean {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         return value >= today;
@@ -21,7 +25,7 @@ const bookingSchema = new mongoose.Schema({
     type: Date,
     required: [true, "Return date is required"],
     validate: {
-      validator: function(value) {
+      validator: function (this: { pickupDate: Date }, value: Date): boolean {
         return value > this.pickupDate;
       },
       message: "Return date must be after pickup date"
@@ -30,7 +34,7 @@ const bookingSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: {
-      values: ["pending", "confirmed", "cancelled", "completed"],
+      values: [...BOOKING_STATUSES],
       message: "Status must be one of: pending, confirmed, cancelled, completed"
     },
     default: "pending"
@@ -81,9 +85,12 @@ bookingSchema.index(
   { car: 1, pickupDate: 1, returnDate: 1 },
   {
     unique: true,
-    partialFilterExpression: { status: { $in: ["pending", "confirmed"] } },
+    partialFilterExpression: { status: { $in: [...ACTIVE_BOOKING_STATUSES] } },
   }
 );
+
+export type BookingAttrs = InferSchemaType<typeof bookingSchema>;
+export type BookingDocument = HydratedDocument<BookingAttrs>;
 
 const Booking = mongoose.model('Booking', bookingSchema);
 

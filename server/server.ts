@@ -1,7 +1,7 @@
-import express from "express";
+import express, { type Request, type Response } from "express";
+import type { Server } from "node:http";
 import "dotenv/config";
 import mongoose from "mongoose";
-import cors from "cors";
 import corsConfig from "./configs/cors.js";
 import connectDB from "./configs/db.js";
 import userRouter from "./routes/userRoutes.js";
@@ -116,19 +116,19 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 
-// Declare server variable (will be assigned after app.listen)
-let server;
+// Assigned after app.listen
+let server: Server | undefined;
 
 // ============================================
 // Process Handlers
 // ============================================
 
 // Handle unhandled promise rejections
-process.on('unhandledRejection', (err) => {
+process.on("unhandledRejection", (err: unknown) => {
   console.error('❌ Unhandled Promise Rejection:', {
-    message: err.message,
-    name: err.name,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    message: err instanceof Error ? err.message : String(err),
+    name: err instanceof Error ? err.name : "Error",
+    stack: process.env.NODE_ENV === "development" && err instanceof Error ? err.stack : undefined,
     timestamp: new Date().toISOString()
   });
   
@@ -144,7 +144,7 @@ process.on('unhandledRejection', (err) => {
 });
 
 // Graceful shutdown handler
-const gracefulShutdown = async (signal) => {
+const gracefulShutdown = async (signal: string): Promise<void> => {
   console.log(`\n${signal} received. Starting graceful shutdown...`);
   
   // Close HTTP server
@@ -153,16 +153,16 @@ const gracefulShutdown = async (signal) => {
       console.log('✅ HTTP server closed');
       
       // Close database connection
-      mongoose.connection.close(false, () => {
-        console.log('✅ MongoDB connection closed');
-        console.log('✅ Graceful shutdown complete');
+      void mongoose.connection.close().then(() => {
+        console.log("✅ MongoDB connection closed");
+        console.log("✅ Graceful shutdown complete");
         process.exit(0);
       });
     });
   } else {
     // If server not started yet, just close DB
-    mongoose.connection.close(false, () => {
-      console.log('✅ MongoDB connection closed');
+    void mongoose.connection.close().then(() => {
+      console.log("✅ MongoDB connection closed");
       process.exit(0);
     });
   }

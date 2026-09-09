@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { type InferSchemaType, type HydratedDocument } from "mongoose";
 const { ObjectId } = mongoose.Schema.Types
 
 const carSchema = new mongoose.Schema({
@@ -83,6 +83,9 @@ const carSchema = new mongoose.Schema({
 carSchema.index({ owner: 1 });
 carSchema.index({ location: 1 });
 carSchema.index({ isAvailable: 1 });
+
+export type CarAttrs = InferSchemaType<typeof carSchema>;
+export type CarDocument = HydratedDocument<CarAttrs>;
 
 const Car = mongoose.model('Car', carSchema)
 

@@ -1,16 +1,18 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "main": "server.js",
+  "main": "dist/server.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon server.js",
-    "start": "node server.js",
+    "dev": "tsx watch server.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "test:integration": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.integration.config.js --runInBand",
     "test:all": "npm test && npm run test:integration",
-    "db:sync-booking-indexes": "node scripts/sync-booking-indexes.js"
+    "db:sync-booking-indexes": "tsx scripts/sync-booking-indexes.ts"
   },
   "keywords": [],
   "author": "",
@@ -37,9 +39,18 @@
   },
   "devDependencies": {
     "@jest/globals": "^30.2.0",
+    "@swc/core": "^1.16.2",
+    "@swc/jest": "^0.2.39",
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.2.0",
+    "@types/node": "^22.20.2",
     "jest": "^30.2.0",
     "mongodb-memory-server": "^11.2.0",
-    "nodemon": "^3.1.11",
-    "supertest": "^7.1.4"
+    "supertest": "^7.1.4",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
   }
 }

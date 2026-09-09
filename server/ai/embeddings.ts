@@ -51,7 +51,7 @@ import { getOpenAIClient } from "./openaiClient.js";
  * // const results = await pineconeIndex.query({ vector: userQueryEmbedding, topK: 10 });
  * // 4. Fetch full car data from MongoDB using returned IDs
  */
-export const getEmbeddingForText = async (text) => {
+export const getEmbeddingForText = async (text: string): Promise<number[]> => {
   try {
     // Validate input
     if (!text || typeof text !== 'string' || text.trim().length === 0) {
@@ -81,13 +81,13 @@ export const getEmbeddingForText = async (text) => {
   } catch (error) {
     // Log error without exposing secrets
     console.error('[getEmbeddingForText] Error generating embedding:', {
-      message: error.message,
-      name: error.name,
+      message: error instanceof Error ? error.message : String(error),
+      name: error instanceof Error ? error.name : "Error",
       timestamp: new Date().toISOString()
     });
     
     // Re-throw with generic error message
-    if (error.message.includes("OPENAI_API_KEY")) {
+    if (error instanceof Error && error.message.includes("OPENAI_API_KEY")) {
       throw error; // Preserve the original error message for missing API key
     }
     

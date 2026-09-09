@@ -1,11 +1,13 @@
 import User from "../models/User.js";
 import Car from "../models/Car.js";
 import Booking from "../models/Booking.js";
-import { uploadToS3, uploadCarImageToS3, deleteFromS3 } from "../configs/aws.js"; // ✅ Import new function
+import type { Request, Response } from "express";
+import { uploadToS3, uploadCarImageToS3, deleteFromS3 } from "../configs/aws.js";
+import { errCode, errMessage, errName } from "../utils/errors.js";
 
-export const changeRoleToOwner = async (req, res) => {
+export const changeRoleToOwner = async (req: Request, res: Response) => {
   try {
-    const { _id } = req.user;
+    const { _id } = req.user!;
     const updatedUser = await User.findByIdAndUpdate(_id, { role: "owner" }, { new: true });
     if (!updatedUser) {
       return res.status(404).json({ success: false, message: "User not found" });
@@ -13,9 +15,9 @@ export const changeRoleToOwner = async (req, res) => {
     res.json({ success: true, message: "User role updated to owner" });
   } catch (error) {
     console.error(`[changeRoleToOwner] Error:`, {
-      message: error.message,
-      name: error.name,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      message: errMessage(error),
+      name: errName(error),
+      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
     res.status(500).json({ success: false, message: "Failed to update user role." });
@@ -23,7 +25,7 @@ export const changeRoleToOwner = async (req, res) => {
 };
 
 // ✅ UPDATED: API to add car with Lambda optimization
-export const addCar = async (req, res) => {
+export const addCar = async (req: Request, res: Response) => {
   try {
     console.log(`[addCar] Request received`, {
       userId: req.user?._id?.toString(),
@@ -32,10 +34,10 @@ export const addCar = async (req, res) => {
       timestamp: new Date().toISOString()
     });
 
-    const { _id } = req.user;
+    const { _id } = req.user!;
     
     // Parse carData with prototype pollution protection
-    let car;
+    let car: any;
     try {
       car = JSON.parse(req.body.carData);
       if (car && typeof car === 'object' && !Array.isArray(car)) {
@@ -68,7 +70,7 @@ export const addCar = async (req, res) => {
     }
 
     // Validate car data against model schema
-    const validationErrors = [];
+    const validationErrors: string[] = [];
 
     if (!car.year || typeof car.year !== 'number' || car.year < 1900 || car.year > new Date().getFullYear() + 1) {
       validationErrors.push("Year must be a number between 1900 and " + (new Date().getFullYear() + 1));
@@ -137,31 +139,31 @@ export const addCar = async (req, res) => {
     res.json({ success: true, message: "Car added successfully" });
   } catch (error) {
     console.error(`[addCar] Error:`, {
-      message: error.message,
-      name: error.name,
-      code: error.code,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      message: errMessage(error),
+      name: errName(error),
+      code: errCode(error),
+      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
       userId: req.user?._id?.toString(),
       timestamp: new Date().toISOString()
     });
     res.status(500).json({ 
       success: false, 
-      message: error.message || "Failed to add car. Please try again." 
+      message: errMessage(error) || "Failed to add car. Please try again." 
     });
   }
 };
 
 // API to get all cars of a specific owner
-export const getOwnerCars = async (req, res) => {
+export const getOwnerCars = async (req: Request, res: Response) => {
   try {
-    const { _id } = req.user;
+    const { _id } = req.user!;
     const cars = await Car.find({ owner: _id });
     res.json({ success: true, cars });
   } catch (error) {
     console.error(`[getOwnerCars] Error:`, {
-      message: error.message,
-      name: error.name,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      message: errMessage(error),
+      name: errName(error),
+      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
     res.status(500).json({ success: false, message: "Failed to retrieve cars." });
@@ -169,9 +171,9 @@ export const getOwnerCars = async (req, res) => {
 };
 
 // API to Toggle Car Availability
-export const toggleCarAvailability = async (req, res) => {
+export const toggleCarAvailability = async (req: Request, res: Response) => {
   try {
-    const { _id } = req.user;
+    const { _id } = req.user!;
     const { carId } = req.body;
     const car = await Car.findById(carId);
 
@@ -180,7 +182,7 @@ export const toggleCarAvailability = async (req, res) => {
     }
 
     // Checking if the car belongs to the user
-    if (car.owner.toString() !== _id.toString()) {
+    if (car.owner?.toString() !== _id!.toString()) {
       return res.status(403).json({ success: false, message: "Unauthorized" });
     }
 
@@ -190,9 +192,9 @@ export const toggleCarAvailability = async (req, res) => {
     res.json({ success: true, message: "Availability Toggled" });
   } catch (error) {
     console.error(`[toggleCarAvailability] Error:`, {
-      message: error.message,
-      name: error.name,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      message: errMessage(error),
+      name: errName(error),
+      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
     res.status(500).json({ success: false, message: "Failed to update car availability." });
@@ -200,9 +202,9 @@ export const toggleCarAvailability = async (req, res) => {
 };
 
 // API to delete a car (with optional S3 cleanup)
-export const deleteCar = async (req, res) => {
+export const deleteCar = async (req: Request, res: Response) => {
   try {
-    const { _id } = req.user;
+    const { _id } = req.user!;
     const { carId } = req.body;
     const car = await Car.findById(carId);
 
@@ -211,7 +213,7 @@ export const deleteCar = async (req, res) => {
     }
 
     // Checking if the car belongs to the user
-    if (car.owner.toString() !== _id.toString()) {
+    if (car.owner?.toString() !== _id!.toString()) {
       return res.status(403).json({ success: false, message: "Unauthorized" });
     }
 
@@ -221,16 +223,16 @@ export const deleteCar = async (req, res) => {
       await deleteFromS3(car.image);
     }
 
-    car.owner = null; // Remove owner reference
+    (car as any).owner = null; // Remove owner reference
     car.isAvailable = false; // Set availability to false
     await car.save();
 
     res.json({ success: true, message: "Car Removed" });
   } catch (error) {
     console.error(`[deleteCar] Error:`, {
-      message: error.message,
-      name: error.name,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      message: errMessage(error),
+      name: errName(error),
+      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
     res.status(500).json({ success: false, message: "Failed to delete car." });
@@ -238,9 +240,9 @@ export const deleteCar = async (req, res) => {
 };
 
 // API to get Dashboard Data
-export const getDashboardData = async (req, res) => {
+export const getDashboardData = async (req: Request, res: Response) => {
   try {
-    const { _id, role } = req.user;
+    const { _id, role } = req.user!;
 
     if (role !== "owner") {
       return res.status(403).json({ success: false, message: "Unauthorized" });
@@ -278,9 +280,9 @@ export const getDashboardData = async (req, res) => {
     res.json({ success: true, dashboardData });
   } catch (error) {
     console.error(`[getDashboardData] Error:`, {
-      message: error.message,
-      name: error.name,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      message: errMessage(error),
+      name: errName(error),
+      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
     res.status(500).json({ success: false, message: "Failed to retrieve dashboard data." });
@@ -288,9 +290,9 @@ export const getDashboardData = async (req, res) => {
 };
 
 // API to update user image
-export const updateUserImage = async (req, res) => {
+export const updateUserImage = async (req: Request, res: Response) => {
   try {
-    const { _id } = req.user;
+    const { _id } = req.user!;
     const imageFile = req.file;
 
     if (!imageFile) {
@@ -331,16 +333,16 @@ export const updateUserImage = async (req, res) => {
     await User.findByIdAndUpdate(_id, { image: imageUrl });
 
     // Delete old image from S3 (if exists and not default)
-    if (oldImageUrl && oldImageUrl.includes(process.env.AWS_S3_BUCKET_NAME)) {
+    if (oldImageUrl && process.env.AWS_S3_BUCKET_NAME && oldImageUrl.includes(process.env.AWS_S3_BUCKET_NAME)) {
       await deleteFromS3(oldImageUrl);
     }
 
     res.json({ success: true, message: "User image updated successfully" });
   } catch (error) {
     console.error(`[updateUserImage] Error:`, {
-      message: error.message,
-      name: error.name,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      message: errMessage(error),
+      name: errName(error),
+      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
     res.status(500).json({ success: false, message: "Failed to update user image." });

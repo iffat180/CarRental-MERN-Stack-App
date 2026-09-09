@@ -1,4 +1,5 @@
-import multer from "multer";
+import multer, { type FileFilterCallback } from "multer";
+import type { Request } from "express";
 
 // Allowed MIME types for images
 const allowedMimeTypes = [
@@ -12,16 +13,24 @@ const allowedMimeTypes = [
 const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
 
 // File filter function to validate MIME types and extensions
-const fileFilter = (req, file, cb) => {
+const fileFilter = (
+  _req: Request,
+  file: Express.Multer.File,
+  cb: FileFilterCallback
+): void => {
   // Check MIME type
   if (!allowedMimeTypes.includes(file.mimetype)) {
-    return cb(new Error(`Invalid file type. Allowed types: ${allowedMimeTypes.join(', ')}`), false);
+    cb(new Error(`Invalid file type. Allowed types: ${allowedMimeTypes.join(", ")}`));
+    return;
   }
 
   // Check file extension
-  const fileExtension = file.originalname.toLowerCase().substring(file.originalname.lastIndexOf('.'));
+  const fileExtension = file.originalname
+    .toLowerCase()
+    .substring(file.originalname.lastIndexOf("."));
   if (!allowedExtensions.includes(fileExtension)) {
-    return cb(new Error(`Invalid file extension. Allowed extensions: ${allowedExtensions.join(', ')}`), false);
+    cb(new Error(`Invalid file extension. Allowed extensions: ${allowedExtensions.join(", ")}`));
+    return;
   }
 
   // File is valid

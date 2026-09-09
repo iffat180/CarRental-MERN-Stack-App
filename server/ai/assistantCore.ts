@@ -74,7 +74,15 @@
  * ];
  * const response = await runAssistantConversation(messages, tools);
  */
-export const runAssistantConversation = async (messages, tools = []) => {
+export interface AssistantMessage {
+  role: "user" | "assistant" | "system";
+  content: string;
+}
+
+export const runAssistantConversation = async (
+  messages: AssistantMessage[],
+  tools: unknown[] = []
+): Promise<never> => {
   // Validate messages format
   if (!Array.isArray(messages)) {
     throw new Error("Messages must be an array");

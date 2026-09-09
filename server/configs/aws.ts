@@ -1,16 +1,33 @@
-import { S3Client } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  GetObjectCommand,
+  DeleteObjectCommand,
+  HeadObjectCommand,
+  type S3ClientConfig,
+} from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { GetObjectCommand, DeleteObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
+import { errMessage, errName } from "../utils/errors.js";
+
+const { AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET_NAME, AWS_CLOUDFRONT_DOMAIN } =
+  process.env;
+
+const s3Config: S3ClientConfig = { region: AWS_REGION };
+if (AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
+  s3Config.credentials = {
+    accessKeyId: AWS_ACCESS_KEY_ID,
+    secretAccessKey: AWS_SECRET_ACCESS_KEY,
+  };
+}
 
 // Initialize S3 Client
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-});
+const s3Client = new S3Client(s3Config);
+
+export interface CarImageUploadResult {
+  originalUrl: string;
+  optimizedUrl: string;
+  filename: string;
+}
 
 /**
  * Upload file to S3
@@ -20,7 +37,12 @@ const s3Client = new S3Client({
  * @param {string} mimetype - File MIME type
  * @returns {Promise<string>} - CloudFront URL or S3 URL
  */
-export const uploadToS3 = async (fileBuffer, fileName, folder, mimetype) => {
+export const uploadToS3 = async (
+  fileBuffer: Buffer,
+  fileName: string,
+  folder: string,
+  mimetype: string
+): Promise<string> => {
   try {
     // Generate unique filename to prevent collisions
     const timestamp = Date.now();
@@ -50,8 +72,8 @@ export const uploadToS3 = async (fileBuffer, fileName, folder, mimetype) => {
     }
   } catch (error) {
     console.error('[uploadToS3] Error:', {
-      message: error.message,
-      name: error.name,
+      message: errMessage(error),
+      name: errName(error),
       timestamp: new Date().toISOString()
     });
     throw new Error('Failed to upload file to S3');
@@ -66,7 +88,11 @@ export const uploadToS3 = async (fileBuffer, fileName, folder, mimetype) => {
  * @param {string} mimetype - File MIME type
  * @returns {Promise<{originalUrl: string, optimizedUrl: string, filename: string}>}
  */
-export const uploadCarImageToS3 = async (fileBuffer, fileName, mimetype) => {
+export const uploadCarImageToS3 = async (
+  fileBuffer: Buffer,
+  fileName: string,
+  mimetype: string
+): Promise<CarImageUploadResult> => {
   try {
     // Generate unique filename
     const timestamp = Date.now();
@@ -127,8 +153,8 @@ export const uploadCarImageToS3 = async (fileBuffer, fileName, mimetype) => {
     
   } catch (error) {
     console.error('[uploadCarImageToS3] Error:', {
-      message: error.message,
-      name: error.name,
+      message: errMessage(error),
+      name: errName(error),
       timestamp: new Date().toISOString()
     });
     throw new Error('Failed to upload car image to S3');
@@ -140,13 +166,13 @@ export const uploadCarImageToS3 = async (fileBuffer, fileName, mimetype) => {
  * @param {string} fileUrl - Full URL of file to delete
  * @returns {Promise<void>}
  */
-export const deleteFromS3 = async (fileUrl) => {
+export const deleteFromS3 = async (fileUrl: string): Promise<void> => {
   try {
     // Extract key from URL
-    let key;
-    if (fileUrl.includes(process.env.AWS_CLOUDFRONT_DOMAIN)) {
+    let key: string | undefined;
+    if (AWS_CLOUDFRONT_DOMAIN && fileUrl.includes(AWS_CLOUDFRONT_DOMAIN)) {
       // CloudFront URL
-      key = fileUrl.split(process.env.AWS_CLOUDFRONT_DOMAIN + '/')[1];
+      key = fileUrl.split(`${AWS_CLOUDFRONT_DOMAIN}/`)[1];
     } else {
       // S3 URL
       key = fileUrl.split('.amazonaws.com/')[1];
@@ -165,7 +191,7 @@ export const deleteFromS3 = async (fileUrl) => {
     console.log(`[deleteFromS3] Deleted: ${key}`);
   } catch (error) {
     console.error('[deleteFromS3] Error:', {
-      message: error.message,
+      message: errMessage(error),
       key: fileUrl,
       timestamp: new Date().toISOString()
     });
@@ -179,7 +205,7 @@ export const deleteFromS3 = async (fileUrl) => {
  * @param {number} expiresIn - URL expiration in seconds (default: 3600)
  * @returns {Promise<string>} - Signed URL
  */
-export const getSignedS3Url = async (key, expiresIn = 3600) => {
+export const getSignedS3Url = async (key: string, expiresIn = 3600): Promise<string> => {
   try {
     const command = new GetObjectCommand({
       Bucket: process.env.AWS_S3_BUCKET_NAME,
@@ -190,7 +216,7 @@ export const getSignedS3Url = async (key, expiresIn = 3600) => {
     return signedUrl;
   } catch (error) {
     console.error('[getSignedS3Url] Error:', {
-      message: error.message,
+      message: errMessage(error),
       timestamp: new Date().toISOString()
     });
     throw new Error('Failed to generate signed URL');

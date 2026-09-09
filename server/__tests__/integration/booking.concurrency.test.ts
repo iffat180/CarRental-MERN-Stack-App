@@ -2,17 +2,18 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from "@jest/glo
 import mongoose from "mongoose";
 import { MongoMemoryReplSet } from "mongodb-memory-server";
 
-import Car from "../../models/Car.js";
-import User from "../../models/User.js";
+import Car, { type CarDocument } from "../../models/Car.js";
+import User, { type UserDocument } from "../../models/User.js";
 import Booking from "../../models/Booking.js";
 import { __testables } from "../../controllers/bookingController.js";
+import { errMessage } from "../../utils/errors.js";
 
 const { createBookingAtomic } = __testables;
 
 // Transactions need a replica set. MongoMemoryReplSet spins up a single-node
 // one in-memory. If the mongod binary can't start in this environment we skip
 // rather than fail the suite.
-let replSet;
+let replSet: MongoMemoryReplSet | undefined;
 let dbReady = false;
 
 beforeAll(async () => {
@@ -22,7 +23,7 @@ beforeAll(async () => {
     await Booking.syncIndexes(); // build the partial unique index
     dbReady = true;
   } catch (err) {
-    console.warn("[booking.concurrency] skipping — could not start in-memory replica set:", err.message);
+    console.warn("[booking.concurrency] skipping — could not start in-memory replica set:", errMessage(err));
   }
 }, 120_000);
 
@@ -31,8 +32,8 @@ afterAll(async () => {
   if (replSet) await replSet.stop();
 });
 
-let car;
-let baseUser;
+let car: CarDocument;
+let baseUser: UserDocument;
 
 beforeEach(async () => {
   if (!dbReady) return;
@@ -60,9 +61,9 @@ beforeEach(async () => {
   });
 });
 
-const future = (days) => new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+const future = (days: number): Date => new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 
-const maybe = (name, fn, timeout) =>
+const maybe = (name: string, fn: () => Promise<void>, timeout: number) =>
   it(name, async () => {
     if (!dbReady) return; // environment can't run transactions — treated as skipped
     await fn();
@@ -77,8 +78,8 @@ describe("createBookingAtomic — concurrency guarantee", () => {
       const results = await Promise.all(
         Array.from({ length: 20 }, () =>
           createBookingAtomic({ car: car._id, user: baseUser._id, status: "pending", ...dates })
-            .then(() => ({ ok: true }))
-            .catch((e) => ({ ok: false, code: e.code }))
+            .then(() => ({ ok: true, code: undefined as unknown }))
+            .catch((e: unknown) => ({ ok: false, code: (e as { code?: unknown }).code }))
         )
       );
 

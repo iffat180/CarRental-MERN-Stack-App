@@ -21,7 +21,7 @@ describe('Validators Middleware', () => {
   });
 
   describe('validateTimeRange', () => {
-    const validateTimeRange = (value) => {
+    const validateTimeRange = (value: string) => {
       if (!/^\d{2}:\d{2}$/.test(value)) {
         throw new Error('Time must be in HH:MM format');
       }
@@ -66,7 +66,7 @@ describe('Validators Middleware', () => {
   });
 
   describe('validateCarData JSON parsing', () => {
-    const validateCarDataLogic = (carDataString) => {
+    const validateCarDataLogic = (carDataString: string) => {
       try {
         const car = JSON.parse(carDataString);
         
@@ -93,7 +93,8 @@ describe('Validators Middleware', () => {
         }
         return true;
       } catch (error) {
-        if (error.message.startsWith('Unexpected token') || error.message.startsWith('Unexpected end')) {
+        const m = error instanceof Error ? error.message : String(error);
+        if (m.startsWith("Unexpected token") || m.startsWith("Unexpected end")) {
           throw new Error('Invalid JSON format in carData');
         }
         throw error;

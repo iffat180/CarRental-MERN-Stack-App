@@ -1,6 +1,11 @@
-import Booking from "../models/Booking.js"  
+import mongoose, { type ClientSession, type Types } from "mongoose";
+import type { Request, Response } from "express";
+import Booking, { type BookingDocument } from "../models/Booking.js";
 import Car from "../models/Car.js";
-import mongoose from "mongoose";
+import { errCode, errMessage, errName } from "../utils/errors.js";
+
+type IdLike = Types.ObjectId | string;
+type DateLike = Date | string;
 
 // ============================================
 // IN-MEMORY AVAILABILITY LOCK MAP
@@ -10,18 +15,22 @@ import mongoose from "mongoose";
 // TTL: 30 seconds (prevents race conditions during booking creation)
 // RISK: In-memory map resets on server restart - locks will be lost, but this is acceptable
 //       as TTL expiry (30s) is short enough that restart impact is minimal
-const availabilityLockMap = new Map();
+interface Lock {
+  expiresAt: number;
+  createdAt: number;
+}
+const availabilityLockMap = new Map<string, Lock>();
 const LOCK_TTL_MS = 30000; // 30 seconds (exactly as specified)
 
 // Helper: Generate lock key from car ID and date range
-const generateLockKey = (carId, pickupDate, returnDate) => {
+const generateLockKey = (carId: IdLike, pickupDate: DateLike, returnDate: DateLike): string => {
   const pickupISO = new Date(pickupDate).toISOString();
   const returnISO = new Date(returnDate).toISOString();
   return `${carId}_${pickupISO}_${returnISO}`;
 };
 
 // Helper: Check if lock exists and is still valid (not expired)
-const isLocked = (lockKey) => {
+const isLocked = (lockKey: string): boolean => {
   const lock = availabilityLockMap.get(lockKey);
   if (!lock) {
     return false; // No lock exists
@@ -44,7 +53,7 @@ const isLocked = (lockKey) => {
 };
 
 // Helper: Acquire lock (set lock with TTL)
-const acquireLock = (lockKey) => {
+const acquireLock = (lockKey: string): void => {
   const now = Date.now();
   const lock = {
     expiresAt: now + LOCK_TTL_MS,
@@ -60,7 +69,7 @@ const acquireLock = (lockKey) => {
 };
 
 // Helper: Release lock
-const releaseLock = (lockKey) => {
+const releaseLock = (lockKey: string): void => {
   if (availabilityLockMap.has(lockKey)) {
     availabilityLockMap.delete(lockKey);
     console.log(`[AvailabilityLock] Lock released`, {
@@ -76,12 +85,12 @@ const releaseLock = (lockKey) => {
 
 // Only these statuses occupy a car. cancelled / completed bookings must not
 // block new bookings for the same dates.
-const ACTIVE_BOOKING_STATUSES = ["pending", "confirmed"];
+const ACTIVE_BOOKING_STATUSES = ["pending", "confirmed"] as const;
 
 // Two date ranges overlap when each starts strictly before the other ends.
 // Exclusive bounds (`$lt` / `$gt`) mean a same-day handoff — one booking ends
 // the day the next begins — is NOT treated as a conflict.
-const overlapFilter = (pickup, drop) => ({
+const overlapFilter = (pickup: Date, drop: Date) => ({
   status: { $in: ACTIVE_BOOKING_STATUSES },
   pickupDate: { $lt: drop },
   returnDate: { $gt: pickup },
@@ -89,7 +98,9 @@ const overlapFilter = (pickup, drop) => ({
 
 // Typed error so route handlers can map a cause to an HTTP status.
 class BookingError extends Error {
-  constructor(message, statusCode, code) {
+  statusCode: number;
+  code: string;
+  constructor(message: string, statusCode: number, code: string) {
     super(message);
     this.name = "BookingError";
     this.statusCode = statusCode;
@@ -97,22 +108,43 @@ class BookingError extends Error {
   }
 }
 
+// Everything needed to create a booking. Extra detail fields (userDetails, etc.)
+// are passed straight through to the Booking model.
+export interface BookingInput {
+  car: IdLike;
+  user: IdLike;
+  pickupDate: DateLike;
+  returnDate: DateLike;
+  status?: string;
+  userDetails?: unknown;
+  pickupDetails?: unknown;
+  returnDetails?: unknown;
+  extras?: unknown;
+  notes?: string;
+}
+
 // True when the failure is "this MongoDB isn't a replica set" — i.e. a local
 // standalone mongod that can't run transactions. Lets dev environments fall
 // back gracefully; Atlas and the CI in-memory replica set are unaffected.
-const isNoReplicaSetError = (err) => {
-  if (!err) return false;
-  const msg = String(err.message || "");
+const isNoReplicaSetError = (err: unknown): boolean => {
+  if (!err || typeof err !== "object") return false;
+  const e = err as { message?: string; code?: number; codeName?: string };
+  const msg = String(e.message || "");
   return (
-    err.code === 20 ||
-    err.codeName === "IllegalOperation" ||
+    e.code === 20 ||
+    e.codeName === "IllegalOperation" ||
     /replica set|Transaction numbers are only allowed|mongos/i.test(msg)
   );
 };
 
 // Function to Check Availability of Car for a given Date range.
 // Returns true when the car has no active booking overlapping [pickup, return).
-const checkAvailability = async (car, pickupDate, returnDate, session = null) => {
+const checkAvailability = async (
+  car: IdLike,
+  pickupDate: DateLike,
+  returnDate: DateLike,
+  session: ClientSession | null = null
+): Promise<boolean> => {
   const query = Booking.findOne({
     car,
     ...overlapFilter(new Date(pickupDate), new Date(returnDate)),
@@ -124,7 +156,7 @@ const checkAvailability = async (car, pickupDate, returnDate, session = null) =>
 
 // Non-transactional creation path — only reached on a standalone mongod (dev).
 // The unique partial index on Booking is still the last-resort backstop here.
-const createBookingNonTransactional = async (bookingData) => {
+const createBookingNonTransactional = async (bookingData: BookingInput): Promise<BookingDocument> => {
   const { car, pickupDate, returnDate } = bookingData;
   const pickup = new Date(pickupDate);
   const drop = new Date(returnDate);
@@ -143,7 +175,7 @@ const createBookingNonTransactional = async (bookingData) => {
     ...bookingData,
     owner: carDoc.owner,
     price: carDoc.pricePerDay * noOfDays,
-  });
+  }) as unknown as BookingDocument;
 };
 
 /**
@@ -161,14 +193,14 @@ const createBookingNonTransactional = async (bookingData) => {
  * @returns {Promise<import('mongoose').Document>} the created booking
  * @throws {BookingError} CAR_UNAVAILABLE (409) | CAR_NOT_FOUND (404)
  */
-const createBookingAtomic = async (bookingData) => {
+const createBookingAtomic = async (bookingData: BookingInput): Promise<BookingDocument> => {
   const { car, pickupDate, returnDate } = bookingData;
   const pickup = new Date(pickupDate);
   const drop = new Date(returnDate);
 
   const session = await mongoose.startSession();
   try {
-    let createdBooking = null;
+    let createdBooking: BookingDocument | null = null;
 
     await session.withTransaction(
       async () => {
@@ -194,11 +226,12 @@ const createBookingAtomic = async (bookingData) => {
           [{ ...bookingData, owner: carDoc.owner, price: carDoc.pricePerDay * noOfDays }],
           { session }
         );
-        createdBooking = doc;
+        createdBooking = (doc as BookingDocument) ?? null;
       },
       { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } }
     );
 
+    if (!createdBooking) throw new BookingError("Booking could not be created", 500, "BOOKING_FAILED");
     return createdBooking;
   } catch (err) {
     if (isNoReplicaSetError(err)) {
@@ -214,7 +247,7 @@ const createBookingAtomic = async (bookingData) => {
 };
 
 // Shared date-range validation for booking endpoints.
-const validateBookingDates = (pickupDate, returnDate) => {
+const validateBookingDates = (pickupDate: DateLike, returnDate: DateLike): string | null => {
   const pickup = new Date(pickupDate);
   const drop = new Date(returnDate);
   const today = new Date();
@@ -229,28 +262,31 @@ const validateBookingDates = (pickupDate, returnDate) => {
 };
 
 // Maps a booking-creation failure to an HTTP response.
-const handleBookingError = (res, error, label) => {
+const handleBookingError = (res: Response, error: unknown, label: string): void => {
   if (error instanceof BookingError) {
-    return res.status(error.statusCode).json({ success: false, message: error.message });
+    res.status(error.statusCode).json({ success: false, message: error.message });
+    return;
   }
-  if (error?.code === 11000 || error?.code === 11001) {
-    return res.status(409).json({
+  const code = errCode(error);
+  if (code === 11000 || code === 11001) {
+    res.status(409).json({
       success: false,
       message: "This car is already booked for the selected dates",
     });
+    return;
   }
   console.error(`[${label}] Error:`, {
-    message: error?.message,
-    name: error?.name,
-    code: error?.code,
-    stack: process.env.NODE_ENV === "development" ? error?.stack : undefined,
+    message: errMessage(error),
+    name: errName(error),
+    code,
+    stack: process.env.NODE_ENV === "development" && error instanceof Error && error instanceof Error ? error.stack : undefined,
     timestamp: new Date().toISOString(),
   });
-  return res.status(500).json({ success: false, message: "Failed to create booking. Please try again." });
+  res.status(500).json({ success: false, message: "Failed to create booking. Please try again." });
 };
 
 // API to Check Availability of Cars for the given Date and location
-export const checkAvailabilityOfCar = async (req, res) => {
+export const checkAvailabilityOfCar = async (req: Request, res: Response) => {
     try {
         const { location, pickupDate, returnDate } = req.body;
 
@@ -282,7 +318,7 @@ export const checkAvailabilityOfCar = async (req, res) => {
         // check car availability for the given date range using promise
         const availableCarsPromises = cars.map(async (car) => {
             const isAvailable = await checkAvailability(car._id, pickupDate, returnDate);
-            return { ...car._doc, isAvailable };
+            return { ...car.toObject(), isAvailable };
         });
 
         let availableCars = await Promise.all(availableCarsPromises);
@@ -292,9 +328,9 @@ export const checkAvailabilityOfCar = async (req, res) => {
 
     } catch (error) {
         console.error(`[checkAvailabilityOfCar] Error:`, {
-          message: error.message,
-          name: error.name,
-          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+          message: errMessage(error),
+          name: errName(error),
+          stack: process.env.NODE_ENV === "development" && error instanceof Error && error instanceof Error ? error.stack : undefined,
           timestamp: new Date().toISOString()
         });
         res.status(500).json({ success: false, message: "Failed to check car availability." });
@@ -302,9 +338,9 @@ export const checkAvailabilityOfCar = async (req, res) => {
 };
 
 /// Create Booking API (basic — car + dates only)
-export const createBooking = async (req, res) => {
+export const createBooking = async (req: Request, res: Response) => {
   try {
-    const { _id } = req.user;
+    const { _id } = req.user!;
     const { car, pickupDate, returnDate } = req.body;
 
     const dateError = validateBookingDates(pickupDate, returnDate);
@@ -322,9 +358,9 @@ export const createBooking = async (req, res) => {
 
 
 // API to List User Bookings
-export const getUserBookings = async (req, res) => {
+export const getUserBookings = async (req: Request, res: Response) => {
   try {
-    const { _id } = req.user;
+    const { _id } = req.user!;
     const bookings = await Booking.find({ user: _id })
       .populate("car")
       .sort({ createdAt: -1 });
@@ -332,9 +368,9 @@ export const getUserBookings = async (req, res) => {
 
   } catch (error) {
     console.error(`[getUserBookings] Error:`, {
-      message: error.message,
-      name: error.name,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      message: errMessage(error),
+      name: errName(error),
+      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
     res.status(500).json({ success: false, message: "Failed to retrieve bookings." });
@@ -342,21 +378,21 @@ export const getUserBookings = async (req, res) => {
 }
 
 // API to get Owner Bookings
-export const getOwnerBookings = async (req, res) => {
+export const getOwnerBookings = async (req: Request, res: Response) => {
   try {
-    if (req.user.role !== 'owner') {
+    if (req.user!.role !== 'owner') {
       return res.status(403).json({ success: false, message: "Unauthorized" });
     }
-    const bookings = await Booking.find({ owner: req.user._id })
+    const bookings = await Booking.find({ owner: req.user!._id })
       .populate('car user')
       .select("-user.password")
       .sort({ createdAt: -1 });
     res.json({ success: true, bookings });
   } catch (error) {
     console.error(`[getOwnerBookings] Error:`, {
-      message: error.message,
-      name: error.name,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      message: errMessage(error),
+      name: errName(error),
+      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
     res.status(500).json({ success: false, message: "Failed to retrieve bookings." });
@@ -364,9 +400,9 @@ export const getOwnerBookings = async (req, res) => {
 }
 
 // API to change booking status
-export const changeBookingStatus = async (req, res) => {
+export const changeBookingStatus = async (req: Request, res: Response) => {
     try {
-        const { _id } = req.user;
+        const { _id } = req.user!;
         const { id: bookingId } = req.params;
         const { status } = req.body;
 
@@ -386,9 +422,9 @@ export const changeBookingStatus = async (req, res) => {
         res.json({ success: true, message: "Status Updated" });
     } catch (error) {
         console.error(`[changeBookingStatus] Error:`, {
-          message: error.message,
-          name: error.name,
-          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+          message: errMessage(error),
+          name: errName(error),
+          stack: process.env.NODE_ENV === "development" && error instanceof Error && error instanceof Error ? error.stack : undefined,
           timestamp: new Date().toISOString()
         });
         res.status(500).json({ success: false, message: "Failed to update booking status." });
@@ -403,11 +439,11 @@ export const changeBookingStatus = async (req, res) => {
 //   2. transaction     — createBookingAtomic(): snapshot-isolated overlap check
 //                        + insert + car-guard write, with automatic retry
 //   3. unique index    — partial unique index on Booking as the DB backstop
-export const createBookingWithDetails = async (req, res) => {
+export const createBookingWithDetails = async (req: Request, res: Response) => {
   let lockKey = null; // set only if THIS request holds the lock
 
   try {
-    const { _id } = req.user;
+    const { _id } = req.user!;
     const {
       car,
       pickupDate,
@@ -492,10 +528,10 @@ export const createBookingWithDetails = async (req, res) => {
 };
 
 // Get Booking by ID API
-export const getBookingById = async (req, res) => {
+export const getBookingById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { _id: userId, role } = req.user;
+    const { _id: userId, role } = req.user!;
 
     // Find booking and populate car and user data
     const booking = await Booking.findById(id)
@@ -529,9 +565,9 @@ export const getBookingById = async (req, res) => {
 
   } catch (error) {
     console.error(`[getBookingById] Error:`, {
-      message: error.message,
-      name: error.name,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      message: errMessage(error),
+      name: errName(error),
+      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
     res.status(500).json({
@@ -542,10 +578,10 @@ export const getBookingById = async (req, res) => {
 };
 
 // Cancel Booking API
-export const cancelBooking = async (req, res) => {
+export const cancelBooking = async (req: Request, res: Response) => {
   try {
     const { id: bookingId } = req.params;
-    const { _id: userId } = req.user;
+    const { _id: userId } = req.user!;
 
     // Find booking and populate user data for authorization check
     const booking = await Booking.findById(bookingId)
@@ -602,9 +638,9 @@ export const cancelBooking = async (req, res) => {
 
   } catch (error) {
     console.error(`[cancelBooking] Error:`, {
-      message: error.message,
-      name: error.name,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      message: errMessage(error),
+      name: errName(error),
+      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
     res.status(500).json({
@@ -614,7 +650,7 @@ export const cancelBooking = async (req, res) => {
   }
 };
 
-// Internal helpers exposed for integration tests only — not part of the HTTP API.
+// Internal helpers exposed for tests only — not part of the HTTP API.
 export const __testables = {
   createBookingAtomic,
   createBookingNonTransactional,
@@ -622,4 +658,10 @@ export const __testables = {
   BookingError,
   ACTIVE_BOOKING_STATUSES,
   overlapFilter,
+  validateBookingDates,
+  generateLockKey,
+  isLocked,
+  acquireLock,
+  releaseLock,
+  LOCK_TTL_MS,
 };

@@ -73,7 +73,7 @@ import Car from "../models/Car.js";
  * // Test case 8: Electric + Family
  * await recommendSmartCars("electric SUV with space for family");
  */
-export const recommendSmartCars = async (userQuery, tripDays = 3) => {
+export const recommendSmartCars = async (userQuery: string, tripDays = 3): Promise<any> => {
   try {
     // Validate input
     if (!userQuery || typeof userQuery !== 'string' || userQuery.trim().length === 0) {
@@ -90,7 +90,7 @@ export const recommendSmartCars = async (userQuery, tripDays = 3) => {
       queryEmbedding = await getEmbeddingForText(userQuery.trim());
     } catch (error) {
       console.error('[recommendSmartCars] Error generating embedding:', {
-        message: error.message,
+        message: error instanceof Error ? error.message : String(error),
         timestamp: new Date().toISOString()
       });
       throw new Error("Failed to generate embedding for user query");
@@ -113,7 +113,7 @@ export const recommendSmartCars = async (userQuery, tripDays = 3) => {
       });
     } catch (error) {
       console.error('[recommendSmartCars] Error querying Pinecone:', {
-        message: error.message,
+        message: error instanceof Error ? error.message : String(error),
         timestamp: new Date().toISOString()
       });
       throw new Error("Failed to query vector database");
@@ -142,7 +142,7 @@ export const recommendSmartCars = async (userQuery, tripDays = 3) => {
       }).lean(); // Use lean() for better performance since we're just reading
     } catch (error) {
       console.error('[recommendSmartCars] Error fetching cars from MongoDB:', {
-        message: error.message,
+        message: error instanceof Error ? error.message : String(error),
         timestamp: new Date().toISOString()
       });
       throw new Error("Failed to fetch car details from database");
@@ -175,18 +175,18 @@ export const recommendSmartCars = async (userQuery, tripDays = 3) => {
         }
 
         let boostScore = 0;
-        const reasons = [];
+        const reasons: string[] = [];
 
         // Helper function to check if tags include any of the given values
-        const hasTag = (tagValues) => {
+        const hasTag = (tagValues: string[]): boolean => {
           if (!car.tags || !Array.isArray(car.tags)) return false;
-          const carTagsLower = car.tags.map(t => t.toLowerCase());
-          return tagValues.some(tag => carTagsLower.includes(tag.toLowerCase()));
+          const carTagsLower = car.tags.map((t: string) => t.toLowerCase());
+          return tagValues.some((tag) => carTagsLower.includes(tag.toLowerCase()));
         };
 
         // Helper function to check if query contains any keywords
-        const hasKeyword = (keywords) => {
-          return keywords.some(keyword => queryLower.includes(keyword.toLowerCase()));
+        const hasKeyword = (keywords: string[]): boolean => {
+          return keywords.some((keyword) => queryLower.includes(keyword.toLowerCase()));
         };
 
         // RULE 1 - Mountain/Off-Road (+0.15)
@@ -293,7 +293,7 @@ export const recommendSmartCars = async (userQuery, tripDays = 3) => {
                                     (car.mpg && car.mpg > 28);
         if (hasKeyword(roadTripKeywords) && hasRoadTripFeatures) {
           boostScore += 0.14;
-          if (car.trunk_capacity > 700) {
+          if ((car.trunk_capacity ?? 0) > 700) {
             reasons.push(`Large cargo space (${car.trunk_capacity}L) perfect for road trips`);
           } else if (hasTag(["Comfortable"])) {
             reasons.push("Comfortable for long journeys");
@@ -404,13 +404,13 @@ export const recommendSmartCars = async (userQuery, tripDays = 3) => {
   } catch (error) {
     // Log error without exposing internal details
     console.error('[recommendSmartCars] Error in recommendation service:', {
-      message: error.message,
-      name: error.name,
+      message: error instanceof Error ? error.message : String(error),
+      name: error instanceof Error ? error.name : "Error",
       timestamp: new Date().toISOString()
     });
 
     // Re-throw with user-friendly message if it's our own error
-    if (error.message.includes("must be") || error.message.includes("Failed to")) {
+    if (error instanceof Error && (error.message.includes("must be") || error.message.includes("Failed to"))) {
       throw error;
     }
 

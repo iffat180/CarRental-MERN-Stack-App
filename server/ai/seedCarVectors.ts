@@ -36,8 +36,8 @@ import Car from "../models/Car.js";
  * @param {Object} car - Car document from MongoDB
  * @returns {string} Descriptive story text for embedding
  */
-function buildCarStory(car) {
-  const parts = [];
+function buildCarStory(car: any): string {
+  const parts: string[] = [];
 
   // Basic info: brand, model, year
   if (car.brand && car.model && car.year) {
@@ -176,8 +176,8 @@ async function seedCarVectors() {
 
       } catch (error) {
         console.error(`❌ Error processing ${car.brand} ${car.model}:`, {
-          message: error.message,
-          name: error.name
+          message: error instanceof Error ? error.message : String(error),
+          name: error instanceof Error ? error.name : "Error"
         });
         // Continue with next car instead of failing entire batch
         continue;
@@ -204,8 +204,8 @@ async function seedCarVectors() {
 
     } catch (error) {
       console.error("❌ Error upserting to Pinecone:", {
-        message: error.message,
-        name: error.name
+        message: error instanceof Error ? error.message : String(error),
+        name: error instanceof Error ? error.name : "Error"
       });
       throw error;
     }
@@ -213,8 +213,8 @@ async function seedCarVectors() {
   } catch (error) {
     // Log structured errors (no API keys in logs)
     console.error("❌ Seeding failed:", {
-      message: error.message,
-      name: error.name,
+      message: error instanceof Error ? error.message : String(error),
+      name: error instanceof Error ? error.name : "Error",
       timestamp: new Date().toISOString()
     });
     throw error;

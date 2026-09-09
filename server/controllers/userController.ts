@@ -1,22 +1,22 @@
-import User from "../models/User.js";
 import bcrypt from "bcrypt";
-import e from "express";
-import jwt from "jsonwebtoken";
+import jwt, { type SignOptions } from "jsonwebtoken";
+import type { Request, Response } from "express";
+import User from "../models/User.js";
 import Car from "../models/Car.js";
+import { errMessage, errName } from "../utils/errors.js";
 
 //Generate JWT Token
-const generateToken = (userId, role) => {
+const generateToken = (userId: string, role: string): string => {
   const payload = {
     userId: userId,
     role: role
   };
-  return jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: '7d' // 7 days expiration
-  });
+  const options: SignOptions = { expiresIn: "7d" };
+  return jwt.sign(payload, process.env.JWT_SECRET, options);
 };
 
 //Register User
-export const registerUser = async (req, res) => {
+export const registerUser = async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body;
 
@@ -35,9 +35,9 @@ export const registerUser = async (req, res) => {
     res.json({ success: true, token });
   } catch (error) {
     console.error(`[registerUser] Error:`, {
-      message: error.message,
-      name: error.name,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      message: errMessage(error),
+      name: errName(error),
+      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
     res.status(500).json({ success: false, message: "Registration failed. Please try again." });
@@ -45,7 +45,7 @@ export const registerUser = async (req, res) => {
 };
 
 //Login User
-export const loginUser = async (req, res) => {
+export const loginUser = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
@@ -62,9 +62,9 @@ export const loginUser = async (req, res) => {
     res.json({ success: true, token });
   } catch (error) {
     console.error(`[loginUser] Error:`, {
-      message: error.message,
-      name: error.name,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      message: errMessage(error),
+      name: errName(error),
+      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
     return res.status(500).json({ success: false, message: "Login failed. Please try again." });
@@ -73,15 +73,15 @@ export const loginUser = async (req, res) => {
 
 
 //Get User Data using JWT
-export const getUserData = async (req, res) => {
+export const getUserData = async (req: Request, res: Response) => {
   try {
     const { user } = req;
     res.json ({ success: true, user })
   } catch (error) {
     console.error(`[getUserData] Error:`, {
-      message: error.message,
-      name: error.name,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      message: errMessage(error),
+      name: errName(error),
+      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
     res.status(500).json({ success: false, message: "Failed to retrieve user data." });
@@ -89,10 +89,10 @@ export const getUserData = async (req, res) => {
 };
 
 // Upgrade User to Owner
-export const upgradeToOwner = async (req, res) => {
+export const upgradeToOwner = async (req: Request, res: Response) => {
   try {
-    const { user } = req; // User is attached by protect middleware
-    
+    const user = req.user!; // User is attached by protect middleware
+
     // Check if user is already an owner
     if (user.role === "owner") {
       const updatedUser = await User.findById(user._id).select("-password");
@@ -117,9 +117,9 @@ export const upgradeToOwner = async (req, res) => {
     });
   } catch (error) {
     console.error(`[upgradeToOwner] Error:`, {
-      message: error.message,
-      name: error.name,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      message: errMessage(error),
+      name: errName(error),
+      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
     res.status(500).json({ 
@@ -130,7 +130,7 @@ export const upgradeToOwner = async (req, res) => {
 };
 
 // Get All Cars for the Frontend
-export const getCars = async (req, res) => {
+export const getCars = async (req: Request, res: Response) => {
     try {
         // Fetch all cars that are marked as available from the database
         const cars = await Car.find({ isAvailable: true });
@@ -139,9 +139,9 @@ export const getCars = async (req, res) => {
         res.json({ success: true, cars });
     } catch (error) {
         console.error(`[getCars] Error:`, {
-          message: error.message,
-          name: error.name,
-          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+          message: errMessage(error),
+          name: errName(error),
+          stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
           timestamp: new Date().toISOString()
         });
         res.status(500).json({ success: false, message: "Failed to retrieve cars." });
@@ -149,7 +149,7 @@ export const getCars = async (req, res) => {
 }
 
 // Get Single Car by ID
-export const getCarById = async (req, res) => {
+export const getCarById = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
 
@@ -166,9 +166,9 @@ export const getCarById = async (req, res) => {
         res.json({ success: true, car });
     } catch (error) {
         console.error(`[getCarById] Error:`, {
-          message: error.message,
-          name: error.name,
-          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+          message: errMessage(error),
+          name: errName(error),
+          stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
           timestamp: new Date().toISOString()
         });
         res.status(500).json({ success: false, message: "Failed to retrieve car." });
@@ -176,7 +176,7 @@ export const getCarById = async (req, res) => {
 }
 
 // Get Available Cities
-export const getCities = async (req, res) => {
+export const getCities = async (req: Request, res: Response) => {
     try {
         // Fetch distinct location values from cars that are available
         const cities = await Car.distinct("location", { isAvailable: true });
@@ -187,9 +187,9 @@ export const getCities = async (req, res) => {
         res.json({ success: true, cities: sortedCities });
     } catch (error) {
         console.error(`[getCities] Error:`, {
-          message: error.message,
-          name: error.name,
-          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+          message: errMessage(error),
+          name: errName(error),
+          stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
           timestamp: new Date().toISOString()
         });
         res.status(500).json({ success: false, message: "Failed to retrieve cities." });
@@ -198,10 +198,10 @@ export const getCities = async (req, res) => {
 
 // Newsletter Subscription (Simple in-memory storage for now)
 // In production, this should be stored in a database
-const newsletterSubscribers = [];
+const newsletterSubscribers: string[] = [];
 
 // Subscribe to Newsletter
-export const subscribeNewsletter = async (req, res) => {
+export const subscribeNewsletter = async (req: Request, res: Response) => {
     try {
         const { email } = req.body;
 
@@ -229,9 +229,9 @@ export const subscribeNewsletter = async (req, res) => {
         });
     } catch (error) {
         console.error(`[subscribeNewsletter] Error:`, {
-          message: error.message,
-          name: error.name,
-          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+          message: errMessage(error),
+          name: errName(error),
+          stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
           timestamp: new Date().toISOString()
         });
         res.status(500).json({ success: false, message: "Failed to subscribe. Please try again." });

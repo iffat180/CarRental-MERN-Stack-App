@@ -10,7 +10,7 @@ import { Pinecone } from '@pinecone-database/pinecone';
  * and error handling across all vector database operations (embeddings storage, similarity search).
  */
 
-let pineconeInstance = null;
+let pineconeInstance: Pinecone | null = null;
 
 /**
  * Gets or creates the Pinecone client instance (singleton pattern).

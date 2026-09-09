@@ -1,7 +1,9 @@
-import cors from "cors";
+import cors, { type CorsOptions } from "cors";
+
+type OriginCallback = (err: Error | null, allow?: boolean) => void;
 
 const corsConfig = cors({
-  origin: (origin, callback) => {
+  origin: (origin: string | undefined, callback: OriginCallback) => {
     // Allow requests with no origin (mobile apps, Postman, etc.) in development
     if (!origin && process.env.NODE_ENV === "development") {
       return callback(null, true);
@@ -29,7 +31,7 @@ const corsConfig = cors({
     }
 
     // In development, check whitelist if provided
-    if (allowedOrigins.includes(origin)) {
+    if (origin && allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
