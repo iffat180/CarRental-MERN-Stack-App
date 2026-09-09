@@ -65,14 +65,25 @@ const bookingSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Add indexes for better query performance
-bookingSchema.index({ car: 1, pickupDate: 1, returnDate: 1 });
 bookingSchema.index({ user: 1 });
 bookingSchema.index({ owner: 1 });
 bookingSchema.index({ status: 1 });
+// Availability lookups filter by active status, so the partial unique index
+// below (same key, filtered to pending/confirmed) also serves those reads.
 
-// Unique compound index to prevent duplicate bookings at DB level
-// Atomic constraint: same user cannot book same car for same date range
-bookingSchema.index({ user: 1, car: 1, pickupDate: 1, returnDate: 1 }, { unique: true });
+// Database-enforced guard against double-booking.
+// A car may have at most ONE active (pending/confirmed) booking for a given
+// exact date range — regardless of which user creates it. The partial filter
+// keeps cancelled/completed bookings from blocking a later re-book of the same
+// dates. Overlapping (non-identical) ranges are handled in the booking
+// transaction; this index is the atomic backstop for the exact-match case.
+bookingSchema.index(
+  { car: 1, pickupDate: 1, returnDate: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: { $in: ["pending", "confirmed"] } },
+  }
+);
 
 const Booking = mongoose.model('Booking', bookingSchema);
 

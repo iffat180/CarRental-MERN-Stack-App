@@ -70,20 +70,183 @@ const releaseLock = (lockKey) => {
   }
 };
 
-// Function to Check Availability of Car for a given Date
+// ============================================
+// BOOKING CORE — availability + atomic creation
+// ============================================
+
+// Only these statuses occupy a car. cancelled / completed bookings must not
+// block new bookings for the same dates.
+const ACTIVE_BOOKING_STATUSES = ["pending", "confirmed"];
+
+// Two date ranges overlap when each starts strictly before the other ends.
+// Exclusive bounds (`$lt` / `$gt`) mean a same-day handoff — one booking ends
+// the day the next begins — is NOT treated as a conflict.
+const overlapFilter = (pickup, drop) => ({
+  status: { $in: ACTIVE_BOOKING_STATUSES },
+  pickupDate: { $lt: drop },
+  returnDate: { $gt: pickup },
+});
+
+// Typed error so route handlers can map a cause to an HTTP status.
+class BookingError extends Error {
+  constructor(message, statusCode, code) {
+    super(message);
+    this.name = "BookingError";
+    this.statusCode = statusCode;
+    this.code = code;
+  }
+}
+
+// True when the failure is "this MongoDB isn't a replica set" — i.e. a local
+// standalone mongod that can't run transactions. Lets dev environments fall
+// back gracefully; Atlas and the CI in-memory replica set are unaffected.
+const isNoReplicaSetError = (err) => {
+  if (!err) return false;
+  const msg = String(err.message || "");
+  return (
+    err.code === 20 ||
+    err.codeName === "IllegalOperation" ||
+    /replica set|Transaction numbers are only allowed|mongos/i.test(msg)
+  );
+};
+
+// Function to Check Availability of Car for a given Date range.
+// Returns true when the car has no active booking overlapping [pickup, return).
 const checkAvailability = async (car, pickupDate, returnDate, session = null) => {
-    const query = Booking.find({
-        car,
-        pickupDate: { $lte: returnDate },
-        returnDate: { $gte: pickupDate },
-    });
-    
-    if (session) {
-        query.session(session);
+  const query = Booking.findOne({
+    car,
+    ...overlapFilter(new Date(pickupDate), new Date(returnDate)),
+  });
+  if (session) query.session(session);
+  const clash = await query;
+  return !clash;
+};
+
+// Non-transactional creation path — only reached on a standalone mongod (dev).
+// The unique partial index on Booking is still the last-resort backstop here.
+const createBookingNonTransactional = async (bookingData) => {
+  const { car, pickupDate, returnDate } = bookingData;
+  const pickup = new Date(pickupDate);
+  const drop = new Date(returnDate);
+
+  const clash = await Booking.findOne({ car, ...overlapFilter(pickup, drop) });
+  if (clash) {
+    throw new BookingError("Car is not available for the selected dates", 409, "CAR_UNAVAILABLE");
+  }
+
+  const carDoc = await Car.findById(car);
+  if (!carDoc) throw new BookingError("Car not found", 404, "CAR_NOT_FOUND");
+
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const noOfDays = Math.max(1, Math.ceil((drop.getTime() - pickup.getTime()) / msPerDay));
+  return Booking.create({
+    ...bookingData,
+    owner: carDoc.owner,
+    price: carDoc.pricePerDay * noOfDays,
+  });
+};
+
+/**
+ * Create a booking atomically.
+ *
+ * Runs the availability check and the insert inside one MongoDB transaction
+ * (snapshot reads, majority writes). To stop two concurrent transactions for
+ * the same car from both passing the snapshot-isolated overlap check (a "write
+ * skew" — they insert different documents so MongoDB sees no direct conflict),
+ * every attempt also does `$inc: { bookingGuard: 1 }` on the shared Car
+ * document. Concurrent bookings for the same car therefore collide on that one
+ * write; MongoDB aborts the loser with a WriteConflict, `withTransaction`
+ * retries it, and the retry sees the winner's booking and is rejected.
+ *
+ * @returns {Promise<import('mongoose').Document>} the created booking
+ * @throws {BookingError} CAR_UNAVAILABLE (409) | CAR_NOT_FOUND (404)
+ */
+const createBookingAtomic = async (bookingData) => {
+  const { car, pickupDate, returnDate } = bookingData;
+  const pickup = new Date(pickupDate);
+  const drop = new Date(returnDate);
+
+  const session = await mongoose.startSession();
+  try {
+    let createdBooking = null;
+
+    await session.withTransaction(
+      async () => {
+        // 1. Overlap check against this transaction's snapshot.
+        const clash = await Booking.findOne({ car, ...overlapFilter(pickup, drop) }).session(session);
+        if (clash) {
+          throw new BookingError("Car is not available for the selected dates", 409, "CAR_UNAVAILABLE");
+        }
+
+        // 2. Load the car (in-transaction) for price + owner.
+        const carDoc = await Car.findById(car).session(session);
+        if (!carDoc) throw new BookingError("Car not found", 404, "CAR_NOT_FOUND");
+
+        // 3. Materialise a conflict point for concurrent bookings of this car.
+        await Car.updateOne({ _id: car }, { $inc: { bookingGuard: 1 } }, { session });
+
+        // 4. Price.
+        const msPerDay = 1000 * 60 * 60 * 24;
+        const noOfDays = Math.max(1, Math.ceil((drop.getTime() - pickup.getTime()) / msPerDay));
+
+        // 5. Insert the booking in the same transaction.
+        const [doc] = await Booking.create(
+          [{ ...bookingData, owner: carDoc.owner, price: carDoc.pricePerDay * noOfDays }],
+          { session }
+        );
+        createdBooking = doc;
+      },
+      { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } }
+    );
+
+    return createdBooking;
+  } catch (err) {
+    if (isNoReplicaSetError(err)) {
+      console.warn(
+        "[createBookingAtomic] MongoDB is not a replica set — falling back to non-transactional create (dev only)"
+      );
+      return createBookingNonTransactional(bookingData);
     }
-    
-    const bookings = await query;
-    return bookings.length === 0;
+    throw err;
+  } finally {
+    await session.endSession();
+  }
+};
+
+// Shared date-range validation for booking endpoints.
+const validateBookingDates = (pickupDate, returnDate) => {
+  const pickup = new Date(pickupDate);
+  const drop = new Date(returnDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (Number.isNaN(pickup.getTime()) || Number.isNaN(drop.getTime())) {
+    return "Invalid pickup or return date";
+  }
+  if (pickup < today) return "Pickup date cannot be in the past";
+  if (drop <= pickup) return "Return date must be after pickup date";
+  return null;
+};
+
+// Maps a booking-creation failure to an HTTP response.
+const handleBookingError = (res, error, label) => {
+  if (error instanceof BookingError) {
+    return res.status(error.statusCode).json({ success: false, message: error.message });
+  }
+  if (error?.code === 11000 || error?.code === 11001) {
+    return res.status(409).json({
+      success: false,
+      message: "This car is already booked for the selected dates",
+    });
+  }
+  console.error(`[${label}] Error:`, {
+    message: error?.message,
+    name: error?.name,
+    code: error?.code,
+    stack: process.env.NODE_ENV === "development" ? error?.stack : undefined,
+    timestamp: new Date().toISOString(),
+  });
+  return res.status(500).json({ success: false, message: "Failed to create booking. Please try again." });
 };
 
 // API to Check Availability of Cars for the given Date and location
@@ -138,98 +301,22 @@ export const checkAvailabilityOfCar = async (req, res) => {
     }
 };
 
-/// Create Booking API
+/// Create Booking API (basic — car + dates only)
 export const createBooking = async (req, res) => {
   try {
     const { _id } = req.user;
     const { car, pickupDate, returnDate } = req.body;
 
-    // Validate date business logic
-    const pickup = new Date(pickupDate);
-    const returnD = new Date(returnDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Validate pickupDate is not in the past
-    if (pickup < today) {
-      return res.status(400).json({
-        success: false,
-        message: "Pickup date cannot be in the past"
-      });
+    const dateError = validateBookingDates(pickupDate, returnDate);
+    if (dateError) {
+      return res.status(400).json({ success: false, message: dateError });
     }
 
-    // Validate returnDate is after pickupDate
-    if (returnD <= pickup) {
-      return res.status(400).json({
-        success: false,
-        message: "Return date must be after pickup date"
-      });
-    }
+    const booking = await createBookingAtomic({ car, user: _id, pickupDate, returnDate });
 
-    // Start MongoDB transaction
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
-    try {
-      // Check availability within transaction
-      const isAvailable = await checkAvailability(car, pickupDate, returnDate, session);
-
-      if (!isAvailable) {
-        await session.abortTransaction();
-        await session.endSession();
-        return res
-          .status(400)
-          .json({ success: false, message: "Car not available" });
-      }
-
-      // Find car within transaction
-      const carData = await Car.findById(car).session(session);
-
-      if (!carData) {
-        await session.abortTransaction();
-        await session.endSession();
-        return res.status(404).json({ success: false, message: "Car not found" });
-      }
-
-      const noOfDays = Math.ceil(
-        (new Date(returnDate) - new Date(pickupDate)) /
-          (1000 * 60 * 60 * 24)
-      );
-
-      const price = carData.pricePerDay * noOfDays;
-
-      // Create booking within transaction
-      await Booking.create([{
-        car,
-        owner: carData.owner,
-        user: _id,
-        pickupDate,
-        returnDate,
-        price,
-      }], { session });
-
-      // Commit transaction
-      await session.commitTransaction();
-      await session.endSession();
-
-      res.json({
-        success: true,
-        message: "Booking Created",
-      });
-    } catch (transactionError) {
-      // Rollback on error
-      await session.abortTransaction();
-      await session.endSession();
-      throw transactionError; // Re-throw to be caught by outer catch
-    }
+    return res.json({ success: true, bookingId: booking._id, message: "Booking Created" });
   } catch (error) {
-    console.error(`[createBooking] Error:`, {
-      message: error.message,
-      name: error.name,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
-      timestamp: new Date().toISOString()
-    });
-    res.status(500).json({ success: false, message: "Failed to create booking. Please try again." });
+    return handleBookingError(res, error, "createBooking");
   }
 };
 
@@ -309,203 +396,98 @@ export const changeBookingStatus = async (req, res) => {
 };
 
 // Create Booking with Details API
+//
+// Concurrency strategy (three layers):
+//   1. in-memory lock  — cheap per-instance fast-fail for a burst of identical
+//                        requests, so we don't even open a transaction
+//   2. transaction     — createBookingAtomic(): snapshot-isolated overlap check
+//                        + insert + car-guard write, with automatic retry
+//   3. unique index    — partial unique index on Booking as the DB backstop
 export const createBookingWithDetails = async (req, res) => {
-  let lockKey = null; // Track lock key for cleanup in error paths
-  
+  let lockKey = null; // set only if THIS request holds the lock
+
   try {
     const { _id } = req.user;
-    const { 
-      car, 
-      pickupDate, 
+    const {
+      car,
+      pickupDate,
       returnDate,
       userDetails,
       pickupDetails,
       returnDetails,
       extras,
-      notes
+      notes,
     } = req.body;
 
-    // Validate user is logged in (req.user is set by protect middleware)
     if (!_id) {
       return res.status(401).json({
         success: false,
-        message: "User must be logged in to create a booking"
+        message: "User must be logged in to create a booking",
       });
     }
 
-    // ============================================
-    // STEP 1: Check for duplicate booking
-    // ============================================
+    const dateError = validateBookingDates(pickupDate, returnDate);
+    if (dateError) {
+      return res.status(400).json({ success: false, message: dateError });
+    }
+
+    // Friendly fast-path: this same user already booked this exact car + dates.
     const existingBooking = await Booking.findOne({
       user: _id,
       car,
+      status: { $in: ACTIVE_BOOKING_STATUSES },
       pickupDate: new Date(pickupDate),
-      returnDate: new Date(returnDate)
+      returnDate: new Date(returnDate),
     });
-
     if (existingBooking) {
-      console.log(`[createBookingWithDetails] Duplicate rejected`, {
-        userId: _id.toString(),
-        carId: car.toString(),
-        pickupDate: new Date(pickupDate).toISOString(),
-        returnDate: new Date(returnDate).toISOString(),
-        existingBookingId: existingBooking._id.toString(),
-        timestamp: new Date().toISOString()
-      });
-      
-      return res.status(400).json({
-        success: false,
-        message: "A booking with the same car and dates already exists"
-      });
-    }
-
-    // ============================================
-    // STEP 2: Check availability lock
-    // ============================================
-    const currentLockKey = generateLockKey(car, pickupDate, returnDate);
-    
-    if (isLocked(currentLockKey)) {
-      console.log(`[createBookingWithDetails] Lock hit - Booking rejected`, {
-        userId: _id.toString(),
-        carId: car.toString(),
-        lockKey: currentLockKey,
-        pickupDate: new Date(pickupDate).toISOString(),
-        returnDate: new Date(returnDate).toISOString(),
-        timestamp: new Date().toISOString()
-      });
-      
       return res.status(409).json({
         success: false,
-        message: "Booking is currently being processed. Please try again in a moment."
+        message: "You already have a booking for this car and dates",
       });
     }
 
-    // Lock miss - log and acquire lock
-    console.log(`[createBookingWithDetails] Lock miss - Acquiring lock`, {
-      userId: _id.toString(),
-      carId: car.toString(),
-      lockKey: currentLockKey,
-      pickupDate: new Date(pickupDate).toISOString(),
-      returnDate: new Date(returnDate).toISOString(),
-      timestamp: new Date().toISOString()
-    });
-    
-    acquireLock(currentLockKey);
-    lockKey = currentLockKey; // Track for cleanup
-
-    // ============================================
-    // STEP 3: Check car availability (database check)
-    // ============================================
-    const isAvailable = await checkAvailability(car, pickupDate, returnDate);
-
-    if (!isAvailable) {
-      releaseLock(lockKey);
-      return res.status(400).json({
+    // Layer 1 — in-memory lock. Fast-fail an identical request that is already
+    // mid-flight on this instance. Not the real guarantee (see layer 2).
+    lockKey = generateLockKey(car, pickupDate, returnDate);
+    if (isLocked(lockKey)) {
+      lockKey = null; // someone else's lock — don't release it in `finally`
+      return res.status(409).json({
         success: false,
-        message: "Car not available for the selected dates"
+        message: "This booking is already being processed. Please try again in a moment.",
       });
     }
+    acquireLock(lockKey);
 
-    // ============================================
-    // STEP 4: Find car data
-    // ============================================
-    const carData = await Car.findById(car);
-
-    if (!carData) {
-      releaseLock(lockKey);
-      return res.status(404).json({
-        success: false,
-        message: "Car not found"
-      });
-    }
-
-    // ============================================
-    // STEP 5: Calculate price and create booking
-    // ============================================
-    const noOfDays = Math.ceil(
-      (new Date(returnDate) - new Date(pickupDate)) /
-        (1000 * 60 * 60 * 24)
-    );
-
-    const price = carData.pricePerDay * noOfDays;
-
-    // Create booking with all details
-    // Note: booking.user comes from req.user._id (logged-in user)
-    // Note: booking.userDetails comes from req.body (form data)
-    const booking = await Booking.create({
+    // Layer 2 — atomic, transactional creation.
+    const booking = await createBookingAtomic({
       car,
       user: _id,
-      owner: carData.owner,
       pickupDate,
       returnDate,
-      price,
       status: "pending",
       userDetails,
       pickupDetails,
       returnDetails,
       extras: extras || { extraDriver: false },
-      notes: notes || ""
+      notes: notes || "",
     });
 
-    // Release lock after successful booking creation
-    releaseLock(lockKey);
-
-    // ============================================
-    // STEP 6: Log successful booking creation
-    // ============================================
-    console.log(`[createBookingWithDetails] Booking created successfully`, {
+    console.log(`[createBookingWithDetails] Booking created`, {
       bookingId: booking._id.toString(),
       userId: _id.toString(),
-      carId: car.toString(),
-      ownerId: carData.owner.toString(),
-      pickupDate: new Date(pickupDate).toISOString(),
-      returnDate: new Date(returnDate).toISOString(),
-      price,
-      noOfDays,
-      status: booking.status,
-      timestamp: new Date().toISOString()
+      carId: String(car),
+      timestamp: new Date().toISOString(),
     });
 
-    res.json({
+    return res.json({
       success: true,
       bookingId: booking._id,
-      message: "Booking created successfully"
+      message: "Booking created successfully",
     });
-
   } catch (error) {
-    // Release lock on error
-    if (lockKey) {
-      releaseLock(lockKey);
-    }
-    
-    // Handle duplicate key error (E11000) from unique index constraint
-    if (error.code === 11000 || error.code === 11001) {
-      console.log(`[createBookingWithDetails] Duplicate key error`, {
-        userId: _id?.toString(),
-        carId: car?.toString(),
-        pickupDate: pickupDate ? new Date(pickupDate).toISOString() : null,
-        returnDate: returnDate ? new Date(returnDate).toISOString() : null,
-        errorCode: error.code,
-        timestamp: new Date().toISOString()
-      });
-      
-      return res.status(400).json({
-        success: false,
-        message: "A booking with the same car and dates already exists"
-      });
-    }
-    
-    console.error(`[createBookingWithDetails] Error:`, {
-      message: error.message,
-      name: error.name,
-      code: error.code,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
-      timestamp: new Date().toISOString()
-    });
-    res.status(500).json({
-      success: false,
-      message: "Failed to create booking. Please try again."
-    });
+    return handleBookingError(res, error, "createBookingWithDetails");
+  } finally {
+    if (lockKey) releaseLock(lockKey);
   }
 };
 
@@ -630,4 +612,14 @@ export const cancelBooking = async (req, res) => {
       message: "Failed to cancel booking. Please try again."
     });
   }
+};
+
+// Internal helpers exposed for integration tests only — not part of the HTTP API.
+export const __testables = {
+  createBookingAtomic,
+  createBookingNonTransactional,
+  checkAvailability,
+  BookingError,
+  ACTIVE_BOOKING_STATUSES,
+  overlapFilter,
 };

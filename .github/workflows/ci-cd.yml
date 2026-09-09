@@ -31,30 +31,33 @@ jobs:
           cd server
           npm ci
       
-      - name: Run Backend Tests
+      - name: Run Backend Unit Tests
         run: |
           cd server
           npm test
-      
+
+      - name: Run Backend Integration Tests (booking concurrency)
+        run: |
+          cd server
+          npm run test:integration
+
       # Frontend tests
       - name: Install Frontend Dependencies
         run: |
           cd client
           npm ci
-      
+
       - name: Run Frontend Tests
         run: |
           cd client
           npm test
-      
+
       - name: All Tests Passed ✅
         run: |
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "✅ All 119 tests passed successfully!"
+          echo "✅ All tests passed successfully!"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "Backend tests: 46 ✓"
-          echo "Frontend tests: 73 ✓"
-          echo "Total execution time: ~2.5 seconds"
+          echo "Backend unit tests + booking-concurrency integration tests + frontend tests"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
   # Job 2: Verify AWS credentials (only after tests pass)
@@ -90,7 +93,7 @@ jobs:
           echo "🎉 CI/CD Pipeline Completed Successfully!"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo ""
-          echo "✅ Tests: 119 passed"
+          echo "✅ Tests: unit + integration + frontend passed"
           echo "✅ AWS Access: Verified"
           echo ""
           echo "Commit: ${{ github.sha }}"

@@ -69,7 +69,14 @@ const carSchema = new mongoose.Schema({
         type: [String],
         default: []
     },
-    isAvailable: { type: Boolean, default: true }
+    isAvailable: { type: Boolean, default: true },
+    // Concurrency-control counter. Every booking transaction for this car does
+    // `$inc: { bookingGuard: 1 }` inside the transaction. Two bookings for the
+    // same car running at the same time then both write this one document, which
+    // MongoDB detects as a write conflict — so one transaction is forced to abort
+    // and retry instead of both slipping past the snapshot-isolated overlap check
+    // (the classic "write skew" anomaly). Never returned to clients.
+    bookingGuard: { type: Number, default: 0, select: false }
 }, {timestamps: true})
 
 // Add indexes for better query performance
