@@ -46,3 +46,10 @@ coverage/
 # Temporary files
 tmp/
 temp/
+
+# Personal notes / interview prep (keep local, never publish)
+INTERVIEW_PREP.md
+LEARNING_ROADMAP.md
+leetcode-practice/
+_archive/
+_notes/
