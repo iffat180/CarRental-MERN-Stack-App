@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useAppContext } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
 import { assets } from "../assets/assets";
+import type { CarRecommendation } from "../types";
 
 /**
  * TEST CASES:
@@ -102,7 +103,7 @@ const AISearch = () => {
   const [tripDays, setTripDays] = useState(3);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState("");
-  const [aiRecommendations, setAiRecommendations] = useState([]);
+  const [aiRecommendations, setAiRecommendations] = useState<CarRecommendation[]>([]);
 
   const getSmartRecommendations = async () => {
     // Validation
@@ -119,7 +120,7 @@ const AISearch = () => {
     // Query complexity detection (Solution 4)
     const complexityCheck = simplifyQuery(aiQuery.trim());
     if (complexityCheck.isComplex) {
-      setAiError(complexityCheck.message);
+      setAiError(complexityCheck.message ?? "");
       if (complexityCheck.suggestions) {
         setAiError(`${complexityCheck.message} Examples: ${complexityCheck.suggestions.slice(0, 2).join(", ")}`);
       }
@@ -151,7 +152,7 @@ const AISearch = () => {
       } else {
         setAiRecommendations(data.recommendations || []);
       }
-    } catch (error) {
+    } catch (error: any) {
       const errorMessage =
         error.response?.data?.error ||
         error.message ||

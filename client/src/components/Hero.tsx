@@ -30,7 +30,7 @@ const validateDates = (pickupDate, returnDate) => {
     errors.general = "Minimum rental period is 1 day";
   } else {
     // Check minimum rental period (1 day)
-    const days = Math.ceil((returnD - pickup) / (1000 * 60 * 60 * 24));
+    const days = Math.ceil((returnD.getTime() - pickup.getTime()) / (1000 * 60 * 60 * 24));
     if (days < 1) {
       errors.general = "Minimum rental period is 1 day";
     }
@@ -44,7 +44,7 @@ const validateDates = (pickupDate, returnDate) => {
 
 const Hero = () => {
   const [pickupLocation, setPickupLocation] = useState("");
-  const [cities, setCities] = useState([]);
+  const [cities, setCities] = useState<string[]>([]);
   const [isLoadingCities, setIsLoadingCities] = useState(false);
   const [dateErrors, setDateErrors] = useState({
     pickupDate: "",
@@ -115,7 +115,7 @@ const Hero = () => {
         if (data.success) {
           setCities(data.cities);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to fetch cities:", error);
         // Fallback to empty array if fetch fails
         setCities([]);

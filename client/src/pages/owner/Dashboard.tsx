@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import type { Booking } from "../../types";
 import Title from "../../components/Title";
 import { assets } from "../../assets/assets";
 import toast from "react-hot-toast";
@@ -10,7 +11,14 @@ import EmptyState from "../../components/owner/EmptyState";
 const Dashboard = () => {
   const { axios, isOwner, currency } = useAppContext();
 
-  const [data, setData] = useState({
+  const [data, setData] = useState<{
+    totalCars: number;
+    totalBookings: number;
+    pendingBookings: number;
+    completedBookings: number;
+    recentBookings: Booking[];
+    monthlyRevenue: number;
+  }>({
     totalCars: 0,
     totalBookings: 0,
     pendingBookings: 0,
@@ -19,7 +27,7 @@ const Dashboard = () => {
     monthlyRevenue: 0,
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const dashboardCards = [
     { title: "Total Cars", value: data.totalCars, icon: assets.carIconColored },
@@ -52,7 +60,7 @@ const Dashboard = () => {
         setError(errorMessage);
         toast.error(errorMessage);
       }
-    } catch (error) {
+    } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || "Failed to fetch dashboard data";
       setError(errorMessage);
       toast.error(errorMessage);
@@ -131,7 +139,7 @@ const Dashboard = () => {
                 {booking.car.brand} {booking.car.model}
               </p>
               <p className="text-sm text-gray-500">
-                {booking.createdAt.split("T")[0]}
+                {booking.createdAt?.split("T")[0]}
               </p>
               <div className="flex items-center gap-2 font-medium">
                 <p className="text-sm text-gray-500">

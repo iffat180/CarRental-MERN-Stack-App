@@ -5,10 +5,11 @@ import Loader from "../components/Loader";
 import { useAppContext } from "../context/AppContext";
 import { toast } from "react-hot-toast";
 import { getLocationsForCity } from "../utils/locationData";
+import type { Car } from "../types";
 
 // Generate time options for dropdown (8:00 AM to 10:00 PM in 30-minute intervals)
 const generateTimeOptions = () => {
-  const options = [];
+  const options: { value: string; label: string }[] = [];
   for (let hour = 8; hour <= 22; hour++) {
     for (let minute = 0; minute < 60; minute += 30) {
       const time24 = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
@@ -59,10 +60,10 @@ const BookingDetails = () => {
   
   const { cars, axios, user, navigate, currency, pickupDate: contextPickupDate, returnDate: contextReturnDate } = useAppContext();
   
-  const [car, setCar] = useState(null);
+  const [car, setCar] = useState<Car | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [locationOptions, setLocationOptions] = useState([]);
+  const [locationOptions, setLocationOptions] = useState<any[]>([]);
   
   // Use params if available, otherwise fallback to context
   const pickupDate = pickupDateParam || contextPickupDate;
@@ -126,7 +127,7 @@ const BookingDetails = () => {
           toast.error(data.message || "Car not found");
           navigate("/cars");
         }
-      } catch (error) {
+      } catch (error: any) {
         const errorMessage = error.response?.data?.message || error.message || "Failed to load car details";
         toast.error(errorMessage);
         navigate("/cars");
@@ -182,7 +183,7 @@ const BookingDetails = () => {
             // Clear edit booking ID from sessionStorage after use
             sessionStorage.removeItem("editBookingId");
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error("Failed to fetch booking for prefill:", error);
           // Continue with user profile prefill if booking fetch fails
         }
@@ -326,7 +327,7 @@ const BookingDetails = () => {
       } else {
         toast.error(data.message || "Failed to create booking");
       }
-    } catch (error) {
+    } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || "Failed to create booking. Please try again.";
       toast.error(errorMessage);
       

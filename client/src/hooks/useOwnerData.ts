@@ -18,7 +18,7 @@ export const useOwnerData = (fetchFunction) => {
       const result = await fetchFunction(...args);
       setData(result);
       return { success: true, data: result };
-    } catch (err) {
+    } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || "An error occurred";
       setError(errorMessage);
       toast.error(errorMessage);

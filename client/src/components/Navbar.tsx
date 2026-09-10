@@ -53,7 +53,7 @@ const Navbar = () => {
         try {
           navigate("/owner/add-car");
           sessionStorage.removeItem("redirectPath");
-        } catch (error) {
+        } catch (error: any) {
           console.log(`[Navbar] Navigation failed`, {
             path: "/owner/add-car",
             error: error.message,
@@ -62,7 +62,7 @@ const Navbar = () => {
           // Keep redirectPath for retry
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       // On failure: show toast error, leave modal open
       toast.error(error.message || "Failed to become an owner. Please try again.");
     } finally {

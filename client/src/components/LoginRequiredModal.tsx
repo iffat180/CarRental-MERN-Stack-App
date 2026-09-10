@@ -38,7 +38,7 @@ const LoginRequiredModal = ({ isOpen, onClose }) => {
     if (isOpen) {
       document.addEventListener("keydown", handleEscape);
       // Focus trap: focus first focusable element
-      const firstButton = document.querySelector('[role="dialog"] button');
+      const firstButton = document.querySelector<HTMLElement>('[role="dialog"] button');
       if (firstButton) {
         firstButton.focus();
       }

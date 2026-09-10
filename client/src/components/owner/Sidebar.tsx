@@ -4,15 +4,16 @@ import { NavLink } from "react-router-dom";
 import { ownerMenuLinks } from "../../assets/assets";
 import { assets } from "../../assets/assets";
 import { useAppContext } from "../../context/AppContext";
-import { use } from "react";
+import toast from "react-hot-toast";
 
 const Sidebar = () => {
   const { user, axios, fetchUser } = useAppContext();
   const location = useLocation();
-  const [image, setImage] = useState("");
+  const [image, setImage] = useState<File | null>(null);
 
   const updateImage = async () => {
     try {
+      if (!image) return;
       const formData = new FormData();
       formData.append("image", image);
 
@@ -21,11 +22,11 @@ const Sidebar = () => {
       if (data.success) {
         fetchUser();
         toast.success(data.message);
-        setImage("");
+        setImage(null);
       } else {
         toast.error(data.message);
       }
-    } catch (error) {
+    } catch (error: any) {
       toast.error(error.message);
     }
   };
@@ -54,7 +55,7 @@ const Sidebar = () => {
           id="image"
           accept="image/*"
           hidden
-          onChange={(e) => setImage(e.target.files[0])}
+          onChange={(e) => setImage(e.target.files?.[0] ?? null)}
         />
 
         {image && (

@@ -8,16 +8,17 @@ import ErrorState from "../../components/owner/ErrorState";
 import EmptyState from "../../components/owner/EmptyState";
 import TableSkeleton from "../../components/owner/TableSkeleton";
 import ConfirmModal from "../../components/owner/ConfirmModal";
+import type { Car } from "../../types";
 
 const ManageCars = () => {
   const { isOwner, axios, currency } = useAppContext();
 
-  const [cars, setCars] = useState([]);
+  const [cars, setCars] = useState<Car[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [actionLoading, setActionLoading] = useState(null); // Track which action is loading
+  const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null); // Track which action is loading
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [carToDelete, setCarToDelete] = useState(null);
+  const [carToDelete, setCarToDelete] = useState<Car | null>(null);
 
   const fetchOwnerCars = async () => {
     setIsLoading(true);
@@ -31,7 +32,7 @@ const ManageCars = () => {
         setError(errorMessage);
         toast.error(errorMessage);
       }
-    } catch (error) {
+    } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || "Failed to fetch cars";
       setError(errorMessage);
       toast.error(errorMessage);
@@ -50,7 +51,7 @@ const ManageCars = () => {
       } else {
         toast.error(data.message);
       }
-    } catch (error) {
+    } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || "Failed to toggle availability";
       toast.error(errorMessage);
     } finally {
@@ -67,7 +68,7 @@ const ManageCars = () => {
   const deleteCar = async () => {
     if (!carToDelete) return;
     
-    setActionLoading(carToDelete);
+    setActionLoading(carToDelete._id);
     setShowDeleteModal(false);
     
     try {
@@ -78,7 +79,7 @@ const ManageCars = () => {
       } else {
         toast.error(data.message);
       }
-    } catch (error) {
+    } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || "Failed to delete car";
       toast.error(errorMessage);
     } finally {

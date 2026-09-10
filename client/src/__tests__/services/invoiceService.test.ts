@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import invoiceService from '../../services/invoiceService';
-import axios from 'axios';
+import axios from "axios";
+const mockedPost = vi.mocked(axios.post);
 
 // Mock axios
 vi.mock('axios');
@@ -15,14 +16,14 @@ describe('Invoice Service', () => {
   describe('generateInvoice - Input Validation', () => {
     it('should throw error when bookingId is missing', async () => {
       import.meta.env.VITE_INVOICE_API_URL = 'https://api.example.com/invoice';
-      await expect(invoiceService.generateInvoice()).rejects.toThrow(
+      await expect(invoiceService.generateInvoice(undefined as unknown as string)).rejects.toThrow(
         'Booking ID is required to generate invoice.'
       );
     });
 
     it('should throw error when bookingId is null', async () => {
       import.meta.env.VITE_INVOICE_API_URL = 'https://api.example.com/invoice';
-      await expect(invoiceService.generateInvoice(null)).rejects.toThrow(
+      await expect(invoiceService.generateInvoice(null as unknown as string)).rejects.toThrow(
         'Booking ID is required to generate invoice.'
       );
     });
@@ -50,7 +51,7 @@ describe('Invoice Service', () => {
       
       import.meta.env.VITE_INVOICE_API_URL = 'https://api.example.com/invoice';
       
-      axios.post.mockResolvedValueOnce({
+      mockedPost.mockResolvedValueOnce({
         data: {
           invoiceUrl: mockInvoiceUrl
         }
@@ -80,7 +81,7 @@ describe('Invoice Service', () => {
     it('should handle 404 error (booking not found)', async () => {
       const bookingId = '507f1f77bcf86cd799439011';
       
-      axios.post.mockRejectedValueOnce({
+      mockedPost.mockRejectedValueOnce({
         response: {
           status: 404,
           data: { message: 'Booking not found' }
@@ -96,7 +97,7 @@ describe('Invoice Service', () => {
       const bookingId = '507f1f77bcf86cd799439011';
       const errorMessage = 'Invalid booking data';
       
-      axios.post.mockRejectedValueOnce({
+      mockedPost.mockRejectedValueOnce({
         response: {
           status: 400,
           data: { message: errorMessage }
@@ -109,7 +110,7 @@ describe('Invoice Service', () => {
     it('should handle 500+ server errors', async () => {
       const bookingId = '507f1f77bcf86cd799439011';
       
-      axios.post.mockRejectedValueOnce({
+      mockedPost.mockRejectedValueOnce({
         response: {
           status: 500,
           data: { error: 'Internal server error' }
@@ -124,7 +125,7 @@ describe('Invoice Service', () => {
     it('should handle network errors (no response)', async () => {
       const bookingId = '507f1f77bcf86cd799439011';
       
-      axios.post.mockRejectedValueOnce({
+      mockedPost.mockRejectedValueOnce({
         request: {},
         message: 'Network Error'
       });
@@ -137,7 +138,7 @@ describe('Invoice Service', () => {
     it('should handle timeout errors', async () => {
       const bookingId = '507f1f77bcf86cd799439011';
       
-      axios.post.mockRejectedValueOnce({
+      mockedPost.mockRejectedValueOnce({
         code: 'ECONNABORTED',
         message: 'timeout of 30000ms exceeded'
       });
@@ -150,7 +151,7 @@ describe('Invoice Service', () => {
     it('should handle invalid response format', async () => {
       const bookingId = '507f1f77bcf86cd799439011';
       
-      axios.post.mockResolvedValueOnce({
+      mockedPost.mockResolvedValueOnce({
         data: {
           // Missing invoiceUrl
           status: 'success'
@@ -166,7 +167,7 @@ describe('Invoice Service', () => {
       const bookingId = '507f1f77bcf86cd799439011';
       const errorMessage = 'Unexpected error';
       
-      axios.post.mockRejectedValueOnce({
+      mockedPost.mockRejectedValueOnce({
         message: errorMessage
       });
 

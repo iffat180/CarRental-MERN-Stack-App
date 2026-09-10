@@ -4,6 +4,7 @@ import { assets } from "../assets/assets";
 import Loader from "../components/Loader";
 import { useAppContext } from "../context/AppContext";
 import { toast } from "react-hot-toast";
+import type { Booking } from "../types";
 
 // Helper function to format date
 const formatDate = (dateString) => {
@@ -31,7 +32,7 @@ const calculateDays = (pickupDate, returnDate) => {
   if (!pickupDate || !returnDate) return 0;
   const pickup = new Date(pickupDate);
   const returnD = new Date(returnDate);
-  const diffTime = returnD - pickup;
+  const diffTime = returnD.getTime() - pickup.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   return diffDays > 0 ? diffDays : 1;
 };
@@ -40,10 +41,10 @@ const BookingSummary = () => {
   const { bookingId } = useParams();
   const { axios, navigate, currency } = useAppContext();
   
-  const [booking, setBooking] = useState(null);
+  const [booking, setBooking] = useState<Booking | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isConfirming, setIsConfirming] = useState(false);
-  const [fetchError, setFetchError] = useState(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [pollingAttempts, setPollingAttempts] = useState(0);
   const [isPolling, setIsPolling] = useState(false);
   
@@ -93,7 +94,7 @@ const BookingSummary = () => {
         setFetchError(errorMessage);
         toast.error(errorMessage);
       }
-    } catch (error) {
+    } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || "Failed to load booking details";
       
       console.log(`[BookingSummary] Fetch failed - Exception`, {
@@ -182,7 +183,7 @@ const BookingSummary = () => {
             clearInterval(pollInterval);
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.log(`[BookingSummary] Polling failed`, {
           bookingId,
           attempt: currentAttempts,
@@ -319,8 +320,8 @@ const BookingSummary = () => {
                     src={booking.car?.image || ""}
                     alt={`${booking.car?.brand || ""} ${booking.car?.model || ""}`}
                     className="w-full h-auto rounded-lg object-cover"
-                    onError={(e) => {
-                      e.target.src = ""; // Handle broken images
+                    onError={(e: any) => {
+                    e.target.src = ""; // Handle broken images
                     }}
                   />
                 </div>

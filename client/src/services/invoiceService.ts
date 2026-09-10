@@ -38,7 +38,7 @@ const invoiceService = {
       } else {
         throw new Error("Invalid response from invoice service");
       }
-    } catch (error) {
+    } catch (error: any) {
       // Handle different types of errors
       if (error.response) {
         // API responded with error status

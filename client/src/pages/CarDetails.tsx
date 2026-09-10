@@ -4,6 +4,7 @@ import { assets } from "../assets/assets";
 import Loader from "../components/Loader";
 import { useAppContext } from "../context/AppContext";
 import { toast } from "react-hot-toast";
+import type { Car } from "../types";
 
 // Date validation utility function
 const validateDates = (pickupDate, returnDate) => {
@@ -33,7 +34,7 @@ const validateDates = (pickupDate, returnDate) => {
     errors.general = "Minimum rental period is 1 day";
   } else {
     // Check minimum rental period (1 day)
-    const days = Math.ceil((returnD - pickup) / (1000 * 60 * 60 * 24));
+    const days = Math.ceil((returnD.getTime() - pickup.getTime()) / (1000 * 60 * 60 * 24));
     if (days < 1) {
       errors.general = "Minimum rental period is 1 day";
     }
@@ -51,7 +52,7 @@ const CarDetails = () => {
   const { cars, pickupDate, setPickupDate, returnDate, setReturnDate, user, setShowLoginRequired } =
     useAppContext();
   const navigate = useNavigate(); 
-  const [car, setCar] = useState(null);
+  const [car, setCar] = useState<Car | null>(null);
   const [dateErrors, setDateErrors] = useState({
     pickupDate: "",
     returnDate: "",
@@ -147,7 +148,7 @@ const CarDetails = () => {
   };
 
   useEffect(() => {
-    setCar(cars.find((c) => c._id == id));
+    setCar(cars.find((c) => c._id === id) ?? null);
   }, [cars, id]);
 
   return car ? (

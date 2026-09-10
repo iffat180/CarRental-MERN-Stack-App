@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { useAppContext } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
 import invoiceService from "../services/invoiceService";
+import type { Booking } from "../types";
 
 // Helper function to format time (HH:MM to 12-hour format)
 const formatTime = (time24) => {
@@ -21,12 +22,12 @@ const MyBookings = () => {
   const { axios, user, currency} = useAppContext();
   const navigate = useNavigate();
 
-  const [bookings, setBookings] = useState([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
-  const [cancellingBookingId, setCancellingBookingId] = useState(null);
-  const [generatingInvoiceId, setGeneratingInvoiceId] = useState(null);
+  const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(null);
+  const [generatingInvoiceId, setGeneratingInvoiceId] = useState<string | null>(null);
 
   const fetchMyBookings = async () => {
     setIsLoading(true);
@@ -43,7 +44,7 @@ const MyBookings = () => {
         setError(errorMessage);
         toast.error(errorMessage);
       }
-    } catch (error) {
+    } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || "Failed to fetch bookings";
       setError(errorMessage);
       toast.error(errorMessage);
@@ -74,7 +75,7 @@ const MyBookings = () => {
       } else {
         toast.error(data.message || "Failed to cancel booking");
       }
-    } catch (error) {
+    } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || "Failed to cancel booking";
       toast.error(errorMessage);
     } finally {
@@ -117,7 +118,7 @@ const MyBookings = () => {
       } else {
         toast.error("Invoice URL not received");
       }
-    } catch (error) {
+    } catch (error: any) {
       toast.error(error.message || "Failed to generate invoice. Please try again.");
     } finally {
       setGeneratingInvoiceId(null);
@@ -316,7 +317,7 @@ const MyBookings = () => {
                   {currency}
                   {booking.price}
                 </h1>
-                <p>Booked on {booking.createdAt.split("T")[0]}</p>
+                <p>Booked on {booking.createdAt?.split("T")[0]}</p>
               </div>
               
               {/* Action Buttons */}

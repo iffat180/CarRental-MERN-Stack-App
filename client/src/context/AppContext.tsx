@@ -1,16 +1,59 @@
-import { createContext, useContext } from "react";
-import axios from "axios";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  type ReactNode,
+} from "react";
+import axios, { type AxiosInstance } from "axios";
 import { toast } from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate, type NavigateFunction } from "react-router-dom";
+import type { Car, User } from "../types";
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
+
+interface JwtPayload {
+  userId?: string;
+  role?: string;
+  exp?: number;
+  iat?: number;
+}
+
+export interface AppContextType {
+  navigate: NavigateFunction;
+  currency: string;
+  axios: AxiosInstance;
+  user: User | null;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
+  token: string | null;
+  setToken: React.Dispatch<React.SetStateAction<string | null>>;
+  isOwner: boolean;
+  setIsOwner: React.Dispatch<React.SetStateAction<boolean>>;
+  fetchUser: () => Promise<void>;
+  showLogin: boolean;
+  setShowLogin: React.Dispatch<React.SetStateAction<boolean>>;
+  showLoginRequired: boolean;
+  setShowLoginRequired: React.Dispatch<React.SetStateAction<boolean>>;
+  showOwnerOnboarding: boolean;
+  setShowOwnerOnboarding: React.Dispatch<React.SetStateAction<boolean>>;
+  upgradeToOwner: () => Promise<{ success: boolean; user: User }>;
+  logout: () => void;
+  fetchCars: () => Promise<void>;
+  cars: Car[];
+  setCars: React.Dispatch<React.SetStateAction<Car[]>>;
+  pickupDate: string;
+  setPickupDate: React.Dispatch<React.SetStateAction<string>>;
+  returnDate: string;
+  setReturnDate: React.Dispatch<React.SetStateAction<string>>;
+}
 
 // ============================================
 // Token Utility Functions
 // ============================================
 
-const decodeToken = (token) => {
+const decodeToken = (token: string | null): JwtPayload | null => {
   try {
     if (!token) return null;
     const base64Url = token.split('.')[1];
@@ -34,12 +77,12 @@ const decodeToken = (token) => {
     }
     
     return decoded;
-  } catch (error) {
+  } catch (error: any) {
     return null;
   }
 };
 
-const isTokenExpired = (token) => {
+const isTokenExpired = (token: string | null): boolean => {
   if (!token) return true;
   const decoded = decodeToken(token);
   if (!decoded || !decoded.exp) return true;
@@ -47,21 +90,21 @@ const isTokenExpired = (token) => {
   return decoded.exp < currentTime;
 };
 
-const getTokenExpiryTime = (token) => {
+const getTokenExpiryTime = (token: string | null): number | null => {
   if (!token) return null;
   const decoded = decodeToken(token);
   if (!decoded || !decoded.exp) return null;
   return decoded.exp * 1000; // Convert to milliseconds
 };
 
-export const AppContext = createContext();
+export const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const AppProvider = ({ children }) => {
+export const AppProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
   const currency = import.meta.env.VITE_CURRENCY;
 
-  const [token, setToken] = useState(null);
-  const [user, setUser] = useState(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isOwner, setIsOwner] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showLoginRequired, setShowLoginRequired] = useState(false);
@@ -69,12 +112,12 @@ export const AppProvider = ({ children }) => {
   const [pickupDate, setPickupDate] = useState("");
   const [returnDate, setReturnDate] = useState("");
 
-  const [cars, setCars] = useState([]);
+  const [cars, setCars] = useState<Car[]>([]);
   
   // Request state management
   const [isFetchingUser, setIsFetchingUser] = useState(false);
   const [isFetchingCars, setIsFetchingCars] = useState(false);
-  const [carsCacheTimestamp, setCarsCacheTimestamp] = useState(null);
+  const [carsCacheTimestamp, setCarsCacheTimestamp] = useState<number | null>(null);
   const CARS_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
   
   // Use ref to access latest token in handleTokenExpiry
@@ -125,7 +168,7 @@ export const AppProvider = ({ children }) => {
       } else {
         navigate("/");
       }
-    } catch (error) {
+    } catch (error: any) {
       // Handle 401 (Unauthorized) - token expired or invalid
       if (error.response?.status === 401) {
         handleTokenExpiry();
@@ -157,7 +200,7 @@ export const AppProvider = ({ children }) => {
       } else {
         toast.error(data.message);
       }
-    } catch (error) {
+    } catch (error: any) {
       // Handle 401 (Unauthorized) - token expired or invalid
       if (error.response?.status === 401) {
         handleTokenExpiry();
@@ -199,14 +242,14 @@ export const AppProvider = ({ children }) => {
       } else {
         throw new Error(data.message || "Failed to upgrade to owner");
       }
-    } catch (error) {
+    } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || "Failed to upgrade to owner";
       throw new Error(errorMessage);
     }
   };
 
   // Helper function to check if error is booking-related
-  const isBookingRelatedError = (error) => {
+  const isBookingRelatedError = (error: any): boolean => {
     const requestUrl = error.config?.url || "";
     return requestUrl.includes("/api/bookings/");
   };
@@ -328,6 +371,8 @@ export const AppProvider = ({ children }) => {
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 
-export const useAppContext = () => {
-  return useContext(AppContext);
+export const useAppContext = (): AppContextType => {
+  const ctx = useContext(AppContext);
+  if (!ctx) throw new Error("useAppContext must be used within an AppProvider");
+  return ctx;
 };

@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: (query) => ({
+  value: (query: string) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -16,12 +16,16 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Mock IntersectionObserver
-global.IntersectionObserver = class IntersectionObserver {
-  constructor() {}
+class MockIntersectionObserver {
+  root = null;
+  rootMargin = '';
+  thresholds = [];
   disconnect() {}
   observe() {}
   takeRecords() {
     return [];
   }
   unobserve() {}
-};
+}
+globalThis.IntersectionObserver =
+  MockIntersectionObserver as unknown as typeof IntersectionObserver;

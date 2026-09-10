@@ -27,7 +27,7 @@ const redirectBack = (navigate) => {
     try {
       navigate(path);
       sessionStorage.removeItem("redirectPath");
-    } catch (error) {
+    } catch (error: any) {
       console.log(`[Login] Navigation failed`, {
         path,
         error: error.message,
@@ -59,7 +59,7 @@ const Login = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState({
+  const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string }>({
     name: "",
     email: "",
     password: "",
@@ -113,7 +113,7 @@ const Login = () => {
     setErrors({ name: "", email: "", password: "" });
     
     // Client-side validation BEFORE API call
-    const validationErrors = {};
+    const validationErrors: { name?: string; email?: string; password?: string } = {};
     
     if (state === "register") {
       if (!name.trim() || name.trim().length < 2) {
@@ -168,7 +168,7 @@ const Login = () => {
       } else {
         toast.error(data.message);
       }
-    } catch (error) {
+    } catch (error: any) {
       // Better error handling
       const errorMessage = error.response?.data?.message || error.message || "An error occurred. Please try again.";
       toast.error(errorMessage);

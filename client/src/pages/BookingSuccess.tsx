@@ -5,6 +5,7 @@ import Loader from "../components/Loader";
 import { useAppContext } from "../context/AppContext";
 import { toast } from "react-hot-toast";
 import invoiceService from "../services/invoiceService";
+import type { Booking } from "../types";
 
 // Helper function to format date
 const formatDate = (dateString) => {
@@ -32,7 +33,7 @@ const calculateDays = (pickupDate, returnDate) => {
   if (!pickupDate || !returnDate) return 0;
   const pickup = new Date(pickupDate);
   const returnD = new Date(returnDate);
-  const diffTime = returnD - pickup;
+  const diffTime = returnD.getTime() - pickup.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   return diffDays > 0 ? diffDays : 1;
 };
@@ -41,7 +42,7 @@ const BookingSuccess = () => {
   const { bookingId } = useParams();
   const { axios, navigate, currency } = useAppContext();
   
-  const [booking, setBooking] = useState(null);
+  const [booking, setBooking] = useState<Booking | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
   
@@ -57,7 +58,7 @@ const BookingSuccess = () => {
           toast.error(data.message || "Booking not found");
           navigate("/my-bookings");
         }
-      } catch (error) {
+      } catch (error: any) {
         const errorMessage = error.response?.data?.message || error.message || "Failed to load booking details";
         toast.error(errorMessage);
         navigate("/my-bookings");
@@ -97,7 +98,7 @@ const BookingSuccess = () => {
       } else {
         toast.error("Invoice URL not received");
       }
-    } catch (error) {
+    } catch (error: any) {
       toast.error(error.message || "Failed to generate invoice. Please try again.");
     } finally {
       setIsGeneratingInvoice(false);

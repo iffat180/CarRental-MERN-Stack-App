@@ -1,11 +1,13 @@
 import React from "react";
 
-const EmptyState = ({ 
-  title = "No data found", 
-  message, 
-  actionLabel, 
-  onAction 
-}) => {
+interface EmptyStateProps {
+  title?: string;
+  message?: string;
+  actionLabel?: string;
+  onAction?: () => void;
+}
+
+const EmptyState = ({ title = "No data found", message, actionLabel, onAction }: EmptyStateProps) => {
   return (
     <div className="flex flex-col items-center justify-center py-20">
       <div className="text-center">

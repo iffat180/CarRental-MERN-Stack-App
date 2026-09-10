@@ -45,7 +45,7 @@ const Newsletter = () => {
         setError(errorMessage);
         toast.error(errorMessage);
       }
-    } catch (error) {
+    } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || 'Failed to subscribe. Please try again.';
       setError(errorMessage);
       toast.error(errorMessage);

@@ -20,11 +20,11 @@ const formatTime = (time24) => {
   return `${hour12}:${minutes} ${ampm}`;
 };
 
-const calculateDays = (pickupDate, returnDate) => {
+const calculateDays = (pickupDate: string | null | undefined, returnDate: string | null | undefined) => {
   if (!pickupDate || !returnDate) return 0;
   const pickup = new Date(pickupDate);
   const returnD = new Date(returnDate);
-  const diffTime = returnD - pickup;
+  const diffTime = returnD.getTime() - pickup.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   return diffDays > 0 ? diffDays : 1;
 };

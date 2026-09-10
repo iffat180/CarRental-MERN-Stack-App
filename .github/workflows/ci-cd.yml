@@ -51,16 +51,26 @@ jobs:
           cd server
           npm run test:integration
 
-      # Frontend tests
+      # Frontend
       - name: Install Frontend Dependencies
         run: |
           cd client
           npm ci
 
+      - name: Typecheck Frontend (tsc)
+        run: |
+          cd client
+          npm run typecheck
+
       - name: Run Frontend Tests
         run: |
           cd client
           npm test
+
+      - name: Build Frontend (tsc + vite)
+        run: |
+          cd client
+          npm run build
 
       - name: All Tests Passed ✅
         run: |

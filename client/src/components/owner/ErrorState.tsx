@@ -1,6 +1,12 @@
 import React from "react";
 
-const ErrorState = ({ error, onRetry, retryLabel = "Retry" }) => {
+interface ErrorStateProps {
+  error?: string;
+  onRetry?: () => void;
+  retryLabel?: string;
+}
+
+const ErrorState = ({ error, onRetry, retryLabel = "Retry" }: ErrorStateProps) => {
   return (
     <div className="flex flex-col items-center justify-center py-20">
       <div className="text-center">

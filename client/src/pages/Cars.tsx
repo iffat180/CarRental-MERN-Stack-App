@@ -5,6 +5,7 @@ import CarCard from "../components/CarCard";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import toast from "react-hot-toast";
+import type { CarWithAvailability } from "../types";
 
 const Cars = () => {
   const [searchParams] = useSearchParams();
@@ -18,18 +19,18 @@ const Cars = () => {
   const navigate = useNavigate();
 
   // Base list (either all cars or available cars for a date/location)
-  const [baseCars, setBaseCars] = useState([]);
+  const [baseCars, setBaseCars] = useState<CarWithAvailability[]>([]);
   // What we actually render after filtering by the search box
-  const [filteredCars, setFilteredCars] = useState([]);
+  const [filteredCars, setFilteredCars] = useState<CarWithAvailability[]>([]);
   const [input, setInput] = useState(searchParam || "");
   
   // State management
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(9); // 3x3 grid
   
-  const debounceTimeoutRef = useRef(null);
+  const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const resetPagination = useCallback(() => {
     setCurrentPage(1);
@@ -60,7 +61,7 @@ const Cars = () => {
         toast.error(errorMessage);
         setBaseCars([]); // fail safe
       }
-    } catch (err) {
+    } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || "Failed to check availability";
       setError(errorMessage);
       toast.error(errorMessage);

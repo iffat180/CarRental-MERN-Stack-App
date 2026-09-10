@@ -7,8 +7,8 @@ import toast from "react-hot-toast";
 const AddCar = () => {
   const { axios, currency } = useAppContext();
 
-  const [image, setImage] = useState(null);
-  const [cities, setCities] = useState([]);
+  const [image, setImage] = useState<File | null>(null);
+  const [cities, setCities] = useState<string[]>([]);
   const [isLoadingCities, setIsLoadingCities] = useState(false);
   const [car, setCar] = useState({
     brand: "",
@@ -68,15 +68,15 @@ const AddCar = () => {
     setIsLoading(true);
     try {
       const formData = new FormData();
-      formData.append("image", image);
-      const payload = {
+      if (image) formData.append("image", image);
+      const payload: any = {
         ...car,
         mpg: car.mpg === "" ? undefined : Number(car.mpg),
         trunk_capacity:
           car.trunk_capacity === "" ? undefined : Number(car.trunk_capacity),
         tags: car.tagsArray && car.tagsArray.length ? car.tagsArray : [],
       };
-      delete payload.tagsArray;
+      delete (payload as any).tagsArray;
 
       formData.append("carData", JSON.stringify(payload));
 
@@ -103,7 +103,7 @@ const AddCar = () => {
       } else {
         toast.error("Please fill all fields");
       }
-    } catch (error) {
+    } catch (error: any) {
       toast.error(error.message);
     } finally {
       setIsLoading(false);
@@ -119,7 +119,7 @@ const AddCar = () => {
         if (data.success) {
           setCities(data.cities);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to fetch cities:", error);
         // Fallback to empty array if fetch fails
         setCities([]);
@@ -155,7 +155,7 @@ const AddCar = () => {
               id="car-image"
               accept="image/*"
               hidden
-              onChange={(e) => setImage(e.target.files[0])}
+              onChange={(e) => setImage(e.target.files?.[0] ?? null)}
               aria-label="Upload car image"
             />
           </label>

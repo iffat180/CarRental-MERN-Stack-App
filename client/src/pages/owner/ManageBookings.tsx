@@ -8,13 +8,14 @@ import ErrorState from "../../components/owner/ErrorState";
 import EmptyState from "../../components/owner/EmptyState";
 import TableSkeleton from "../../components/owner/TableSkeleton";
 import { assets } from "../../assets/assets";
-import { 
-  BOOKING_STATUS, 
-  STATUS_CONFIG, 
-  canTransitionStatus, 
-  getStatusOptions, 
-  getStatusBadgeClasses 
+import {
+  BOOKING_STATUS,
+  STATUS_CONFIG,
+  canTransitionStatus,
+  getStatusOptions,
+  getStatusBadgeClasses
 } from "../../utils/bookingStatus";
+import type { Booking } from "../../types";
 
 // Helper function to format date
 const formatDate = (dateString) => {
@@ -41,10 +42,10 @@ const ManageBookings = () => {
   const { axios, currency } = useAppContext();
   const navigate = useNavigate();
 
-  const [bookings, setBookings] = useState([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [actionLoading, setActionLoading] = useState(null); // Track which booking action is loading
+  const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null); // Track which booking action is loading
 
   const fetchOwnerBookings = async () => {
     setIsLoading(true);
@@ -58,7 +59,7 @@ const ManageBookings = () => {
         setError(errorMessage);
         toast.error(errorMessage);
       }
-    } catch (error) {
+    } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || "Failed to fetch bookings";
       setError(errorMessage);
       toast.error(errorMessage);
@@ -108,7 +109,7 @@ const ManageBookings = () => {
         
         toast.error(data.message || "Failed to approve booking");
       }
-    } catch (error) {
+    } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || "Failed to approve booking";
       
       console.log(`[ManageBookings] Approve API exception`, {
@@ -157,7 +158,7 @@ const ManageBookings = () => {
         
         toast.error(data.message || "Failed to reject booking");
       }
-    } catch (error) {
+    } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || "Failed to reject booking";
       
       console.log(`[ManageBookings] Reject API exception`, {
