@@ -1,3 +1,7 @@
+// Vercel compiles from this entry file only, so it never reads tsconfig's
+// "include" list. These pull in the ambient types (req.user, process.env).
+/// <reference path="../types/env.d.ts" />
+/// <reference path="../types/express.d.ts" />
 import "dotenv/config";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import mongoose from "mongoose";
