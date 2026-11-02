@@ -1,14 +1,11 @@
-import express, { type Request, type Response } from "express";
 import type { Server } from "node:http";
 import "dotenv/config";
 import mongoose from "mongoose";
-import corsConfig from "./configs/cors.js";
+import app from "./app.js";
 import connectDB from "./configs/db.js";
-import userRouter from "./routes/userRoutes.js";
-import ownerRouter from "./routes/ownerRoutes.js";
-import bookingRouter from "./routes/bookingRoutes.js";
-import recommendationRouter from "./routes/recommendation.js";
-import { errorHandler } from "./middleware/errorHandler.js";
+
+// Long-running entry point (local dev and Render). The Vercel serverless
+// entry point is api/index.ts; both share the app defined in app.ts.
 
 // ============================================
 // Environment Variable Validation
@@ -19,96 +16,19 @@ const requiredEnvVars = {
   JWT_SECRET: process.env.JWT_SECRET,
 };
 
-const validateEnvVars = () => {
-  const missing = Object.entries(requiredEnvVars)
-    .filter(([key, value]) => !value)
-    .map(([key]) => key);
-  
-  if (missing.length > 0) {
-    console.error('❌ Missing required environment variables:', missing.join(', '));
-    console.error('Please set the following environment variables:');
-    missing.forEach(key => console.error(`  - ${key}`));
-    process.exit(1);
-  }
-  
-  console.log('✅ Environment variables validated');
-};
+const missing = Object.entries(requiredEnvVars)
+  .filter(([, value]) => !value)
+  .map(([key]) => key);
 
-validateEnvVars();
-
-// Initialize Express App
-const app = express()
+if (missing.length > 0) {
+  console.error("❌ Missing required environment variables:", missing.join(", "));
+  missing.forEach((key) => console.error(`  - ${key}`));
+  process.exit(1);
+}
+console.log("✅ Environment variables validated");
 
 // Connect to Database
 await connectDB();
-
-// ============================================
-// Middleware Configuration
-// ============================================
-
-// CORS Configuration
-app.use(corsConfig);
-
-// Request Logging Middleware
-app.use((req, res, next) => {
-  const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}] ${req.method} ${req.path}`);
-  next();
-});
-
-// Body Parser
-app.use(express.json());
-
-// Static File Serving
-app.use("/uploads", express.static("uploads"));
-
-
-// ============================================
-// Routes
-// ============================================
-
-// Health Check Endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'Server is running',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development'
-  });
-});
-
-// Root Endpoint
-app.get('/', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'Car Rental API Server',
-    version: '1.0.0',
-    health: '/health'
-  });
-});
-
-// API Routes
-app.use('/api/user', userRouter);
-app.use('/api/owner', ownerRouter);
-app.use('/api/bookings', bookingRouter);
-// AI-powered car recommendations endpoint
-app.use('/api', recommendationRouter);
-
-// ============================================
-// Error Handling
-// ============================================
-
-// 404 Handler - must come after all routes
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: "Route not found"
-  });
-});
-
-// Global Error Handler - must be last middleware
-app.use(errorHandler);
 
 // ============================================
 // Server Startup
