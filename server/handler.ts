@@ -1,16 +1,15 @@
-// Vercel compiles from this entry file only, so it never reads tsconfig's
-// "include" list. These pull in the ambient types (req.user, process.env).
-/// <reference path="../types/env.d.ts" />
-/// <reference path="../types/express.d.ts" />
 import "dotenv/config";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import mongoose from "mongoose";
-import app from "../app.js";
-import { errMessage } from "../utils/errors.js";
+import app from "./app.js";
+import { errMessage } from "./utils/errors.js";
 
-// Vercel serverless entry point. A function instance can serve many requests
-// while it stays warm, so the database connection is created once and reused
-// instead of reconnecting on every request.
+// Serverless request handler. It is compiled by `npm run build` into
+// dist/handler.js, and api/index.js (plain JavaScript) re-exports it, so
+// Vercel never has to compile TypeScript itself.
+// A function instance can serve many requests while it stays warm, so the
+// database connection is created once and reused instead of reconnecting on
+// every request.
 let connection: Promise<typeof mongoose> | undefined;
 
 const ensureDb = (): Promise<typeof mongoose> => {
