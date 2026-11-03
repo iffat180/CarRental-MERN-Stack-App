@@ -8,6 +8,7 @@ import LoadingState from "../../components/owner/LoadingState";
 import ErrorState from "../../components/owner/ErrorState";
 import EmptyState from "../../components/owner/EmptyState";
 import RevenueChart from "../../components/owner/RevenueChart";
+import { useOwnerLiveRefresh } from "../../hooks/useOwnerLiveRefresh";
 
 const Dashboard = () => {
   const { axios, isOwner, currency } = useAppContext();
@@ -51,23 +52,31 @@ const Dashboard = () => {
     },
   ];
 
-  const fetchDashboardData = async () => {
-    setIsLoading(true);
-    setError(null);
+  // `silent` refreshes (live updates and polling) keep the page as it is: no spinner,
+  // no error toast.
+  const fetchDashboardData = async (silent = false) => {
+    if (!silent) {
+      setIsLoading(true);
+      setError(null);
+    }
     try {
       const { data } = await axios.get("/api/owner/dashboard");
       if (data.success) {
         setData(data.dashboardData);
       } else {
-        const errorMessage = data.message || "Failed to fetch dashboard data";
+        if (!silent) {
+          const errorMessage = data.message || "Failed to fetch dashboard data";
+          setError(errorMessage);
+          toast.error(errorMessage);
+        }
+      }
+    } catch (error: any) {
+      if (!silent) {
+        const errorMessage =
+          error.response?.data?.message || error.message || "Failed to fetch dashboard data";
         setError(errorMessage);
         toast.error(errorMessage);
       }
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message || error.message || "Failed to fetch dashboard data";
-      setError(errorMessage);
-      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -78,6 +87,10 @@ const Dashboard = () => {
       fetchDashboardData();
     }
   }, [isOwner]);
+
+  // live updates over a WebSocket, or polling when the server cannot hold one
+  useOwnerLiveRefresh(() => fetchDashboardData(true));
+
   return (
     <div className="px-4 pt-10 md:px-10 flex-1">
       <Title
@@ -90,7 +103,7 @@ const Dashboard = () => {
 
       {/* Error State */}
       {error && !isLoading && (
-        <ErrorState error={error} onRetry={fetchDashboardData} retryLabel="Retry" />
+        <ErrorState error={error} onRetry={() => fetchDashboardData()} retryLabel="Retry" />
       )}
 
       {/* Dashboard Content */}

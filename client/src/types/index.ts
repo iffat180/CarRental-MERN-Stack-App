@@ -102,3 +102,9 @@ export interface MonthlyRevenue {
   revenue: number;
   bookings: number;
 }
+
+/** A live update pushed to an owner over the WebSocket. */
+export interface RealtimeEvent {
+  type: "booking.created" | "booking.updated" | "booking.cancelled";
+  bookingId: string;
+}

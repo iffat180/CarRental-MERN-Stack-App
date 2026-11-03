@@ -4,6 +4,7 @@ import Title from "../../components/owner/Title";
 import { useAppContext } from "../../context/AppContext";
 import toast from "react-hot-toast";
 import ErrorState from "../../components/owner/ErrorState";
+import { useOwnerLiveRefresh } from "../../hooks/useOwnerLiveRefresh";
 import EmptyState from "../../components/owner/EmptyState";
 import TableSkeleton from "../../components/owner/TableSkeleton";
 import { BOOKING_STATUS, STATUS_CONFIG, getStatusBadgeClasses } from "../../utils/bookingStatus";
@@ -39,23 +40,29 @@ const ManageBookings = () => {
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null); // Track which booking action is loading
 
-  const fetchOwnerBookings = async () => {
-    setIsLoading(true);
-    setError(null);
+  const fetchOwnerBookings = async (silent = false) => {
+    if (!silent) {
+      setIsLoading(true);
+      setError(null);
+    }
     try {
       const { data } = await axios.get("/api/bookings/owner");
       if (data.success) {
         setBookings(data.bookings);
       } else {
-        const errorMessage = data.message || "Failed to fetch bookings";
+        if (!silent) {
+          const errorMessage = data.message || "Failed to fetch bookings";
+          setError(errorMessage);
+          toast.error(errorMessage);
+        }
+      }
+    } catch (error: any) {
+      if (!silent) {
+        const errorMessage =
+          error.response?.data?.message || error.message || "Failed to fetch bookings";
         setError(errorMessage);
         toast.error(errorMessage);
       }
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message || error.message || "Failed to fetch bookings";
-      setError(errorMessage);
-      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -173,6 +180,9 @@ const ManageBookings = () => {
     fetchOwnerBookings();
   }, []);
 
+  // live updates over a WebSocket, or polling when the server cannot hold one
+  useOwnerLiveRefresh(() => fetchOwnerBookings(true));
+
   return (
     <div className="px-4 pt-10 md:px-10 w-full">
       <Title
@@ -185,7 +195,7 @@ const ManageBookings = () => {
 
       {/* Error State */}
       {error && !isLoading && (
-        <ErrorState error={error} onRetry={fetchOwnerBookings} retryLabel="Retry" />
+        <ErrorState error={error} onRetry={() => fetchOwnerBookings()} retryLabel="Retry" />
       )}
 
       {/* Empty State */}
