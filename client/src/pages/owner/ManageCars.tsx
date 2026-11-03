@@ -3,7 +3,6 @@ import { assets } from "../../assets/assets";
 import Title from "../../components/owner/Title";
 import { useAppContext } from "../../context/AppContext";
 import toast from "react-hot-toast";
-import LoadingState from "../../components/owner/LoadingState";
 import ErrorState from "../../components/owner/ErrorState";
 import EmptyState from "../../components/owner/EmptyState";
 import TableSkeleton from "../../components/owner/TableSkeleton";
@@ -90,7 +89,7 @@ const ManageCars = () => {
   };
 
   useEffect(() => {
-    isOwner && fetchOwnerCars();
+    if (isOwner) fetchOwnerCars();
   }, [isOwner]);
 
   return (

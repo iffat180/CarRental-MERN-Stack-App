@@ -127,7 +127,7 @@ const MyBookings = () => {
   };
 
   useEffect(() => {
-    user && fetchMyBookings();
+    if (user) fetchMyBookings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 

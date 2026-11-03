@@ -5,9 +5,7 @@ import { useAppContext } from "../context/AppContext";
 const LoginRequiredModal = ({ isOpen, onClose }) => {
   const { setShowLogin } = useAppContext();
   const location = useLocation();
-  
-  if (!isOpen) return null;
-  
+
   const handleLogin = () => {
     // Store current path for redirect after login
     sessionStorage.setItem("redirectPath", location.pathname + location.search);
@@ -48,6 +46,10 @@ const LoginRequiredModal = ({ isOpen, onClose }) => {
       document.removeEventListener("keydown", handleEscape);
     };
   }, [isOpen, onClose]);
+
+  // After every hook: returning early before the Escape-key effect would change the
+  // hook count when the modal opens (same bug as OwnerOnboardingModal).
+  if (!isOpen) return null;
 
   return (
     <div

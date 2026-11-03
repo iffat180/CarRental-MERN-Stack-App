@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
+import { useParams, useSearchParams, useLocation } from "react-router-dom";
 import { assets } from "../assets/assets";
 import Loader from "../components/Loader";
 import { useAppContext } from "../context/AppContext";
@@ -58,7 +58,7 @@ const BookingDetails = () => {
   const pickupDateParam = searchParams.get("pickupDate");
   const returnDateParam = searchParams.get("returnDate");
   
-  const { cars, axios, user, navigate, currency, pickupDate: contextPickupDate, returnDate: contextReturnDate } = useAppContext();
+  const { cars, axios, user, navigate, pickupDate: contextPickupDate, returnDate: contextReturnDate } = useAppContext();
   
   const [car, setCar] = useState<Car | null>(null);
   const [isLoading, setIsLoading] = useState(true);

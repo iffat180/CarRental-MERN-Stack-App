@@ -3,7 +3,6 @@ import NavbarOwner from "../../components/owner/NavbarOwner";
 import Sidebar from "../../components/owner/Sidebar";
 import { Outlet } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
-import { use } from "react";
 import { useEffect } from "react";
 
 const Layout = () => {

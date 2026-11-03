@@ -78,7 +78,7 @@ const decodeToken = (token: string | null): JwtPayload | null => {
     }
     
     return decoded;
-  } catch (error: any) {
+  } catch {
     return null;
   }
 };
@@ -89,13 +89,6 @@ const isTokenExpired = (token: string | null): boolean => {
   if (!decoded || !decoded.exp) return true;
   const currentTime = Date.now() / 1000;
   return decoded.exp < currentTime;
-};
-
-const getTokenExpiryTime = (token: string | null): number | null => {
-  if (!token) return null;
-  const decoded = decodeToken(token);
-  if (!decoded || !decoded.exp) return null;
-  return decoded.exp * 1000; // Convert to milliseconds
 };
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -286,8 +279,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       localStorage.removeItem("token");
       toast.error("Your session has expired. Please login again.");
     }
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // useEffect to fetch user data when token is available
