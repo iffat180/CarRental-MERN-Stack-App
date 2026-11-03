@@ -24,7 +24,8 @@ test.describe("home page", () => {
     await page.getByRole("button", { name: "Check availability" }).click();
 
     await expect(page).toHaveURL(/\/car-details\/car14$/);
-    await expect(page.getByRole("heading", { name: /Mazda MX-5 Miata/ })).toBeVisible();
+    // level 1: while the page changes the old home page can still be on screen for a moment
+    await expect(page.getByRole("heading", { level: 1, name: /Mazda MX-5 Miata/ })).toBeVisible();
     await expect(page.getByLabel(/Pickup Date/)).toHaveValue("2030-01-10");
     await expect(page.getByLabel(/Return Date/)).toHaveValue("2030-01-13");
   });
