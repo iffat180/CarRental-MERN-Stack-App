@@ -92,3 +92,13 @@ export interface ApiResponse<T = unknown> {
   message?: string;
   data?: T;
 }
+
+/** One month of the owner dashboard's revenue chart. */
+export interface MonthlyRevenue {
+  /** "2026-11" */
+  month: string;
+  /** "Nov" */
+  label: string;
+  revenue: number;
+  bookings: number;
+}

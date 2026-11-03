@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import type { Booking } from "../../types";
+import type { Booking, MonthlyRevenue } from "../../types";
 import Title from "../../components/Title";
 import { assets } from "../../assets/assets";
 import toast from "react-hot-toast";
@@ -7,6 +7,7 @@ import { useAppContext } from "../../context/AppContext";
 import LoadingState from "../../components/owner/LoadingState";
 import ErrorState from "../../components/owner/ErrorState";
 import EmptyState from "../../components/owner/EmptyState";
+import RevenueChart from "../../components/owner/RevenueChart";
 
 const Dashboard = () => {
   const { axios, isOwner, currency } = useAppContext();
@@ -18,6 +19,7 @@ const Dashboard = () => {
     completedBookings: number;
     recentBookings: Booking[];
     monthlyRevenue: number;
+    revenueByMonth: MonthlyRevenue[];
   }>({
     totalCars: 0,
     totalBookings: 0,
@@ -25,6 +27,7 @@ const Dashboard = () => {
     completedBookings: 0,
     recentBookings: [],
     monthlyRevenue: 0,
+    revenueByMonth: [],
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +45,7 @@ const Dashboard = () => {
       icon: assets.cautionIconColored,
     },
     {
-      title: "Confirmed",
+      title: "Completed",
       value: data.completedBookings,
       icon: assets.listIconColored,
     },
@@ -160,6 +163,12 @@ const Dashboard = () => {
               </p>
             </div>
           </div>
+
+          <section className="p-4 md:p-6 mb-8 border border-borderColor rounded-md w-full max-w-3xl">
+            <h2 className="text-lg">Revenue by month</h2>
+            <p className="text-gray-500 mb-4">Confirmed and completed bookings, last 6 months</p>
+            <RevenueChart data={data.revenueByMonth} currency={currency} />
+          </section>
         </>
       )}
     </div>

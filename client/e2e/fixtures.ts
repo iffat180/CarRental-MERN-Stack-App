@@ -58,9 +58,9 @@ const json = (body: unknown) => ({
 });
 
 /** A syntactically valid JWT that expires far in the future (the app only reads `exp`). */
-const fakeToken = () => {
+const fakeToken = (role: string) => {
   const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString("base64url");
-  return `${b64({ alg: "HS256", typ: "JWT" })}.${b64({ userId: "u1", role: "user", exp: Math.floor(Date.now() / 1000) + 3600 })}.sig`;
+  return `${b64({ alg: "HS256", typ: "JWT" })}.${b64({ userId: "u1", role, exp: Math.floor(Date.now() / 1000) + 3600 })}.sig`;
 };
 
 /** Mock every API call the public pages make, and stub car photos so no network is needed. */
@@ -98,14 +98,43 @@ export const mockApi = async (page: Page) => {
   );
 };
 
-/** Pretend a normal (non-owner) user is logged in. */
-export const loginAsUser = async (page: Page) => {
-  await page.addInitScript((token) => localStorage.setItem("token", token), fakeToken());
+/** Pretend a user is logged in (a normal user by default, or an owner). */
+export const loginAsUser = async (page: Page, role: "user" | "owner" = "user") => {
+  await page.addInitScript((token) => localStorage.setItem("token", token), fakeToken(role));
   await page.route("**/api/user/data", (r) =>
     r.fulfill(
       json({
         success: true,
-        user: { _id: "u1", name: "Test User", email: "test@example.com", role: "user" },
+        user: { _id: "u1", name: "Test User", email: "test@example.com", role },
+      })
+    )
+  );
+};
+
+/** An owner with a few months of revenue, for the dashboard. */
+export const loginAsOwner = async (page: Page) => {
+  await loginAsUser(page, "owner");
+  const months = [
+    ["2026-06", "Jun", 0, 0],
+    ["2026-07", "Jul", 240, 2],
+    ["2026-08", "Aug", 0, 0],
+    ["2026-09", "Sep", 380, 3],
+    ["2026-10", "Oct", 150, 1],
+    ["2026-11", "Nov", 500, 2],
+  ].map(([month, label, revenue, bookings]) => ({ month, label, revenue, bookings }));
+  await page.route("**/api/owner/dashboard", (r) =>
+    r.fulfill(
+      json({
+        success: true,
+        dashboardData: {
+          totalCars: 3,
+          totalBookings: 8,
+          pendingBookings: 1,
+          completedBookings: 4,
+          recentBookings: [],
+          monthlyRevenue: 500,
+          revenueByMonth: months,
+        },
       })
     )
   );
