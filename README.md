@@ -291,7 +291,7 @@ curl -X POST http://localhost:3000/api/assistant \
 ### Run All Tests
 
 ```bash
-# Server: 116 unit tests plus 6 integration tests
+# Server: 116 unit tests plus 17 integration tests
 cd server
 npm test
 
