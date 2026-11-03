@@ -57,6 +57,16 @@ jobs:
           cd client
           npm ci
 
+      - name: Lint Frontend (ESLint)
+        run: |
+          cd client
+          npm run lint
+
+      - name: Check Formatting (Prettier)
+        run: |
+          npm ci
+          npm run format:check
+
       - name: Typecheck Frontend (tsc)
         run: |
           cd client
