@@ -101,6 +101,22 @@ jobs:
           cd client
           npm run e2e:stories
 
+      # Lighthouse on the production build (served with the real security headers and a mock
+      # API): accessibility, SEO and best practices must stay above their limits.
+      - name: Lighthouse (accessibility, SEO, best practices, performance)
+        run: |
+          cd client
+          export CHROME_PATH=$(node -e "console.log(require('@playwright/test').chromium.executablePath())")
+          npm run lighthouse
+
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: client/.lighthouseci
+          retention-days: 7
+
       - name: Upload Playwright report
         if: failure()
         uses: actions/upload-artifact@v4

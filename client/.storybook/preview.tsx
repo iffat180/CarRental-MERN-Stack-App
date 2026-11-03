@@ -3,6 +3,7 @@ import type { Preview } from "@storybook/react-vite";
 import { MemoryRouter } from "react-router-dom";
 import { LazyMotion, MotionConfig } from "motion/react";
 import motionFeatures from "../src/motionFeatures";
+import "../src/fonts.css";
 import "../src/index.css";
 import "../src/components/a4/a4.css";
 import "../src/components/a4/a4-skin.css";

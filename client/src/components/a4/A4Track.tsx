@@ -43,11 +43,18 @@ const slideLook = (d: number) => ({
   scale: d === 0 ? 1 : 0.8,
 });
 
-const SlideContent = ({ slide }: { slide: TrackSlide }) => (
+const SlideContent = ({ slide, active }: { slide: TrackSlide; active: boolean }) => (
   <>
     <div className="shadow" aria-hidden="true" />
     <div className="car">
-      <img src={slide.img} alt={`${slide.year} ${slide.name}`} decoding="async" draggable={false} />
+      <img
+        src={slide.img}
+        alt={`${slide.year} ${slide.name}`}
+        decoding="async"
+        // the centred car is the largest thing on the page: fetch it first, the rest later
+        fetchPriority={active ? "high" : "low"}
+        draggable={false}
+      />
     </div>
     <div className="mirror" aria-hidden="true">
       <img src={slide.img} alt="" draggable={false} />
@@ -83,7 +90,7 @@ const StaticTrack = ({ slides, index }: A4TrackProps) => {
             aria-hidden={idx !== index}
             style={{ opacity, transform: `scale(${scale})` }}
           >
-            <SlideContent slide={s} />
+            <SlideContent slide={s} active={idx === index} />
           </div>
         );
       })}
@@ -149,7 +156,7 @@ const MotionTrack = ({ slides, index, onChange }: A4TrackProps) => {
               animate={slideLook(idx - index)}
               transition={spring}
             >
-              <SlideContent slide={s} />
+              <SlideContent slide={s} active={idx === index} />
             </m.div>
           ))}
         </m.div>

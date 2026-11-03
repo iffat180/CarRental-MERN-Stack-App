@@ -4,10 +4,39 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Wayfarer</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Michroma&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" />
+    <title data-seo-default>Wayfarer: rent cars from people, not fleets</title>
+    <meta
+      data-seo-default
+      name="description"
+      content="Rent a car directly from its owner. Slide through the cars near you, pick your dates, or describe your trip and get matched with the right one."
+    />
+    <meta name="theme-color" content="#d6dadf" />
+    <!-- The first car on the home page is its largest element. Start fetching it now,
+         in parallel with the app code, instead of after the cars have loaded. -->
+    <link rel="preload" as="image" href="/cutouts/outback.webp" type="image/webp" fetchpriority="high" />
+
+    <!-- Defaults for crawlers that do not run JavaScript (Facebook, LinkedIn, Slack). Once the
+         app starts, <Seo> removes every tag marked data-seo-default and renders the page's own,
+         so the page never ends up with two descriptions. -->
+    <meta data-seo-default property="og:site_name" content="Wayfarer" />
+    <meta data-seo-default property="og:type" content="website" />
+    <meta
+      data-seo-default
+      property="og:title"
+      content="Wayfarer: rent cars from people, not fleets"
+    />
+    <meta
+      data-seo-default
+      property="og:description"
+      content="Rent a car directly from its owner. Slide through the cars near you, pick your dates, or describe your trip."
+    />
+    <meta
+      data-seo-default
+      property="og:image"
+      content="https://car-rental-nu-rouge.vercel.app/og-image.jpg"
+    />
+    <meta data-seo-default property="og:url" content="https://car-rental-nu-rouge.vercel.app/" />
+    <meta data-seo-default name="twitter:card" content="summary_large_image" />
   </head>
   <body>
     <div id="root"></div>

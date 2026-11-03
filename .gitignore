@@ -61,3 +61,4 @@ client/test-results/
 # Storybook
 client/storybook-static/
 client/playwright-report-stories/
+client/.lighthouseci/

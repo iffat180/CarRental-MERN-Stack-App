@@ -444,7 +444,7 @@
 .a4-dots button {
   background: transparent;
   border: 0;
-  padding: 8px 6px;
+  padding: 8px 8px; /* with the 8px dot, at least 24px wide: the minimum touch target */
   min-height: 24px;
 }
 .a4-dots span {
@@ -788,4 +788,10 @@
   .a4-fcard:hover {
     transform: none;
   }
+}
+
+/* Reserve room for the page, so the footer does not jump down when the content (cars,
+   bookings) arrives after the first paint. Counts against the layout-shift score. */
+.a4 main {
+  min-height: 80vh;
 }
