@@ -7,7 +7,14 @@ import prettier from "eslint-config-prettier";
 import { defineConfig, globalIgnores } from "eslint/config";
 
 export default defineConfig([
-  globalIgnores(["dist", "playwright-report", "test-results", "coverage"]),
+  globalIgnores([
+    "dist",
+    "playwright-report",
+    "playwright-report-stories",
+    "test-results",
+    "coverage",
+    "storybook-static",
+  ]),
   {
     files: ["**/*.{ts,tsx}"],
     extends: [
@@ -32,13 +39,14 @@ export default defineConfig([
     },
   },
   {
-    // The context file exports both the provider and its hook on purpose
-    files: ["src/context/**/*.{ts,tsx}"],
+    // The context file exports both the provider and its hook on purpose, and the story
+    // helpers export demo data next to their component
+    files: ["src/context/**/*.{ts,tsx}", "src/stories/**/*.{ts,tsx}"],
     rules: { "react-refresh/only-export-components": "off" },
   },
   {
     // Node-side files: Playwright tests and tool configs
-    files: ["e2e/**/*.ts", "*.config.{js,ts}"],
+    files: ["e2e/**/*.ts", "storybook-tests/**/*.ts", "*.config.{js,ts}"],
     languageOptions: { globals: globals.node },
   },
 ]);
