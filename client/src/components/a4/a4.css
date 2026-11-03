@@ -186,7 +186,8 @@
   align-items: center;
   min-height: 44px;
 }
-@media (max-width: 720px) {
+/* the header has up to 7 links, which need about 900px; below that it becomes a menu */
+@media (max-width: 920px) {
   .a4-nav {
     flex-wrap: wrap;
     padding: 6px 6px 6px 20px;
