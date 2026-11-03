@@ -72,12 +72,32 @@ jobs:
           cd client
           npm run build
 
+      # End-to-end tests drive the built site in a real browser. The API is mocked
+      # inside the tests, so no database or backend is needed.
+      - name: Install Playwright browser
+        run: |
+          cd client
+          npx playwright install --with-deps chromium
+
+      - name: Run End-to-End Tests (Playwright)
+        run: |
+          cd client
+          npm run e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: client/playwright-report
+          retention-days: 7
+
       - name: All Tests Passed ✅
         run: |
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "✅ All tests passed successfully!"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "Backend unit tests + booking-concurrency integration tests + frontend tests"
+          echo "Backend unit tests + booking-concurrency integration tests + frontend tests + end-to-end tests"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
   # Job 2: Verify AWS credentials (only after tests pass)
