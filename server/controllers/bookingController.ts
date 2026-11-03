@@ -3,6 +3,7 @@ import type { Request, Response } from "express";
 import Booking, { type BookingDocument } from "../models/Booking.js";
 import Car from "../models/Car.js";
 import { errCode, errMessage, errName } from "../utils/errors.js";
+import { notifyOwner } from "../realtime.js";
 
 type IdLike = Types.ObjectId | string;
 type DateLike = Date | string;
@@ -363,6 +364,7 @@ export const createBooking = async (req: Request, res: Response) => {
     }
 
     const booking = await createBookingAtomic({ car, user: _id, pickupDate, returnDate });
+    notifyOwner(booking.owner, { type: "booking.created", bookingId: String(booking._id) });
 
     return res.json({ success: true, bookingId: booking._id, message: "Booking Created" });
   } catch (error) {
@@ -430,6 +432,7 @@ export const changeBookingStatus = async (req: Request, res: Response) => {
 
     booking.status = status;
     await booking.save();
+    notifyOwner(booking.owner, { type: "booking.updated", bookingId: String(booking._id) });
 
     res.json({ success: true, message: "Status Updated" });
   } catch (error) {
@@ -522,6 +525,8 @@ export const createBookingWithDetails = async (req: Request, res: Response) => {
       extras: extras || { extraDriver: false },
       notes: notes || "",
     });
+
+    notifyOwner(booking.owner, { type: "booking.created", bookingId: String(booking._id) });
 
     console.log(`[createBookingWithDetails] Booking created`, {
       bookingId: booking._id.toString(),
@@ -635,6 +640,7 @@ export const cancelBooking = async (req: Request, res: Response) => {
     // Cancel the booking
     booking.status = "cancelled";
     await booking.save();
+    notifyOwner(booking.owner, { type: "booking.cancelled", bookingId: String(booking._id) });
 
     console.log(`[cancelBooking] Booking cancelled successfully`, {
       bookingId: booking._id.toString(),

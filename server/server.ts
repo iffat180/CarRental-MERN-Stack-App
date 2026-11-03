@@ -1,8 +1,10 @@
 import type { Server } from "node:http";
+import type { WebSocketServer } from "ws";
 import "dotenv/config";
 import mongoose from "mongoose";
 import app from "./app.js";
 import connectDB from "./configs/db.js";
+import { attachRealtime } from "./realtime.js";
 
 // Long-running entry point (local dev and Render). The Vercel serverless
 // entry point is api/index.ts; both share the app defined in app.ts.
@@ -38,6 +40,7 @@ const PORT = process.env.PORT || 3000;
 
 // Assigned after app.listen
 let server: Server | undefined;
+let realtime: WebSocketServer | undefined;
 
 // ============================================
 // Process Handlers
@@ -66,6 +69,9 @@ process.on("unhandledRejection", (err: unknown) => {
 // Graceful shutdown handler
 const gracefulShutdown = async (signal: string): Promise<void> => {
   console.log(`\n${signal} received. Starting graceful shutdown...`);
+
+  // Open WebSockets would keep server.close() waiting forever, so drop them first
+  realtime?.clients.forEach((client) => client.terminate());
 
   // Close HTTP server
   if (server) {
@@ -106,3 +112,6 @@ server = app.listen(PORT, () => {
   console.log(`✅ Environment: ${process.env.NODE_ENV || "development"}`);
   console.log(`✅ Health check: http://localhost:${PORT}/health`);
 });
+
+// Live booking updates for owners (WebSocket at /ws)
+realtime = attachRealtime(server);
