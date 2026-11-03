@@ -15,8 +15,6 @@ const OwnerOnboardingModal = ({ isOpen, onClose, onBecomeOwner, isSubmitting }) 
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
   const handleNext = () => {
     if (currentScreen < TOTAL_SCREENS) {
       const newScreen = currentScreen + 1;
@@ -72,6 +70,10 @@ const OwnerOnboardingModal = ({ isOpen, onClose, onBecomeOwner, isSubmitting }) 
       document.removeEventListener("keydown", handleEscape);
     };
   }, [isOpen, onClose]);
+
+  // Must come after every hook above: returning early before the Escape-key
+  // useEffect changed the hook count when the modal opened and crashed the page.
+  if (!isOpen) return null;
 
   return (
     <div
