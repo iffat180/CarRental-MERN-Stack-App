@@ -1,0 +1,15 @@
+node_modules
+dist
+build
+coverage
+playwright-report
+test-results
+package-lock.json
+*.zip
+*.png
+client/public
+server/lambda
+server/uploads
+server/public
+docs
+leetcode-practice
