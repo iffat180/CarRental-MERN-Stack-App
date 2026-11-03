@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { assets } from "../assets/assets";
 import Loader from "../components/Loader";
+import Seo from "../components/Seo";
+import { SITE_URL, snippet } from "../lib/seo";
 import { useAppContext } from "../context/AppContext";
 import { toast } from "react-hot-toast";
 import type { Car } from "../types";
@@ -154,6 +156,43 @@ const CarDetails = () => {
 
   return car ? (
     <div className="a4-page">
+      <Seo
+        title={`${car.brand} ${car.model} ${car.year} for rent`}
+        path={`/car-details/${car._id}`}
+        description={snippet(
+          `Rent this ${car.year} ${car.brand} ${car.model} in ${car.location} for ${currency}${car.pricePerDay} a day. ${car.description}`
+        )}
+        image={car.image}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Car",
+          name: `${car.brand} ${car.model}`,
+          brand: { "@type": "Brand", name: car.brand },
+          model: car.model,
+          vehicleModelDate: String(car.year),
+          bodyType: car.category,
+          vehicleSeatingCapacity: car.seating_capacity,
+          fuelType: car.fuel_type,
+          vehicleTransmission: car.transmission,
+          image: car.image,
+          description: car.description,
+          url: `${SITE_URL}/car-details/${car._id}`,
+          offers: {
+            "@type": "Offer",
+            price: car.pricePerDay,
+            priceCurrency: "USD",
+            availability: car.isAvailable
+              ? "https://schema.org/InStock"
+              : "https://schema.org/OutOfStock",
+            priceSpecification: {
+              "@type": "UnitPriceSpecification",
+              price: car.pricePerDay,
+              priceCurrency: "USD",
+              unitText: "DAY",
+            },
+          },
+        }}
+      />
       <button
         onClick={() => navigate(-1)}
         className="flex items-center gap-2 mb-6 text-gray-500 cursor-pointer hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded px-2 py-1"
@@ -169,7 +208,7 @@ const CarDetails = () => {
           <img
             src={carImage(car.image, "large")}
             alt={`${car.brand} ${car.model} ${car.year} - ${car.category}`}
-            className="w-full h-auto md:max-h-100 object-cover rounded-xl mb-6 shadow-md"
+            className="w-full aspect-[16/10] md:aspect-auto md:h-[25rem] object-cover rounded-xl mb-6 shadow-md"
           />
           <div className="space-y-6">
             <header>

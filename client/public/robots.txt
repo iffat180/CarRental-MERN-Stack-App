@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /owner
+Disallow: /my-bookings
+Disallow: /booking-details
+Disallow: /booking-summary
+Disallow: /booking-success
+
+Sitemap: https://car-rental-nu-rouge.vercel.app/sitemap.xml

@@ -1,10 +1,12 @@
 import React from "react";
+import Seo from "../components/Seo";
 import A4Stage from "../components/a4/A4Stage";
 import { A4Featured, A4Matching, A4Trust, A4Cities, A4Owner } from "../components/a4/A4Sections";
 
 // Home page, "A4 silver glass" design. Header and footer come from App.tsx.
 const HomeA4 = () => (
   <>
+    <Seo />
     <section className="a4-wrap a4-headline">
       <p className="mono a4-eyebrow">18 cars · 11 cities</p>
       <h1 className="disp">Every trip has its car.</h1>

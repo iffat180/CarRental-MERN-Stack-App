@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import Title from "../components/Title";
+import Seo from "../components/Seo";
 import { assets } from "../assets/assets";
 import CarCard from "../components/CarCard";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -178,6 +179,11 @@ const Cars = () => {
 
   return (
     <div className="a4-page flex flex-col items-center">
+      <Seo
+        title="Cars for rent"
+        path="/cars"
+        description="Browse every car on Wayfarer, from SUVs and sedans to convertibles and trucks, each rented directly by its owner."
+      />
       <Title
         title="Available Cars"
         subTitle="Browse our selection of premium vehicles available for your next adventure"
