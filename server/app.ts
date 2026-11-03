@@ -5,6 +5,7 @@ import userRouter from "./routes/userRoutes.js";
 import ownerRouter from "./routes/ownerRoutes.js";
 import bookingRouter from "./routes/bookingRoutes.js";
 import recommendationRouter from "./routes/recommendation.js";
+import { createAssistantRouter } from "./routes/assistant.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { sanitizeBody } from "./middleware/sanitizeBody.js";
 
@@ -71,6 +72,8 @@ app.use("/api/owner", ownerRouter);
 app.use("/api/bookings", bookingRouter);
 // AI-powered car recommendations endpoint
 app.use("/api", recommendationRouter);
+// Chat assistant (read-only car tools)
+app.use("/api", createAssistantRouter());
 
 // ============================================
 // Error handling

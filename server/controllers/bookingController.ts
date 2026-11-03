@@ -669,6 +669,9 @@ export const cancelBooking = async (req: Request, res: Response) => {
 };
 
 // Internal helpers exposed for tests only — not part of the HTTP API.
+// Also used (read-only) by the assistant and MCP tools
+export { checkAvailability };
+
 export const __testables = {
   createBookingAtomic,
   createBookingNonTransactional,

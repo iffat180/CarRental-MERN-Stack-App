@@ -11,4 +11,5 @@
 export { getOpenAIClient } from "./openaiClient.js";
 export { getEmbeddingForText } from "./embeddings.js";
 export { runAssistantConversation } from "./assistantCore.js";
+export { carTools, toOpenAITools } from "./tools.js";
 export { analyzeCarImages } from "./visionCore.js";
