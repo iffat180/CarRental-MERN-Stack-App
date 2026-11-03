@@ -1,4 +1,5 @@
 import type { ErrorRequestHandler } from "express";
+import { flushMonitoring, reportError } from "../monitoring.js";
 
 interface HttpError extends Error {
   statusCode?: number;
@@ -6,7 +7,7 @@ interface HttpError extends Error {
 }
 
 // Global Error Handler Middleware
-export const errorHandler: ErrorRequestHandler = (err: HttpError, req, res, _next) => {
+export const errorHandler: ErrorRequestHandler = async (err: HttpError, req, res, _next) => {
   const errorDetails = {
     message: err.message,
     stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
@@ -25,6 +26,12 @@ export const errorHandler: ErrorRequestHandler = (err: HttpError, req, res, _nex
     statusCode = 401;
   } else if (err.name === "MongoServerError" || err.name === "MongooseError") {
     statusCode = 500;
+  }
+
+  // Only unexpected failures are worth an alert; a 400 or 401 is the client's doing.
+  if (statusCode >= 500) {
+    reportError(err, { method: req.method, url: req.url });
+    await flushMonitoring();
   }
 
   res.status(statusCode).json({

@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import app from "./app.js";
 import connectDB from "./configs/db.js";
 import { attachRealtime } from "./realtime.js";
+import { initMonitoring } from "./monitoring.js";
 
 // Long-running entry point (local dev and Render). The Vercel serverless
 // entry point is api/index.ts; both share the app defined in app.ts.
@@ -31,6 +32,7 @@ console.log("✅ Environment variables validated");
 
 // Connect to Database
 await connectDB();
+if (await initMonitoring()) console.log("✅ Sentry error monitoring is on");
 
 // ============================================
 // Server Startup

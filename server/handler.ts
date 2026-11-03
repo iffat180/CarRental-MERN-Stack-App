@@ -3,6 +3,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import mongoose from "mongoose";
 import app from "./app.js";
 import { errMessage } from "./utils/errors.js";
+import { initMonitoring } from "./monitoring.js";
 
 // Serverless request handler. It is compiled by `npm run build` into
 // dist/handler.js, and api/index.js (plain JavaScript) re-exports it, so
@@ -32,7 +33,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     if (!process.env.MONGODB_URI || !process.env.JWT_SECRET) {
       throw new Error("Missing MONGODB_URI or JWT_SECRET environment variable");
     }
-    await ensureDb();
+    await Promise.all([ensureDb(), initMonitoring()]);
   } catch (err) {
     console.error("[api] startup failure:", errMessage(err));
     res.statusCode = 500;

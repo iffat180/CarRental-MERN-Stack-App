@@ -24,6 +24,7 @@
     "@aws-sdk/lib-storage": "^3.946.0",
     "@aws-sdk/s3-request-presigner": "^3.946.0",
     "@pinecone-database/pinecone": "^3.0.0",
+    "@sentry/node": "^11.10.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
