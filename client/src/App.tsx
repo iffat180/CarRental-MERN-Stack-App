@@ -10,6 +10,8 @@ import Cars from "./pages/Cars";
 import Loader from "./components/Loader";
 import Seo from "./components/Seo";
 import ErrorBoundary from "./components/ErrorBoundary";
+import OfflineBanner from "./pwa/OfflineBanner";
+import PwaPrompt from "./pwa/PwaPrompt";
 import { AnimatePresence, LazyMotion, MotionConfig, m } from "motion/react";
 
 // The animation code is fetched after the first paint, not bundled into it.
@@ -68,6 +70,8 @@ const App = () => {
         <div className="a4">
           {privateTitle && <Seo title={privateTitle} path={pathname} noindex />}
           <Toaster />
+          <OfflineBanner />
+          <PwaPrompt />
           {/* Skip to main content link for keyboard navigation */}
           <a
             href="#main-content"
