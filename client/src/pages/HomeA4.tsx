@@ -8,7 +8,10 @@ const HomeA4 = () => (
     <section className="a4-wrap a4-headline">
       <p className="mono a4-eyebrow">18 cars · 11 cities</p>
       <h1 className="disp">Every trip has its car.</h1>
-      <p>Slide through the cars near you and pick your dates. Or describe the trip, and we'll match one.</p>
+      <p>
+        Slide through the cars near you and pick your dates. Or describe the trip, and we'll match
+        one.
+      </p>
     </section>
 
     <A4Stage />

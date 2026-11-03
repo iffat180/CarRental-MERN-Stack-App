@@ -45,17 +45,17 @@ let server: Server | undefined;
 
 // Handle unhandled promise rejections
 process.on("unhandledRejection", (err: unknown) => {
-  console.error('❌ Unhandled Promise Rejection:', {
+  console.error("❌ Unhandled Promise Rejection:", {
     message: err instanceof Error ? err.message : String(err),
     name: err instanceof Error ? err.name : "Error",
     stack: process.env.NODE_ENV === "development" && err instanceof Error ? err.stack : undefined,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
-  
+
   // Close server gracefully if it exists
   if (server) {
     server.close(() => {
-      console.log('✅ HTTP server closed due to unhandled rejection');
+      console.log("✅ HTTP server closed due to unhandled rejection");
       process.exit(1);
     });
   } else {
@@ -66,12 +66,12 @@ process.on("unhandledRejection", (err: unknown) => {
 // Graceful shutdown handler
 const gracefulShutdown = async (signal: string): Promise<void> => {
   console.log(`\n${signal} received. Starting graceful shutdown...`);
-  
+
   // Close HTTP server
   if (server) {
     server.close(() => {
-      console.log('✅ HTTP server closed');
-      
+      console.log("✅ HTTP server closed");
+
       // Close database connection
       void mongoose.connection.close().then(() => {
         console.log("✅ MongoDB connection closed");
@@ -86,23 +86,23 @@ const gracefulShutdown = async (signal: string): Promise<void> => {
       process.exit(0);
     });
   }
-  
+
   // Force close after 10 seconds
   setTimeout(() => {
-    console.error('❌ Forced shutdown after timeout');
+    console.error("❌ Forced shutdown after timeout");
     process.exit(1);
   }, 10000);
 };
 
 // Register shutdown handlers (override db.js handlers to include HTTP server)
-process.removeAllListeners('SIGINT');
-process.removeAllListeners('SIGTERM');
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.removeAllListeners("SIGINT");
+process.removeAllListeners("SIGTERM");
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 
 // Start server and store instance
 server = app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
-  console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`✅ Environment: ${process.env.NODE_ENV || "development"}`);
   console.log(`✅ Health check: http://localhost:${PORT}/health`);
 });

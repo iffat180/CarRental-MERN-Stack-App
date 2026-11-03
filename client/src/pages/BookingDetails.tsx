@@ -15,9 +15,10 @@ const generateTimeOptions = () => {
       const time24 = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
       const hour12 = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
       const ampm = hour >= 12 ? "PM" : "AM";
-      const display = minute === 0 
-        ? `${hour12}:00 ${ampm}` 
-        : `${hour12}:${minute.toString().padStart(2, "0")} ${ampm}`;
+      const display =
+        minute === 0
+          ? `${hour12}:00 ${ampm}`
+          : `${hour12}:${minute.toString().padStart(2, "0")} ${ampm}`;
       options.push({ value: time24, label: display });
     }
   }
@@ -41,7 +42,7 @@ const validateDate = (dateString, mustBeFuture = false, mustBePast = false) => {
   const date = new Date(dateString);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
+
   if (mustBeFuture) {
     return date > today;
   }
@@ -57,18 +58,25 @@ const BookingDetails = () => {
   const location = useLocation();
   const pickupDateParam = searchParams.get("pickupDate");
   const returnDateParam = searchParams.get("returnDate");
-  
-  const { cars, axios, user, navigate, pickupDate: contextPickupDate, returnDate: contextReturnDate } = useAppContext();
-  
+
+  const {
+    cars,
+    axios,
+    user,
+    navigate,
+    pickupDate: contextPickupDate,
+    returnDate: contextReturnDate,
+  } = useAppContext();
+
   const [car, setCar] = useState<Car | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [locationOptions, setLocationOptions] = useState<any[]>([]);
-  
+
   // Use params if available, otherwise fallback to context
   const pickupDate = pickupDateParam || contextPickupDate;
   const returnDate = returnDateParam || contextReturnDate;
-  
+
   // Form state
   const [formData, setFormData] = useState({
     userDetails: {
@@ -94,18 +102,18 @@ const BookingDetails = () => {
     },
     notes: "",
   });
-  
+
   // Validation errors
   const [errors, setErrors] = useState({});
-  
+
   // Fetch car data
   useEffect(() => {
     const fetchCar = async () => {
       setIsLoading(true);
-      
+
       // First, check if car exists in context
       const carFromContext = cars.find((c) => c._id === carId);
-      
+
       if (carFromContext) {
         setCar(carFromContext);
         // Set location options based on car location
@@ -114,7 +122,7 @@ const BookingDetails = () => {
         setIsLoading(false);
         return;
       }
-      
+
       // If not found in context, fetch from API
       try {
         const { data } = await axios.get(`/api/user/cars/${carId}`);
@@ -128,23 +136,24 @@ const BookingDetails = () => {
           navigate("/cars");
         }
       } catch (error: any) {
-        const errorMessage = error.response?.data?.message || error.message || "Failed to load car details";
+        const errorMessage =
+          error.response?.data?.message || error.message || "Failed to load car details";
         toast.error(errorMessage);
         navigate("/cars");
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     if (carId) {
       fetchCar();
     }
   }, [carId, cars, axios, navigate]);
-  
+
   // Prefill form data from user profile or existing booking
   useEffect(() => {
     const bookingId = location.state?.bookingId || sessionStorage.getItem("editBookingId");
-    
+
     if (bookingId) {
       // Fetch existing booking to prefill form
       const fetchBooking = async () => {
@@ -152,7 +161,7 @@ const BookingDetails = () => {
           const { data } = await axios.get(`/api/bookings/${bookingId}`);
           if (data.success && data.booking) {
             const booking = data.booking;
-            
+
             // Prefill form with booking data
             setFormData((prev) => ({
               ...prev,
@@ -160,10 +169,14 @@ const BookingDetails = () => {
                 fullName: booking.userDetails?.fullName || user?.name || "",
                 email: booking.userDetails?.email || user?.email || "",
                 phone: booking.userDetails?.phone || "",
-                dateOfBirth: booking.userDetails?.dateOfBirth ? booking.userDetails.dateOfBirth.split("T")[0] : "",
+                dateOfBirth: booking.userDetails?.dateOfBirth
+                  ? booking.userDetails.dateOfBirth.split("T")[0]
+                  : "",
                 nationality: booking.userDetails?.nationality || "",
                 licenseNumber: booking.userDetails?.licenseNumber || "",
-                licenseExpiry: booking.userDetails?.licenseExpiry ? booking.userDetails.licenseExpiry.split("T")[0] : "",
+                licenseExpiry: booking.userDetails?.licenseExpiry
+                  ? booking.userDetails.licenseExpiry.split("T")[0]
+                  : "",
                 licenseCountry: booking.userDetails?.licenseCountry || "",
               },
               pickupDetails: {
@@ -179,7 +192,7 @@ const BookingDetails = () => {
               },
               notes: booking.notes || "",
             }));
-            
+
             // Clear edit booking ID from sessionStorage after use
             sessionStorage.removeItem("editBookingId");
           }
@@ -188,10 +201,10 @@ const BookingDetails = () => {
           // Continue with user profile prefill if booking fetch fails
         }
       };
-      
+
       fetchBooking();
     }
-    
+
     // Prefill from user profile if no booking ID or as fallback
     if (user) {
       setFormData((prev) => ({
@@ -204,7 +217,7 @@ const BookingDetails = () => {
       }));
     }
   }, [user, location.state, axios]);
-  
+
   // Validate dates are present
   useEffect(() => {
     if (!pickupDate || !returnDate) {
@@ -212,7 +225,7 @@ const BookingDetails = () => {
       navigate(-1);
     }
   }, [pickupDate, returnDate, navigate]);
-  
+
   // Handle form field changes
   const handleFieldChange = (section, field, value) => {
     setFormData((prev) => ({
@@ -222,12 +235,13 @@ const BookingDetails = () => {
         [field]: value,
       },
     }));
-    
+
     // Clear error for this field
-    const errorKey = section === "userDetails" || section === "pickupDetails" || section === "returnDetails"
-      ? `${section}.${field}`
-      : field;
-    
+    const errorKey =
+      section === "userDetails" || section === "pickupDetails" || section === "returnDetails"
+        ? `${section}.${field}`
+        : field;
+
     if (errors[errorKey]) {
       setErrors((prev) => ({
         ...prev,
@@ -235,7 +249,7 @@ const BookingDetails = () => {
       }));
     }
   };
-  
+
   // Handle notes change (separate because it's not nested)
   const handleNotesChange = (value) => {
     setFormData((prev) => ({
@@ -243,11 +257,11 @@ const BookingDetails = () => {
       notes: value,
     }));
   };
-  
+
   // Validate form
   const validateForm = () => {
     const newErrors = {};
-    
+
     // Validate userDetails
     if (!formData.userDetails.fullName.trim()) {
       newErrors["userDetails.fullName"] = "Full name is required";
@@ -277,7 +291,7 @@ const BookingDetails = () => {
     if (!formData.userDetails.licenseCountry.trim()) {
       newErrors["userDetails.licenseCountry"] = "License country is required";
     }
-    
+
     // Validate pickupDetails
     if (!formData.pickupDetails.address.trim()) {
       newErrors["pickupDetails.address"] = "Pickup address is required";
@@ -285,7 +299,7 @@ const BookingDetails = () => {
     if (!formData.pickupDetails.time || !validateTime(formData.pickupDetails.time)) {
       newErrors["pickupDetails.time"] = "Pickup time is required";
     }
-    
+
     // Validate returnDetails
     if (!formData.returnDetails.address.trim()) {
       newErrors["returnDetails.address"] = "Return address is required";
@@ -293,22 +307,22 @@ const BookingDetails = () => {
     if (!formData.returnDetails.time || !validateTime(formData.returnDetails.time)) {
       newErrors["returnDetails.time"] = "Return time is required";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       toast.error("Please correct the errors in the form");
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       const { data } = await axios.post("/api/bookings/create-details", {
         car: carId,
@@ -320,7 +334,7 @@ const BookingDetails = () => {
         extras: formData.extras,
         notes: formData.notes || "",
       });
-      
+
       if (data.success) {
         toast.success("Booking details submitted successfully");
         navigate(`/booking-summary/${data.bookingId}`);
@@ -328,9 +342,12 @@ const BookingDetails = () => {
         toast.error(data.message || "Failed to create booking");
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || "Failed to create booking. Please try again.";
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to create booking. Please try again.";
       toast.error(errorMessage);
-      
+
       // Handle validation errors from backend
       if (error.response?.data?.errors) {
         const backendErrors = {};
@@ -343,15 +360,15 @@ const BookingDetails = () => {
       setIsSubmitting(false);
     }
   };
-  
+
   if (isLoading || !car) {
     return <Loader />;
   }
-  
+
   if (!pickupDate || !returnDate) {
     return null; // Will redirect in useEffect
   }
-  
+
   return (
     <div className="a4-page">
       <button
@@ -362,13 +379,13 @@ const BookingDetails = () => {
         <img src={assets.arrow_icon} alt="" className="rotate-180 opacity-65" aria-hidden="true" />
         Back
       </button>
-      
+
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-2">Booking Details</h1>
         <p className="text-gray-500 mb-8">
           {car.brand} {car.model} • {pickupDate} to {returnDate}
         </p>
-        
+
         <form onSubmit={handleSubmit} className="space-y-8" noValidate>
           {/* User Identity Section */}
           <fieldset className="bg-white rounded-xl p-6 shadow-md border border-borderColor">
@@ -376,7 +393,10 @@ const BookingDetails = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
                 <label htmlFor="fullName" className="text-sm text-gray-600">
-                  Full Name <span className="text-red-500" aria-label="required">*</span>
+                  Full Name{" "}
+                  <span className="text-red-500" aria-label="required">
+                    *
+                  </span>
                 </label>
                 <input
                   id="fullName"
@@ -397,10 +417,13 @@ const BookingDetails = () => {
                   </p>
                 )}
               </div>
-              
+
               <div className="flex flex-col gap-2">
                 <label htmlFor="email" className="text-sm text-gray-600">
-                  Email <span className="text-red-500" aria-label="required">*</span>
+                  Email{" "}
+                  <span className="text-red-500" aria-label="required">
+                    *
+                  </span>
                 </label>
                 <input
                   id="email"
@@ -422,10 +445,13 @@ const BookingDetails = () => {
                   </p>
                 )}
               </div>
-              
+
               <div className="flex flex-col gap-2">
                 <label htmlFor="phone" className="text-sm text-gray-600">
-                  Phone Number <span className="text-red-500" aria-label="required">*</span>
+                  Phone Number{" "}
+                  <span className="text-red-500" aria-label="required">
+                    *
+                  </span>
                 </label>
                 <input
                   id="phone"
@@ -446,10 +472,13 @@ const BookingDetails = () => {
                   </p>
                 )}
               </div>
-              
+
               <div className="flex flex-col gap-2">
                 <label htmlFor="dateOfBirth" className="text-sm text-gray-600">
-                  Date of Birth <span className="text-red-500" aria-label="required">*</span>
+                  Date of Birth{" "}
+                  <span className="text-red-500" aria-label="required">
+                    *
+                  </span>
                 </label>
                 <input
                   id="dateOfBirth"
@@ -463,7 +492,9 @@ const BookingDetails = () => {
                   required
                   aria-required="true"
                   aria-invalid={errors["userDetails.dateOfBirth"] ? "true" : "false"}
-                  aria-describedby={errors["userDetails.dateOfBirth"] ? "dateOfBirth-error" : undefined}
+                  aria-describedby={
+                    errors["userDetails.dateOfBirth"] ? "dateOfBirth-error" : undefined
+                  }
                 />
                 {errors["userDetails.dateOfBirth"] && (
                   <p id="dateOfBirth-error" className="text-red-500 text-xs" role="alert">
@@ -471,10 +502,13 @@ const BookingDetails = () => {
                   </p>
                 )}
               </div>
-              
+
               <div className="flex flex-col gap-2">
                 <label htmlFor="nationality" className="text-sm text-gray-600">
-                  Nationality <span className="text-red-500" aria-label="required">*</span>
+                  Nationality{" "}
+                  <span className="text-red-500" aria-label="required">
+                    *
+                  </span>
                 </label>
                 <input
                   id="nationality"
@@ -487,7 +521,9 @@ const BookingDetails = () => {
                   required
                   aria-required="true"
                   aria-invalid={errors["userDetails.nationality"] ? "true" : "false"}
-                  aria-describedby={errors["userDetails.nationality"] ? "nationality-error" : undefined}
+                  aria-describedby={
+                    errors["userDetails.nationality"] ? "nationality-error" : undefined
+                  }
                 />
                 {errors["userDetails.nationality"] && (
                   <p id="nationality-error" className="text-red-500 text-xs" role="alert">
@@ -497,27 +533,34 @@ const BookingDetails = () => {
               </div>
             </div>
           </fieldset>
-          
+
           {/* Driving License Section */}
           <fieldset className="bg-white rounded-xl p-6 shadow-md border border-borderColor">
             <legend className="text-xl font-semibold mb-4">Driving License</legend>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
                 <label htmlFor="licenseNumber" className="text-sm text-gray-600">
-                  License Number <span className="text-red-500" aria-label="required">*</span>
+                  License Number{" "}
+                  <span className="text-red-500" aria-label="required">
+                    *
+                  </span>
                 </label>
                 <input
                   id="licenseNumber"
                   type="text"
                   value={formData.userDetails.licenseNumber}
-                  onChange={(e) => handleFieldChange("userDetails", "licenseNumber", e.target.value)}
+                  onChange={(e) =>
+                    handleFieldChange("userDetails", "licenseNumber", e.target.value)
+                  }
                   className={`border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                     errors["userDetails.licenseNumber"] ? "border-red-500" : "border-borderColor"
                   }`}
                   required
                   aria-required="true"
                   aria-invalid={errors["userDetails.licenseNumber"] ? "true" : "false"}
-                  aria-describedby={errors["userDetails.licenseNumber"] ? "licenseNumber-error" : undefined}
+                  aria-describedby={
+                    errors["userDetails.licenseNumber"] ? "licenseNumber-error" : undefined
+                  }
                 />
                 {errors["userDetails.licenseNumber"] && (
                   <p id="licenseNumber-error" className="text-red-500 text-xs" role="alert">
@@ -525,16 +568,21 @@ const BookingDetails = () => {
                   </p>
                 )}
               </div>
-              
+
               <div className="flex flex-col gap-2">
                 <label htmlFor="licenseExpiry" className="text-sm text-gray-600">
-                  License Expiry Date <span className="text-red-500" aria-label="required">*</span>
+                  License Expiry Date{" "}
+                  <span className="text-red-500" aria-label="required">
+                    *
+                  </span>
                 </label>
                 <input
                   id="licenseExpiry"
                   type="date"
                   value={formData.userDetails.licenseExpiry}
-                  onChange={(e) => handleFieldChange("userDetails", "licenseExpiry", e.target.value)}
+                  onChange={(e) =>
+                    handleFieldChange("userDetails", "licenseExpiry", e.target.value)
+                  }
                   min={new Date().toISOString().split("T")[0]}
                   className={`border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                     errors["userDetails.licenseExpiry"] ? "border-red-500" : "border-borderColor"
@@ -542,7 +590,9 @@ const BookingDetails = () => {
                   required
                   aria-required="true"
                   aria-invalid={errors["userDetails.licenseExpiry"] ? "true" : "false"}
-                  aria-describedby={errors["userDetails.licenseExpiry"] ? "licenseExpiry-error" : undefined}
+                  aria-describedby={
+                    errors["userDetails.licenseExpiry"] ? "licenseExpiry-error" : undefined
+                  }
                 />
                 {errors["userDetails.licenseExpiry"] && (
                   <p id="licenseExpiry-error" className="text-red-500 text-xs" role="alert">
@@ -550,23 +600,30 @@ const BookingDetails = () => {
                   </p>
                 )}
               </div>
-              
+
               <div className="flex flex-col gap-2">
                 <label htmlFor="licenseCountry" className="text-sm text-gray-600">
-                  Country of Issue <span className="text-red-500" aria-label="required">*</span>
+                  Country of Issue{" "}
+                  <span className="text-red-500" aria-label="required">
+                    *
+                  </span>
                 </label>
                 <input
                   id="licenseCountry"
                   type="text"
                   value={formData.userDetails.licenseCountry}
-                  onChange={(e) => handleFieldChange("userDetails", "licenseCountry", e.target.value)}
+                  onChange={(e) =>
+                    handleFieldChange("userDetails", "licenseCountry", e.target.value)
+                  }
                   className={`border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                     errors["userDetails.licenseCountry"] ? "border-red-500" : "border-borderColor"
                   }`}
                   required
                   aria-required="true"
                   aria-invalid={errors["userDetails.licenseCountry"] ? "true" : "false"}
-                  aria-describedby={errors["userDetails.licenseCountry"] ? "licenseCountry-error" : undefined}
+                  aria-describedby={
+                    errors["userDetails.licenseCountry"] ? "licenseCountry-error" : undefined
+                  }
                 />
                 {errors["userDetails.licenseCountry"] && (
                   <p id="licenseCountry-error" className="text-red-500 text-xs" role="alert">
@@ -576,7 +633,7 @@ const BookingDetails = () => {
               </div>
             </div>
           </fieldset>
-          
+
           {/* Pickup/Dropoff Details Section */}
           <fieldset className="bg-white rounded-xl p-6 shadow-md border border-borderColor">
             <legend className="text-xl font-semibold mb-4">Pickup & Dropoff Details</legend>
@@ -586,19 +643,26 @@ const BookingDetails = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
                     <label htmlFor="pickupAddress" className="text-sm text-gray-600">
-                      Pickup Location <span className="text-red-500" aria-label="required">*</span>
+                      Pickup Location{" "}
+                      <span className="text-red-500" aria-label="required">
+                        *
+                      </span>
                     </label>
                     <select
                       id="pickupAddress"
                       value={formData.pickupDetails.address}
-                      onChange={(e) => handleFieldChange("pickupDetails", "address", e.target.value)}
+                      onChange={(e) =>
+                        handleFieldChange("pickupDetails", "address", e.target.value)
+                      }
                       className={`border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                         errors["pickupDetails.address"] ? "border-red-500" : "border-borderColor"
                       }`}
                       required
                       aria-required="true"
                       aria-invalid={errors["pickupDetails.address"] ? "true" : "false"}
-                      aria-describedby={errors["pickupDetails.address"] ? "pickupAddress-error" : undefined}
+                      aria-describedby={
+                        errors["pickupDetails.address"] ? "pickupAddress-error" : undefined
+                      }
                     >
                       <option value="">Select pickup location</option>
                       {locationOptions.map((location, index) => (
@@ -613,10 +677,13 @@ const BookingDetails = () => {
                       </p>
                     )}
                   </div>
-                  
+
                   <div className="flex flex-col gap-2">
                     <label htmlFor="pickupTime" className="text-sm text-gray-600">
-                      Pickup Time <span className="text-red-500" aria-label="required">*</span>
+                      Pickup Time{" "}
+                      <span className="text-red-500" aria-label="required">
+                        *
+                      </span>
                     </label>
                     <select
                       id="pickupTime"
@@ -628,7 +695,9 @@ const BookingDetails = () => {
                       required
                       aria-required="true"
                       aria-invalid={errors["pickupDetails.time"] ? "true" : "false"}
-                      aria-describedby={errors["pickupDetails.time"] ? "pickupTime-error" : undefined}
+                      aria-describedby={
+                        errors["pickupDetails.time"] ? "pickupTime-error" : undefined
+                      }
                     >
                       <option value="">Select time</option>
                       {TIME_OPTIONS.map((option) => (
@@ -645,25 +714,32 @@ const BookingDetails = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <h3 className="text-lg font-medium mb-4">Return</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
                     <label htmlFor="returnAddress" className="text-sm text-gray-600">
-                      Return Location <span className="text-red-500" aria-label="required">*</span>
+                      Return Location{" "}
+                      <span className="text-red-500" aria-label="required">
+                        *
+                      </span>
                     </label>
                     <select
                       id="returnAddress"
                       value={formData.returnDetails.address}
-                      onChange={(e) => handleFieldChange("returnDetails", "address", e.target.value)}
+                      onChange={(e) =>
+                        handleFieldChange("returnDetails", "address", e.target.value)
+                      }
                       className={`border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                         errors["returnDetails.address"] ? "border-red-500" : "border-borderColor"
                       }`}
                       required
                       aria-required="true"
                       aria-invalid={errors["returnDetails.address"] ? "true" : "false"}
-                      aria-describedby={errors["returnDetails.address"] ? "returnAddress-error" : undefined}
+                      aria-describedby={
+                        errors["returnDetails.address"] ? "returnAddress-error" : undefined
+                      }
                     >
                       <option value="">Select return location</option>
                       {locationOptions.map((location, index) => (
@@ -678,10 +754,13 @@ const BookingDetails = () => {
                       </p>
                     )}
                   </div>
-                  
+
                   <div className="flex flex-col gap-2">
                     <label htmlFor="returnTime" className="text-sm text-gray-600">
-                      Return Time <span className="text-red-500" aria-label="required">*</span>
+                      Return Time{" "}
+                      <span className="text-red-500" aria-label="required">
+                        *
+                      </span>
                     </label>
                     <select
                       id="returnTime"
@@ -693,7 +772,9 @@ const BookingDetails = () => {
                       required
                       aria-required="true"
                       aria-invalid={errors["returnDetails.time"] ? "true" : "false"}
-                      aria-describedby={errors["returnDetails.time"] ? "returnTime-error" : undefined}
+                      aria-describedby={
+                        errors["returnDetails.time"] ? "returnTime-error" : undefined
+                      }
                     >
                       <option value="">Select time</option>
                       {TIME_OPTIONS.map((option) => (
@@ -712,7 +793,7 @@ const BookingDetails = () => {
               </div>
             </div>
           </fieldset>
-          
+
           {/* Extras Section */}
           <fieldset className="bg-white rounded-xl p-6 shadow-md border border-borderColor">
             <legend className="text-xl font-semibold mb-4">Extras</legend>
@@ -725,14 +806,18 @@ const BookingDetails = () => {
                 className="w-4 h-4 text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                 aria-label="Add extra driver to booking"
               />
-              <label htmlFor="extraDriver" className="text-sm text-gray-600">Extra Driver</label>
+              <label htmlFor="extraDriver" className="text-sm text-gray-600">
+                Extra Driver
+              </label>
             </div>
           </fieldset>
-          
+
           {/* Notes Section */}
           <div className="bg-white rounded-xl p-6 shadow-md border border-borderColor">
             <h2 className="text-xl font-semibold mb-4">Notes</h2>
-            <label htmlFor="notes" className="sr-only">Additional notes or special requests</label>
+            <label htmlFor="notes" className="sr-only">
+              Additional notes or special requests
+            </label>
             <textarea
               id="notes"
               value={formData.notes}
@@ -743,7 +828,7 @@ const BookingDetails = () => {
               aria-label="Additional notes or special requests"
             />
           </div>
-          
+
           {/* Submit Button */}
           <div className="flex gap-4">
             <button
@@ -773,4 +858,3 @@ const BookingDetails = () => {
 };
 
 export default BookingDetails;
-

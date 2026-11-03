@@ -61,7 +61,7 @@ const run = async () => {
     conflicts.forEach((c) => console.warn(`   car ${c.car}: booking ${c.a} <-> ${c.b}`));
     console.warn(
       "\nThe partial unique index only blocks EXACT date-range duplicates, so it will still\n" +
-      "build — but resolve these (cancel one of each pair) so the data matches the invariant.\n"
+        "build — but resolve these (cancel one of each pair) so the data matches the invariant.\n"
     );
   } else {
     console.log("No pre-existing overlaps. 👍");

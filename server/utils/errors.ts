@@ -2,7 +2,9 @@
 // types as `unknown`.
 
 export const toError = (value: unknown): Error =>
-  value instanceof Error ? value : new Error(typeof value === "string" ? value : JSON.stringify(value));
+  value instanceof Error
+    ? value
+    : new Error(typeof value === "string" ? value : JSON.stringify(value));
 
 export const errMessage = (value: unknown): string => toError(value).message;
 

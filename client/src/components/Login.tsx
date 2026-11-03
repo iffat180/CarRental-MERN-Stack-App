@@ -31,7 +31,7 @@ const redirectBack = (navigate) => {
       console.log(`[Login] Navigation failed`, {
         path,
         error: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
       // Keep redirectPath for retry - don't remove it on failure
     }
@@ -42,7 +42,7 @@ const Login = () => {
   const { showLogin, setShowLogin, axios, setToken, navigate } = useAppContext();
 
   const [state, setState] = useState("login");
-  
+
   // Check for initial mode when modal opens
   useEffect(() => {
     if (showLogin) {
@@ -55,7 +55,7 @@ const Login = () => {
       }
     }
   }, [showLogin]);
-  
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -73,59 +73,59 @@ const Login = () => {
   const handleNameChange = (e) => {
     const value = e.target.value;
     setName(value);
-    
+
     if (value && value.trim().length < 2) {
-      setErrors(prev => ({ ...prev, name: "Name must be at least 2 characters" }));
+      setErrors((prev) => ({ ...prev, name: "Name must be at least 2 characters" }));
     } else {
-      setErrors(prev => ({ ...prev, name: "" }));
+      setErrors((prev) => ({ ...prev, name: "" }));
     }
   };
 
   const handleEmailChange = (e) => {
     const value = e.target.value;
     setEmail(value);
-    
+
     if (value && !validateEmail(value)) {
-      setErrors(prev => ({ ...prev, email: "Please enter a valid email address" }));
+      setErrors((prev) => ({ ...prev, email: "Please enter a valid email address" }));
     } else {
-      setErrors(prev => ({ ...prev, email: "" }));
+      setErrors((prev) => ({ ...prev, email: "" }));
     }
   };
 
   const handlePasswordChange = (e) => {
     const value = e.target.value;
     setPassword(value);
-    
+
     const validation = validatePassword(value);
     setPasswordRequirements(validation.requirements);
-    
+
     if (value && !validation.isValid) {
-      setErrors(prev => ({ ...prev, password: "Password must be at least 8 characters" }));
+      setErrors((prev) => ({ ...prev, password: "Password must be at least 8 characters" }));
     } else {
-      setErrors(prev => ({ ...prev, password: "" }));
+      setErrors((prev) => ({ ...prev, password: "" }));
     }
   };
 
   const onSubmitHandler = async (event) => {
     event.preventDefault();
-    
+
     // Reset errors
     setErrors({ name: "", email: "", password: "" });
-    
+
     // Client-side validation BEFORE API call
     const validationErrors: { name?: string; email?: string; password?: string } = {};
-    
+
     if (state === "register") {
       if (!name.trim() || name.trim().length < 2) {
         validationErrors.name = "Name must be at least 2 characters";
       }
     }
-    
+
     // Validate email format
     if (!email || !validateEmail(email)) {
       validationErrors.email = "Please enter a valid email address";
     }
-    
+
     // Validate password - minimum 8 characters
     if (!password) {
       validationErrors.password = "Password is required";
@@ -135,16 +135,16 @@ const Login = () => {
         validationErrors.password = "Password must be at least 8 characters";
       }
     }
-    
+
     // If validation errors exist, show them and return
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
     }
-    
+
     // Set loading state to disable button while submitting
     setIsLoading(true);
-    
+
     try {
       const { data } = await axios.post(`/api/user/${state}`, {
         name: state === "register" ? name : undefined,
@@ -156,13 +156,13 @@ const Login = () => {
         // Save token to localStorage
         setToken(data.token);
         localStorage.setItem("token", data.token);
-        
+
         // Close modal
         setShowLogin(false);
-        
+
         // Show success message
         toast.success(state === "register" ? "Account created successfully!" : "Login successful!");
-        
+
         // Redirect back to stored path if it exists
         redirectBack(navigate);
       } else {
@@ -170,9 +170,10 @@ const Login = () => {
       }
     } catch (error: any) {
       // Better error handling
-      const errorMessage = error.response?.data?.message || error.message || "An error occurred. Please try again.";
+      const errorMessage =
+        error.response?.data?.message || error.message || "An error occurred. Please try again.";
       toast.error(errorMessage);
-      
+
       // Set specific field errors if available
       if (error.response?.data?.errors) {
         setErrors(error.response.data.errors);
@@ -198,12 +199,11 @@ const Login = () => {
         noValidate
       >
         <h2 id="login-dialog-title" className="text-2xl font-medium m-auto">
-          <span className="text-primary">User</span>{" "}
-          {state === "login" ? "Login" : "Sign Up"}
+          <span className="text-primary">User</span> {state === "login" ? "Login" : "Sign Up"}
         </h2>
         <p id="login-dialog-description" className="sr-only">
-          {state === "login" 
-            ? "Enter your email and password to login to your account" 
+          {state === "login"
+            ? "Enter your email and password to login to your account"
             : "Create a new account by entering your name, email and password"}
         </p>
         {state === "register" && (
@@ -211,7 +211,10 @@ const Login = () => {
             <legend className="sr-only">Registration Information</legend>
             <div className="w-full">
               <label htmlFor="register-name" className="block mb-1">
-                Name <span className="text-red-500" aria-label="required">*</span>
+                Name{" "}
+                <span className="text-red-500" aria-label="required">
+                  *
+                </span>
               </label>
               <input
                 id="register-name"
@@ -240,7 +243,10 @@ const Login = () => {
           <legend className="sr-only">Login Information</legend>
           <div className="w-full">
             <label htmlFor="login-email" className="block mb-1">
-              Email <span className="text-red-500" aria-label="required">*</span>
+              Email{" "}
+              <span className="text-red-500" aria-label="required">
+                *
+              </span>
             </label>
             <input
               id="login-email"
@@ -266,7 +272,10 @@ const Login = () => {
         </fieldset>
         <div className="w-full">
           <label htmlFor="login-password" className="block mb-1">
-            Password <span className="text-red-500" aria-label="required">*</span>
+            Password{" "}
+            <span className="text-red-500" aria-label="required">
+              *
+            </span>
           </label>
           <input
             id="login-password"
@@ -281,7 +290,13 @@ const Login = () => {
             disabled={isLoading}
             aria-required="true"
             aria-invalid={errors.password ? "true" : "false"}
-            aria-describedby={errors.password ? "password-error" : state === "register" && password ? "password-requirements" : undefined}
+            aria-describedby={
+              errors.password
+                ? "password-error"
+                : state === "register" && password
+                  ? "password-requirements"
+                  : undefined
+            }
           />
           {errors.password && (
             <p id="password-error" className="text-red-500 text-xs mt-1" role="alert">
@@ -289,12 +304,19 @@ const Login = () => {
             </p>
           )}
           {state === "register" && password && (
-            <div id="password-requirements" className="mt-2 text-xs" role="status" aria-live="polite">
+            <div
+              id="password-requirements"
+              className="mt-2 text-xs"
+              role="status"
+              aria-live="polite"
+            >
               <p className="text-gray-600 mb-1">Password requirements:</p>
               <ul className="list-none space-y-1">
-                <li className={`flex items-center gap-2 ${
-                  passwordRequirements.minLength ? "text-green-600" : "text-gray-400"
-                }`}>
+                <li
+                  className={`flex items-center gap-2 ${
+                    passwordRequirements.minLength ? "text-green-600" : "text-gray-400"
+                  }`}
+                >
                   <span aria-hidden="true">{passwordRequirements.minLength ? "✓" : "○"}</span>
                   <span>At least 8 characters</span>
                 </li>
@@ -336,12 +358,20 @@ const Login = () => {
           }`}
         >
           {isLoading ? (
-            <span className="flex items-center justify-center gap-2" aria-live="polite" aria-busy="true">
-              <span className="animate-spin" aria-hidden="true">⏳</span>
+            <span
+              className="flex items-center justify-center gap-2"
+              aria-live="polite"
+              aria-busy="true"
+            >
+              <span className="animate-spin" aria-hidden="true">
+                ⏳
+              </span>
               {state === "register" ? "Creating Account..." : "Logging in..."}
             </span>
+          ) : state === "register" ? (
+            "Create Account"
           ) : (
-            state === "register" ? "Create Account" : "Login"
+            "Login"
           )}
         </button>
       </form>

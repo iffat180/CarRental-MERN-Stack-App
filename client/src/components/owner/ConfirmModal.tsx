@@ -1,23 +1,23 @@
 import React from "react";
 
-const ConfirmModal = ({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
+const ConfirmModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
   title = "Confirm Action",
   message = "Are you sure you want to proceed?",
   confirmLabel = "Confirm",
   cancelLabel = "Cancel",
-  confirmVariant = "danger" // "danger" or "primary"
+  confirmVariant = "danger", // "danger" or "primary"
 }) => {
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="fixed top-0 bottom-0 left-0 right-0 z-100 flex items-center text-sm text-gray-600 bg-black/50"
       onClick={onClose}
     >
-      <div 
+      <div
         className="flex flex-col gap-4 m-auto items-start p-6 w-80 sm:w-[400px] rounded-lg shadow-xl border border-gray-200 bg-white"
         onClick={(e) => e.stopPropagation()}
       >
@@ -47,4 +47,3 @@ const ConfirmModal = ({
 };
 
 export default ConfirmModal;
-

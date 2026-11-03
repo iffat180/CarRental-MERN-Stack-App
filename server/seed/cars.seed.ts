@@ -453,7 +453,7 @@
 //       } else {
 //         console.log("ℹ️  No seed cars to clean up.");
 //       }
-      
+
 //       // After cleanup, proceed to seed new cars
 //       console.log("🚀 Proceeding with seeding...");
 //     } else if (existingSeedCars > 0) {

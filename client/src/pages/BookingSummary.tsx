@@ -41,35 +41,35 @@ const calculateDays = (pickupDate, returnDate) => {
 const BookingSummary = () => {
   const { bookingId } = useParams();
   const { axios, navigate, currency } = useAppContext();
-  
+
   const [booking, setBooking] = useState<Booking | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isConfirming, setIsConfirming] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [pollingAttempts, setPollingAttempts] = useState(0);
   const [isPolling, setIsPolling] = useState(false);
-  
+
   const MAX_POLLING_ATTEMPTS = 10;
   const POLLING_INTERVAL_MS = 3000; // 3 seconds
-  
+
   // Terminal states that stop polling
   const isTerminalState = (status) => {
     return status === "confirmed" || status === "cancelled";
   };
-  
+
   // Fetch booking data with structured logging
   const fetchBooking = async () => {
     setIsLoading(true);
     setFetchError(null);
-    
+
     try {
       console.log(`[BookingSummary] Fetching booking`, {
         bookingId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
-      
+
       const { data } = await axios.get(`/api/bookings/${bookingId}`);
-      
+
       if (data.success) {
         console.log(`[BookingSummary] Booking fetched successfully`, {
           bookingId,
@@ -79,9 +79,9 @@ const BookingSummary = () => {
           hasPickupDetails: !!data.booking?.pickupDetails,
           hasReturnDetails: !!data.booking?.returnDetails,
           hasExtras: !!data.booking?.extras,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
-        
+
         setBooking(data.booking);
         setFetchError(null);
       } else {
@@ -89,46 +89,47 @@ const BookingSummary = () => {
         console.log(`[BookingSummary] Fetch failed - API error`, {
           bookingId,
           errorMessage,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
-        
+
         setFetchError(errorMessage);
         toast.error(errorMessage);
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || "Failed to load booking details";
-      
+      const errorMessage =
+        error.response?.data?.message || error.message || "Failed to load booking details";
+
       console.log(`[BookingSummary] Fetch failed - Exception`, {
         bookingId,
         errorMessage,
         statusCode: error.response?.status,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
-      
+
       setFetchError(errorMessage);
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   // Initial fetch on mount
   useEffect(() => {
     if (bookingId) {
       fetchBooking();
     }
   }, [bookingId]);
-  
+
   // Polling effect for booking status
   useEffect(() => {
     // Only poll if booking exists and is not in terminal state
     if (!booking || isTerminalState(booking.status)) {
       return;
     }
-    
+
     setIsPolling(true);
     let currentAttempts = pollingAttempts;
-    
+
     const pollInterval = setInterval(async () => {
       // Check max attempts before polling
       if (currentAttempts >= MAX_POLLING_ATTEMPTS) {
@@ -137,48 +138,48 @@ const BookingSummary = () => {
           attempts: currentAttempts,
           maxAttempts: MAX_POLLING_ATTEMPTS,
           currentStatus: booking.status,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
         setIsPolling(false);
         clearInterval(pollInterval);
         return;
       }
-      
+
       currentAttempts += 1;
-      
+
       try {
         console.log(`[BookingSummary] Polling booking status`, {
           bookingId,
           attempt: currentAttempts,
           maxAttempts: MAX_POLLING_ATTEMPTS,
           currentStatus: booking.status,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
-        
+
         const { data } = await axios.get(`/api/bookings/${bookingId}`);
-        
+
         if (data.success && data.booking) {
           const newStatus = data.booking.status;
-          
+
           console.log(`[BookingSummary] Polling response received`, {
             bookingId,
             attempt: currentAttempts,
             previousStatus: booking.status,
             newStatus,
             isTerminal: isTerminalState(newStatus),
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
           });
-          
+
           setBooking(data.booking);
           setPollingAttempts(currentAttempts);
-          
+
           // Stop polling if terminal state reached
           if (isTerminalState(newStatus)) {
             console.log(`[BookingSummary] Polling stopped - Terminal state reached`, {
               bookingId,
               finalStatus: newStatus,
               totalAttempts: currentAttempts,
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
             });
             setIsPolling(false);
             clearInterval(pollInterval);
@@ -189,50 +190,50 @@ const BookingSummary = () => {
           bookingId,
           attempt: currentAttempts,
           errorMessage: error.message,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
         setPollingAttempts(currentAttempts);
       }
     }, POLLING_INTERVAL_MS);
-    
+
     // Cleanup on unmount or when terminal state is reached
     return () => {
       clearInterval(pollInterval);
       setIsPolling(false);
     };
   }, [booking?.status, bookingId, axios]); // Only depend on status change, not booking object
-  
+
   // Handle confirm booking with structured logging
   const handleConfirm = async () => {
     setIsConfirming(true);
-    
+
     console.log(`[BookingSummary] Confirm booking clicked`, {
       bookingId,
       currentStatus: booking?.status,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-    
+
     // Booking is already created, just redirect to success page
     // The booking status is already "pending" which is correct
     navigate(`/booking-success/${bookingId}`);
   };
-  
+
   // Handle retry for fetch errors
   const handleRetry = () => {
     console.log(`[BookingSummary] Retry clicked`, {
       bookingId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-    
+
     setPollingAttempts(0);
     fetchBooking();
   };
-  
+
   // Loading state
   if (isLoading) {
     return <Loader />;
   }
-  
+
   // Error state with retry button
   if (fetchError && !booking) {
     return (
@@ -250,19 +251,19 @@ const BookingSummary = () => {
       </div>
     );
   }
-  
+
   // No booking found
   if (!booking) {
     return <Loader />;
   }
-  
+
   const rentalDays = calculateDays(booking.pickupDate, booking.returnDate);
   const totalCost = booking.price || (booking?.car?.pricePerDay || 0) * rentalDays;
-  
+
   // Determine booking status display
   const getStatusDisplay = () => {
     if (!booking?.status) return null;
-    
+
     const status = booking.status;
     if (status === "pending") {
       return (
@@ -292,7 +293,7 @@ const BookingSummary = () => {
     }
     return null;
   };
-  
+
   return (
     <div className="a4-page">
       <button
@@ -302,14 +303,14 @@ const BookingSummary = () => {
         <img src={assets.arrow_icon} alt="" className="rotate-180 opacity-65" />
         Back
       </button>
-      
+
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-2">Booking Summary</h1>
         <p className="text-gray-500 mb-8">Please review your booking details before confirming</p>
-        
+
         {/* Status Display */}
         {getStatusDisplay()}
-        
+
         <div className="space-y-6">
           {/* Car Details */}
           {booking?.car ? (
@@ -322,7 +323,7 @@ const BookingSummary = () => {
                     alt={`${booking.car?.brand || ""} ${booking.car?.model || ""}`}
                     className="w-full h-auto rounded-lg object-cover"
                     onError={(e: any) => {
-                    e.target.src = ""; // Handle broken images
+                      e.target.src = ""; // Handle broken images
                     }}
                   />
                 </div>
@@ -335,7 +336,8 @@ const BookingSummary = () => {
                   </p>
                   <p className="text-lg font-semibold">
                     {currency}
-                    {booking.car?.pricePerDay || 0} <span className="text-base font-normal text-gray-500">per day</span>
+                    {booking.car?.pricePerDay || 0}{" "}
+                    <span className="text-base font-normal text-gray-500">per day</span>
                   </p>
                 </div>
               </div>
@@ -346,7 +348,7 @@ const BookingSummary = () => {
               <p className="text-gray-500">Car information not available</p>
             </div>
           )}
-          
+
           {/* Rental Period */}
           <div className="bg-white rounded-xl p-6 shadow-md border border-borderColor">
             <h2 className="text-xl font-semibold mb-4">Rental Period</h2>
@@ -356,7 +358,9 @@ const BookingSummary = () => {
                   <img src={assets.calendar_icon_colored} alt="" className="w-5 h-5 mt-1" />
                   <div>
                     <p className="text-sm text-gray-500">Pickup</p>
-                    <p className="font-semibold">{booking?.pickupDate ? formatDate(booking.pickupDate) : "N/A"}</p>
+                    <p className="font-semibold">
+                      {booking?.pickupDate ? formatDate(booking.pickupDate) : "N/A"}
+                    </p>
                     {booking?.pickupDetails?.time && (
                       <p className="text-gray-600">{formatTime(booking.pickupDetails.time)}</p>
                     )}
@@ -374,13 +378,15 @@ const BookingSummary = () => {
                   </div>
                 )}
               </div>
-              
+
               <div>
                 <div className="flex items-start gap-3 mb-4">
                   <img src={assets.calendar_icon_colored} alt="" className="w-5 h-5 mt-1" />
                   <div>
                     <p className="text-sm text-gray-500">Return</p>
-                    <p className="font-semibold">{booking?.returnDate ? formatDate(booking.returnDate) : "N/A"}</p>
+                    <p className="font-semibold">
+                      {booking?.returnDate ? formatDate(booking.returnDate) : "N/A"}
+                    </p>
                     {booking?.returnDetails?.time && (
                       <p className="text-gray-600">{formatTime(booking.returnDetails.time)}</p>
                     )}
@@ -399,14 +405,15 @@ const BookingSummary = () => {
                 )}
               </div>
             </div>
-            
+
             <div className="mt-4 pt-4 border-t border-borderColor">
               <p className="text-gray-600">
-                <span className="font-semibold">Duration:</span> {rentalDays} {rentalDays === 1 ? "day" : "days"}
+                <span className="font-semibold">Duration:</span> {rentalDays}{" "}
+                {rentalDays === 1 ? "day" : "days"}
               </p>
             </div>
           </div>
-          
+
           {/* Renter Details */}
           {booking?.userDetails ? (
             <div className="bg-white rounded-xl p-6 shadow-md border border-borderColor">
@@ -442,7 +449,7 @@ const BookingSummary = () => {
                     <p className="font-semibold">{booking.userDetails.nationality}</p>
                   </div>
                 )}
-                
+
                 {booking.userDetails?.licenseNumber && (
                   <>
                     <div>
@@ -452,7 +459,9 @@ const BookingSummary = () => {
                     {booking.userDetails.licenseExpiry && (
                       <div>
                         <p className="text-sm text-gray-500">License Expiry</p>
-                        <p className="font-semibold">{formatDate(booking.userDetails.licenseExpiry)}</p>
+                        <p className="font-semibold">
+                          {formatDate(booking.userDetails.licenseExpiry)}
+                        </p>
                       </div>
                     )}
                     {booking.userDetails.licenseCountry && (
@@ -466,7 +475,7 @@ const BookingSummary = () => {
               </div>
             </div>
           ) : null}
-          
+
           {/* Extras */}
           {booking?.extras?.extraDriver && (
             <div className="bg-white rounded-xl p-6 shadow-md border border-borderColor">
@@ -474,7 +483,7 @@ const BookingSummary = () => {
               <p className="text-gray-600">✓ Extra Driver</p>
             </div>
           )}
-          
+
           {/* Notes */}
           {booking?.notes && (
             <div className="bg-white rounded-xl p-6 shadow-md border border-borderColor">
@@ -482,7 +491,7 @@ const BookingSummary = () => {
               <p className="text-gray-600 whitespace-pre-wrap">{booking.notes}</p>
             </div>
           )}
-          
+
           {/* Price Summary */}
           <div className="bg-white rounded-xl p-6 shadow-md border border-borderColor">
             <h2 className="text-xl font-semibold mb-4">Price Summary</h2>
@@ -506,7 +515,7 @@ const BookingSummary = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Action Buttons */}
           <div className="flex gap-4 pb-8">
             <button
@@ -528,10 +537,16 @@ const BookingSummary = () => {
               onClick={handleConfirm}
               disabled={isConfirming || booking?.status === "cancelled"}
               className={`flex-1 bg-primary hover:bg-primary-dull transition-all py-3 font-medium text-white rounded-xl ${
-                isConfirming || booking?.status === "cancelled" ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                isConfirming || booking?.status === "cancelled"
+                  ? "opacity-50 cursor-not-allowed"
+                  : "cursor-pointer"
               }`}
             >
-              {isConfirming ? "Confirming..." : booking?.status === "confirmed" ? "View Booking" : "Confirm Booking"}
+              {isConfirming
+                ? "Confirming..."
+                : booking?.status === "confirmed"
+                  ? "View Booking"
+                  : "Confirm Booking"}
             </button>
           </div>
         </div>
@@ -541,4 +556,3 @@ const BookingSummary = () => {
 };
 
 export default BookingSummary;
-

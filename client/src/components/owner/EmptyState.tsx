@@ -7,7 +7,12 @@ interface EmptyStateProps {
   onAction?: () => void;
 }
 
-const EmptyState = ({ title = "No data found", message, actionLabel, onAction }: EmptyStateProps) => {
+const EmptyState = ({
+  title = "No data found",
+  message,
+  actionLabel,
+  onAction,
+}: EmptyStateProps) => {
   return (
     <div className="flex flex-col items-center justify-center py-20">
       <div className="text-center">
@@ -27,4 +32,3 @@ const EmptyState = ({ title = "No data found", message, actionLabel, onAction }:
 };
 
 export default EmptyState;
-

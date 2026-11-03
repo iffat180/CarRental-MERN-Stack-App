@@ -7,7 +7,10 @@ test("the phone header collapses into a menu button", async ({ page }) => {
 
   await expect(nav.getByRole("link", { name: "Cars" })).toBeHidden();
   await menu.click();
-  await expect(page.getByRole("button", { name: "Close menu" })).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByRole("button", { name: "Close menu" })).toHaveAttribute(
+    "aria-expanded",
+    "true"
+  );
   await expect(nav.getByRole("link", { name: "Cars" })).toBeVisible();
 
   await nav.getByRole("link", { name: "Cars" }).click();
@@ -18,6 +21,8 @@ test("the phone header collapses into a menu button", async ({ page }) => {
 test("the home page has no horizontal scroll on a phone", async ({ page }) => {
   await page.goto("/");
   await page.waitForLoadState("networkidle");
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth
+  );
   expect(overflow).toBeLessThanOrEqual(0);
 });

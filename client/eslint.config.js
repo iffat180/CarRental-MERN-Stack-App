@@ -25,7 +25,10 @@ export default defineConfig([
       // Components are still being typed file by file (see tsconfig.json), so
       // `any` is allowed for now. Unused variables stay visible as warnings.
       "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
     },
   },
   {

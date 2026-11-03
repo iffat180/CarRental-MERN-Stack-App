@@ -35,7 +35,7 @@ const isLocked = (lockKey: string): boolean => {
   if (!lock) {
     return false; // No lock exists
   }
-  
+
   const now = Date.now();
   if (now >= lock.expiresAt) {
     // Lock expired - remove it and return false
@@ -44,11 +44,11 @@ const isLocked = (lockKey: string): boolean => {
       lockKey,
       expiresAt: new Date(lock.expiresAt).toISOString(),
       createdAt: new Date(lock.createdAt).toISOString(),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
     return false;
   }
-  
+
   return true; // Lock exists and is valid
 };
 
@@ -57,14 +57,14 @@ const acquireLock = (lockKey: string): void => {
   const now = Date.now();
   const lock = {
     expiresAt: now + LOCK_TTL_MS,
-    createdAt: now
+    createdAt: now,
   };
   availabilityLockMap.set(lockKey, lock);
   console.log(`[AvailabilityLock] Lock acquired`, {
     lockKey,
     expiresAt: new Date(lock.expiresAt).toISOString(),
     ttlSeconds: LOCK_TTL_MS / 1000,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 };
 
@@ -74,7 +74,7 @@ const releaseLock = (lockKey: string): void => {
     availabilityLockMap.delete(lockKey);
     console.log(`[AvailabilityLock] Lock released`, {
       lockKey,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 };
@@ -156,7 +156,9 @@ const checkAvailability = async (
 
 // Non-transactional creation path — only reached on a standalone mongod (dev).
 // The unique partial index on Booking is still the last-resort backstop here.
-const createBookingNonTransactional = async (bookingData: BookingInput): Promise<BookingDocument> => {
+const createBookingNonTransactional = async (
+  bookingData: BookingInput
+): Promise<BookingDocument> => {
   const { car, pickupDate, returnDate } = bookingData;
   const pickup = new Date(pickupDate);
   const drop = new Date(returnDate);
@@ -205,9 +207,15 @@ const createBookingAtomic = async (bookingData: BookingInput): Promise<BookingDo
     await session.withTransaction(
       async () => {
         // 1. Overlap check against this transaction's snapshot.
-        const clash = await Booking.findOne({ car, ...overlapFilter(pickup, drop) }).session(session);
+        const clash = await Booking.findOne({ car, ...overlapFilter(pickup, drop) }).session(
+          session
+        );
         if (clash) {
-          throw new BookingError("Car is not available for the selected dates", 409, "CAR_UNAVAILABLE");
+          throw new BookingError(
+            "Car is not available for the selected dates",
+            409,
+            "CAR_UNAVAILABLE"
+          );
         }
 
         // 2. Load the car (in-transaction) for price + owner.
@@ -231,7 +239,8 @@ const createBookingAtomic = async (bookingData: BookingInput): Promise<BookingDo
       { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } }
     );
 
-    if (!createdBooking) throw new BookingError("Booking could not be created", 500, "BOOKING_FAILED");
+    if (!createdBooking)
+      throw new BookingError("Booking could not be created", 500, "BOOKING_FAILED");
     return createdBooking;
   } catch (err) {
     if (isNoReplicaSetError(err)) {
@@ -279,7 +288,10 @@ const handleBookingError = (res: Response, error: unknown, label: string): void 
     message: errMessage(error),
     name: errName(error),
     code,
-    stack: process.env.NODE_ENV === "development" && error instanceof Error && error instanceof Error ? error.stack : undefined,
+    stack:
+      process.env.NODE_ENV === "development" && error instanceof Error && error instanceof Error
+        ? error.stack
+        : undefined,
     timestamp: new Date().toISOString(),
   });
   res.status(500).json({ success: false, message: "Failed to create booking. Please try again." });
@@ -287,54 +299,56 @@ const handleBookingError = (res: Response, error: unknown, label: string): void 
 
 // API to Check Availability of Cars for the given Date and location
 export const checkAvailabilityOfCar = async (req: Request, res: Response) => {
-    try {
-        const { location, pickupDate, returnDate } = req.body;
+  try {
+    const { location, pickupDate, returnDate } = req.body;
 
-        // Validate date business logic
-        const pickup = new Date(pickupDate);
-        const returnD = new Date(returnDate);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+    // Validate date business logic
+    const pickup = new Date(pickupDate);
+    const returnD = new Date(returnDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-        // Validate pickupDate is not in the past
-        if (pickup < today) {
-          return res.status(400).json({
-            success: false,
-            message: "Pickup date cannot be in the past"
-          });
-        }
-
-        // Validate returnDate is after pickupDate
-        if (returnD <= pickup) {
-          return res.status(400).json({
-            success: false,
-            message: "Return date must be after pickup date"
-          });
-        }
-
-        // fetch all available cars for the given location
-        const cars = await Car.find({ location, isAvailable: true });
-
-        // check car availability for the given date range using promise
-        const availableCarsPromises = cars.map(async (car) => {
-            const isAvailable = await checkAvailability(car._id, pickupDate, returnDate);
-            return { ...car.toObject(), isAvailable };
-        });
-
-        let availableCars = await Promise.all(availableCarsPromises);
-        availableCars = availableCars.filter(car => car.isAvailable === true);
-
-        res.json({ success: true, availableCars });
-
-    } catch (error) {
-        console.error(`[checkAvailabilityOfCar] Error:`, {
-          message: errMessage(error),
-          name: errName(error),
-          stack: process.env.NODE_ENV === "development" && error instanceof Error && error instanceof Error ? error.stack : undefined,
-          timestamp: new Date().toISOString()
-        });
-        res.status(500).json({ success: false, message: "Failed to check car availability." });
+    // Validate pickupDate is not in the past
+    if (pickup < today) {
+      return res.status(400).json({
+        success: false,
+        message: "Pickup date cannot be in the past",
+      });
     }
+
+    // Validate returnDate is after pickupDate
+    if (returnD <= pickup) {
+      return res.status(400).json({
+        success: false,
+        message: "Return date must be after pickup date",
+      });
+    }
+
+    // fetch all available cars for the given location
+    const cars = await Car.find({ location, isAvailable: true });
+
+    // check car availability for the given date range using promise
+    const availableCarsPromises = cars.map(async (car) => {
+      const isAvailable = await checkAvailability(car._id, pickupDate, returnDate);
+      return { ...car.toObject(), isAvailable };
+    });
+
+    let availableCars = await Promise.all(availableCarsPromises);
+    availableCars = availableCars.filter((car) => car.isAvailable === true);
+
+    res.json({ success: true, availableCars });
+  } catch (error) {
+    console.error(`[checkAvailabilityOfCar] Error:`, {
+      message: errMessage(error),
+      name: errName(error),
+      stack:
+        process.env.NODE_ENV === "development" && error instanceof Error && error instanceof Error
+          ? error.stack
+          : undefined,
+      timestamp: new Date().toISOString(),
+    });
+    res.status(500).json({ success: false, message: "Failed to check car availability." });
+  }
 };
 
 /// Create Booking API (basic — car + dates only)
@@ -356,35 +370,32 @@ export const createBooking = async (req: Request, res: Response) => {
   }
 };
 
-
 // API to List User Bookings
 export const getUserBookings = async (req: Request, res: Response) => {
   try {
     const { _id } = req.user!;
-    const bookings = await Booking.find({ user: _id })
-      .populate("car")
-      .sort({ createdAt: -1 });
-      res.json({ success: true, bookings });
-
+    const bookings = await Booking.find({ user: _id }).populate("car").sort({ createdAt: -1 });
+    res.json({ success: true, bookings });
   } catch (error) {
     console.error(`[getUserBookings] Error:`, {
       message: errMessage(error),
       name: errName(error),
-      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
+      stack:
+        process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
     });
     res.status(500).json({ success: false, message: "Failed to retrieve bookings." });
   }
-}
+};
 
 // API to get Owner Bookings
 export const getOwnerBookings = async (req: Request, res: Response) => {
   try {
-    if (req.user!.role !== 'owner') {
+    if (req.user!.role !== "owner") {
       return res.status(403).json({ success: false, message: "Unauthorized" });
     }
     const bookings = await Booking.find({ owner: req.user!._id })
-      .populate('car user')
+      .populate("car user")
       .select("-user.password")
       .sort({ createdAt: -1 });
     res.json({ success: true, bookings });
@@ -392,43 +403,47 @@ export const getOwnerBookings = async (req: Request, res: Response) => {
     console.error(`[getOwnerBookings] Error:`, {
       message: errMessage(error),
       name: errName(error),
-      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
+      stack:
+        process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
     });
     res.status(500).json({ success: false, message: "Failed to retrieve bookings." });
   }
-}
+};
 
 // API to change booking status
 export const changeBookingStatus = async (req: Request, res: Response) => {
-    try {
-        const { _id } = req.user!;
-        const { id: bookingId } = req.params;
-        const { status } = req.body;
+  try {
+    const { _id } = req.user!;
+    const { id: bookingId } = req.params;
+    const { status } = req.body;
 
-        const booking = await Booking.findById(bookingId);
+    const booking = await Booking.findById(bookingId);
 
-        if (!booking) {
-            return res.status(404).json({ success: false, message: "Booking not found" });
-        }
-
-        if (booking.owner.toString() !== _id.toString()) {
-            return res.status(403).json({ success: false, message: "Unauthorized" });
-        }
-
-        booking.status = status;
-        await booking.save();
-
-        res.json({ success: true, message: "Status Updated" });
-    } catch (error) {
-        console.error(`[changeBookingStatus] Error:`, {
-          message: errMessage(error),
-          name: errName(error),
-          stack: process.env.NODE_ENV === "development" && error instanceof Error && error instanceof Error ? error.stack : undefined,
-          timestamp: new Date().toISOString()
-        });
-        res.status(500).json({ success: false, message: "Failed to update booking status." });
+    if (!booking) {
+      return res.status(404).json({ success: false, message: "Booking not found" });
     }
+
+    if (booking.owner.toString() !== _id.toString()) {
+      return res.status(403).json({ success: false, message: "Unauthorized" });
+    }
+
+    booking.status = status;
+    await booking.save();
+
+    res.json({ success: true, message: "Status Updated" });
+  } catch (error) {
+    console.error(`[changeBookingStatus] Error:`, {
+      message: errMessage(error),
+      name: errName(error),
+      stack:
+        process.env.NODE_ENV === "development" && error instanceof Error && error instanceof Error
+          ? error.stack
+          : undefined,
+      timestamp: new Date().toISOString(),
+    });
+    res.status(500).json({ success: false, message: "Failed to update booking status." });
+  }
 };
 
 // Create Booking with Details API
@@ -534,14 +549,12 @@ export const getBookingById = async (req: Request, res: Response) => {
     const { _id: userId, role } = req.user!;
 
     // Find booking and populate car and user data
-    const booking = await Booking.findById(id)
-      .populate("car")
-      .populate("user", "-password");
+    const booking = await Booking.findById(id).populate("car").populate("user", "-password");
 
     if (!booking) {
       return res.status(404).json({
         success: false,
-        message: "Booking not found"
+        message: "Booking not found",
       });
     }
 
@@ -549,30 +562,30 @@ export const getBookingById = async (req: Request, res: Response) => {
     // - User can access their own bookings
     // - Owner can access bookings for their cars
     const isBookingOwner = booking.user._id.toString() === userId.toString();
-    const isCarOwner = role === 'owner' && booking.owner.toString() === userId.toString();
+    const isCarOwner = role === "owner" && booking.owner.toString() === userId.toString();
 
     if (!isBookingOwner && !isCarOwner) {
       return res.status(403).json({
         success: false,
-        message: "Unauthorized"
+        message: "Unauthorized",
       });
     }
 
     res.json({
       success: true,
-      booking
+      booking,
     });
-
   } catch (error) {
     console.error(`[getBookingById] Error:`, {
       message: errMessage(error),
       name: errName(error),
-      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
+      stack:
+        process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
     });
     res.status(500).json({
       success: false,
-      message: "Failed to retrieve booking."
+      message: "Failed to retrieve booking.",
     });
   }
 };
@@ -584,13 +597,12 @@ export const cancelBooking = async (req: Request, res: Response) => {
     const { _id: userId } = req.user!;
 
     // Find booking and populate user data for authorization check
-    const booking = await Booking.findById(bookingId)
-      .populate("user", "-password");
+    const booking = await Booking.findById(bookingId).populate("user", "-password");
 
     if (!booking) {
       return res.status(404).json({
         success: false,
-        message: "Booking not found"
+        message: "Booking not found",
       });
     }
 
@@ -598,7 +610,7 @@ export const cancelBooking = async (req: Request, res: Response) => {
     if (booking.user._id.toString() !== userId.toString()) {
       return res.status(403).json({
         success: false,
-        message: "Unauthorized. You can only cancel your own bookings."
+        message: "Unauthorized. You can only cancel your own bookings.",
       });
     }
 
@@ -609,14 +621,14 @@ export const cancelBooking = async (req: Request, res: Response) => {
     if (booking.status === "cancelled") {
       return res.status(400).json({
         success: false,
-        message: "Booking is already cancelled"
+        message: "Booking is already cancelled",
       });
     }
 
     if (booking.status === "completed") {
       return res.status(400).json({
         success: false,
-        message: "Cannot cancel a completed booking"
+        message: "Cannot cancel a completed booking",
       });
     }
 
@@ -628,24 +640,24 @@ export const cancelBooking = async (req: Request, res: Response) => {
       bookingId: booking._id.toString(),
       userId: userId.toString(),
       previousStatus: previousStatus,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     res.json({
       success: true,
-      message: "Booking cancelled successfully"
+      message: "Booking cancelled successfully",
     });
-
   } catch (error) {
     console.error(`[cancelBooking] Error:`, {
       message: errMessage(error),
       name: errName(error),
-      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
+      stack:
+        process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
     });
     res.status(500).json({
       success: false,
-      message: "Failed to cancel booking. Please try again."
+      message: "Failed to cancel booking. Please try again.",
     });
   }
 };

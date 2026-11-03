@@ -9,22 +9,22 @@ const LoginRequiredModal = ({ isOpen, onClose }) => {
   const handleLogin = () => {
     // Store current path for redirect after login
     sessionStorage.setItem("redirectPath", location.pathname + location.search);
-    
+
     // Open login modal in login mode
     setShowLogin(true);
     onClose();
   };
-  
+
   const handleCreateAccount = () => {
     // Store current path for redirect after signup
     sessionStorage.setItem("redirectPath", location.pathname + location.search);
     sessionStorage.setItem("loginInitialMode", "register");
-    
+
     // Open login modal in register mode
     setShowLogin(true);
     onClose();
   };
-  
+
   // Handle Escape key to close modal
   useEffect(() => {
     const handleEscape = (e) => {
@@ -32,7 +32,7 @@ const LoginRequiredModal = ({ isOpen, onClose }) => {
         onClose();
       }
     };
-    
+
     if (isOpen) {
       document.addEventListener("keydown", handleEscape);
       // Focus trap: focus first focusable element
@@ -41,7 +41,7 @@ const LoginRequiredModal = ({ isOpen, onClose }) => {
         firstButton.focus();
       }
     }
-    
+
     return () => {
       document.removeEventListener("keydown", handleEscape);
     };
@@ -64,7 +64,9 @@ const LoginRequiredModal = ({ isOpen, onClose }) => {
         onClick={(e) => e.stopPropagation()}
         className="flex flex-col gap-4 m-auto items-start p-6 w-80 sm:w-[400px] rounded-lg shadow-xl border border-gray-200 bg-white"
       >
-        <h2 id="login-required-title" className="text-xl font-semibold">Login Required</h2>
+        <h2 id="login-required-title" className="text-xl font-semibold">
+          Login Required
+        </h2>
         <p id="login-required-description" className="text-gray-600">
           You must log in to book a car. Please log in or create an account.
         </p>
@@ -97,4 +99,3 @@ const LoginRequiredModal = ({ isOpen, onClose }) => {
 };
 
 export default LoginRequiredModal;
-

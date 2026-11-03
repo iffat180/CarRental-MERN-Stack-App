@@ -6,11 +6,7 @@ import toast from "react-hot-toast";
 import ErrorState from "../../components/owner/ErrorState";
 import EmptyState from "../../components/owner/EmptyState";
 import TableSkeleton from "../../components/owner/TableSkeleton";
-import {
-  BOOKING_STATUS,
-  STATUS_CONFIG,
-  getStatusBadgeClasses
-} from "../../utils/bookingStatus";
+import { BOOKING_STATUS, STATUS_CONFIG, getStatusBadgeClasses } from "../../utils/bookingStatus";
 import type { Booking } from "../../types";
 
 // Helper function to format date
@@ -56,7 +52,8 @@ const ManageBookings = () => {
         toast.error(errorMessage);
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || "Failed to fetch bookings";
+      const errorMessage =
+        error.response?.data?.message || error.message || "Failed to fetch bookings";
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -67,7 +64,7 @@ const ManageBookings = () => {
   const handleViewBooking = (bookingId) => {
     console.log(`[ManageBookings] View booking clicked`, {
       bookingId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
     navigate(`/booking-summary/${bookingId}`);
   };
@@ -76,45 +73,46 @@ const ManageBookings = () => {
     console.log(`[ManageBookings] Approve clicked`, {
       bookingId,
       action: "approve",
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-    
+
     setActionLoading(bookingId);
-    
+
     try {
       const { data } = await axios.post(`/api/bookings/change-status/${bookingId}`, {
-        status: BOOKING_STATUS.CONFIRMED
+        status: BOOKING_STATUS.CONFIRMED,
       });
-      
+
       if (data.success) {
         console.log(`[ManageBookings] Approve API success`, {
           bookingId,
           status: BOOKING_STATUS.CONFIRMED,
           message: data.message,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
-        
+
         toast.success(data.message || "Booking approved successfully");
         fetchOwnerBookings(); // Refresh bookings list
       } else {
         console.log(`[ManageBookings] Approve API failed`, {
           bookingId,
           errorMessage: data.message,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
-        
+
         toast.error(data.message || "Failed to approve booking");
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || "Failed to approve booking";
-      
+      const errorMessage =
+        error.response?.data?.message || error.message || "Failed to approve booking";
+
       console.log(`[ManageBookings] Approve API exception`, {
         bookingId,
         errorMessage,
         statusCode: error.response?.status,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
-      
+
       toast.error(errorMessage);
     } finally {
       setActionLoading(null);
@@ -125,45 +123,46 @@ const ManageBookings = () => {
     console.log(`[ManageBookings] Reject clicked`, {
       bookingId,
       action: "reject",
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-    
+
     setActionLoading(bookingId);
-    
+
     try {
       const { data } = await axios.post(`/api/bookings/change-status/${bookingId}`, {
-        status: BOOKING_STATUS.CANCELLED
+        status: BOOKING_STATUS.CANCELLED,
       });
-      
+
       if (data.success) {
         console.log(`[ManageBookings] Reject API success`, {
           bookingId,
           status: BOOKING_STATUS.CANCELLED,
           message: data.message,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
-        
+
         toast.success(data.message || "Booking rejected successfully");
         fetchOwnerBookings(); // Refresh bookings list
       } else {
         console.log(`[ManageBookings] Reject API failed`, {
           bookingId,
           errorMessage: data.message,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
-        
+
         toast.error(data.message || "Failed to reject booking");
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || "Failed to reject booking";
-      
+      const errorMessage =
+        error.response?.data?.message || error.message || "Failed to reject booking";
+
       console.log(`[ManageBookings] Reject API exception`, {
         bookingId,
         errorMessage,
         statusCode: error.response?.status,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
-      
+
       toast.error(errorMessage);
     } finally {
       setActionLoading(null);
@@ -191,8 +190,8 @@ const ManageBookings = () => {
 
       {/* Empty State */}
       {!isLoading && !error && bookings.length === 0 && (
-        <EmptyState 
-          title="No bookings found" 
+        <EmptyState
+          title="No bookings found"
           message="You don't have any bookings yet. Bookings will appear here once customers make reservations."
         />
       )}
@@ -203,7 +202,7 @@ const ManageBookings = () => {
           {bookings.map((booking) => {
             console.log(`[ManageBookings] Rendering booking card`, {
               bookingId: booking._id,
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
             });
 
             const statusConfig = STATUS_CONFIG[booking?.status] || null;
@@ -217,7 +216,7 @@ const ManageBookings = () => {
               hasPickupDetails: !!booking?.pickupDetails,
               hasReturnDetails: !!booking?.returnDetails,
               hasNotes: !!booking?.notes,
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
             });
 
             return (
@@ -228,7 +227,9 @@ const ManageBookings = () => {
                 {/* Header Row: Status & Price */}
                 <div className="flex items-center justify-between mb-4 pb-4 border-b border-borderColor">
                   <div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBadgeClasses}`}>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBadgeClasses}`}
+                    >
                       {statusConfig?.label || booking?.status || "Unknown"}
                     </span>
                   </div>
@@ -249,7 +250,9 @@ const ManageBookings = () => {
                       {booking.userDetails?.fullName && (
                         <div>
                           <p className="text-gray-500 text-xs">Full Name</p>
-                          <p className="text-gray-800 font-medium">{booking.userDetails.fullName}</p>
+                          <p className="text-gray-800 font-medium">
+                            {booking.userDetails.fullName}
+                          </p>
                         </div>
                       )}
                       {booking.userDetails?.email && (
@@ -267,7 +270,9 @@ const ManageBookings = () => {
                       {booking.userDetails?.nationality && (
                         <div>
                           <p className="text-gray-500 text-xs">Nationality</p>
-                          <p className="text-gray-800 font-medium">{booking.userDetails.nationality}</p>
+                          <p className="text-gray-800 font-medium">
+                            {booking.userDetails.nationality}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -282,19 +287,25 @@ const ManageBookings = () => {
                       {booking.userDetails?.licenseNumber && (
                         <div>
                           <p className="text-gray-500 text-xs">License Number</p>
-                          <p className="text-gray-800 font-medium">{booking.userDetails.licenseNumber}</p>
+                          <p className="text-gray-800 font-medium">
+                            {booking.userDetails.licenseNumber}
+                          </p>
                         </div>
                       )}
                       {booking.userDetails?.licenseExpiry && (
                         <div>
                           <p className="text-gray-500 text-xs">Expiry Date</p>
-                          <p className="text-gray-800 font-medium">{formatDate(booking.userDetails.licenseExpiry)}</p>
+                          <p className="text-gray-800 font-medium">
+                            {formatDate(booking.userDetails.licenseExpiry)}
+                          </p>
                         </div>
                       )}
                       {booking.userDetails?.licenseCountry && (
                         <div>
                           <p className="text-gray-500 text-xs">Country of Issue</p>
-                          <p className="text-gray-800 font-medium">{booking.userDetails.licenseCountry}</p>
+                          <p className="text-gray-800 font-medium">
+                            {booking.userDetails.licenseCountry}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -328,13 +339,17 @@ const ManageBookings = () => {
                       {booking.pickupDetails?.address && (
                         <div>
                           <p className="text-gray-500 text-xs">Address</p>
-                          <p className="text-gray-800 font-medium">{booking.pickupDetails.address}</p>
+                          <p className="text-gray-800 font-medium">
+                            {booking.pickupDetails.address}
+                          </p>
                         </div>
                       )}
                       {booking.pickupDetails?.time && (
                         <div>
                           <p className="text-gray-500 text-xs">Time</p>
-                          <p className="text-gray-800 font-medium">{formatTime(booking.pickupDetails.time)}</p>
+                          <p className="text-gray-800 font-medium">
+                            {formatTime(booking.pickupDetails.time)}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -349,13 +364,17 @@ const ManageBookings = () => {
                       {booking.returnDetails?.address && (
                         <div>
                           <p className="text-gray-500 text-xs">Address</p>
-                          <p className="text-gray-800 font-medium">{booking.returnDetails.address}</p>
+                          <p className="text-gray-800 font-medium">
+                            {booking.returnDetails.address}
+                          </p>
                         </div>
                       )}
                       {booking.returnDetails?.time && (
                         <div>
                           <p className="text-gray-500 text-xs">Time</p>
-                          <p className="text-gray-800 font-medium">{formatTime(booking.returnDetails.time)}</p>
+                          <p className="text-gray-800 font-medium">
+                            {formatTime(booking.returnDetails.time)}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -380,18 +399,26 @@ const ManageBookings = () => {
                   </button>
                   <button
                     onClick={() => handleApprove(booking._id)}
-                    disabled={actionLoading === booking._id || booking?.status !== BOOKING_STATUS.PENDING}
+                    disabled={
+                      actionLoading === booking._id || booking?.status !== BOOKING_STATUS.PENDING
+                    }
                     className={`px-4 py-2 text-sm bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors ${
-                      actionLoading === booking._id || booking?.status !== BOOKING_STATUS.PENDING ? "opacity-50 cursor-not-allowed" : ""
+                      actionLoading === booking._id || booking?.status !== BOOKING_STATUS.PENDING
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
                     }`}
                   >
                     {actionLoading === booking._id ? "Approving..." : "Approve"}
                   </button>
                   <button
                     onClick={() => handleReject(booking._id)}
-                    disabled={actionLoading === booking._id || booking?.status !== BOOKING_STATUS.PENDING}
+                    disabled={
+                      actionLoading === booking._id || booking?.status !== BOOKING_STATUS.PENDING
+                    }
                     className={`px-4 py-2 text-sm bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors ${
-                      actionLoading === booking._id || booking?.status !== BOOKING_STATUS.PENDING ? "opacity-50 cursor-not-allowed" : ""
+                      actionLoading === booking._id || booking?.status !== BOOKING_STATUS.PENDING
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
                     }`}
                   >
                     {actionLoading === booking._id ? "Rejecting..." : "Reject"}

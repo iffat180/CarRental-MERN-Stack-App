@@ -26,4 +26,3 @@ const ErrorState = ({ error, onRetry, retryLabel = "Retry" }: ErrorStateProps) =
 };
 
 export default ErrorState;
-

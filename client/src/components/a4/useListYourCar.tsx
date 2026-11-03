@@ -43,7 +43,12 @@ export const useListYourCar = () => {
   };
 
   const modal = (
-    <OwnerOnboardingModal isOpen={open} onClose={() => setOpen(false)} onBecomeOwner={becomeOwner} isSubmitting={busy} />
+    <OwnerOnboardingModal
+      isOpen={open}
+      onClose={() => setOpen(false)}
+      onBecomeOwner={becomeOwner}
+      isSubmitting={busy}
+    />
   );
 
   return { listYourCar, modal };

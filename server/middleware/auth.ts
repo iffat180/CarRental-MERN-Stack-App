@@ -32,8 +32,7 @@ export const protect: RequestHandler = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET) as string | JwtPayload;
 
-    const userId =
-      typeof decoded === "string" ? decoded : (decoded.userId as string | undefined);
+    const userId = typeof decoded === "string" ? decoded : (decoded.userId as string | undefined);
 
     if (!userId) {
       res.status(401).json({ success: false, message: "Invalid token payload" });

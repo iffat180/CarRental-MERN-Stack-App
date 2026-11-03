@@ -7,7 +7,7 @@ export const strictLimiter = rateLimit({
   max: 5, // Limit each IP to 5 requests per windowMs
   message: {
     success: false,
-    message: "Too many authentication attempts, please try again later."
+    message: "Too many authentication attempts, please try again later.",
   },
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
@@ -19,7 +19,7 @@ export const userLimiter = rateLimit({
   max: 100, // Limit each IP to 100 requests per windowMs
   message: {
     success: false,
-    message: "Too many requests, please try again later."
+    message: "Too many requests, please try again later.",
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -31,9 +31,8 @@ export const ownerLimiter = rateLimit({
   max: 100, // Limit each IP to 100 requests per windowMs
   message: {
     success: false,
-    message: "Too many requests, please try again later."
+    message: "Too many requests, please try again later.",
   },
   standardHeaders: true,
   legacyHeaders: false,
 });
-

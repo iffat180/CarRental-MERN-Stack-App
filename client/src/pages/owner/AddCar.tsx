@@ -72,8 +72,7 @@ const AddCar = () => {
       const payload: any = {
         ...car,
         mpg: car.mpg === "" ? undefined : Number(car.mpg),
-        trunk_capacity:
-          car.trunk_capacity === "" ? undefined : Number(car.trunk_capacity),
+        trunk_capacity: car.trunk_capacity === "" ? undefined : Number(car.trunk_capacity),
         tags: car.tagsArray && car.tagsArray.length ? car.tagsArray : [],
       };
       delete (payload as any).tagsArray;
@@ -144,7 +143,10 @@ const AddCar = () => {
       >
         {/* Car Image */}
         <div className="flex items-center gap-2 w-full">
-          <label htmlFor="car-image" className="cursor-pointer focus-within:outline-none focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 rounded">
+          <label
+            htmlFor="car-image"
+            className="cursor-pointer focus-within:outline-none focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 rounded"
+          >
             <img
               src={image ? URL.createObjectURL(image) : assets.upload_icon}
               alt={image ? "Preview of car image to upload" : "Upload car image icon"}
@@ -167,7 +169,10 @@ const AddCar = () => {
           <legend className="sr-only">Car Brand and Model</legend>
           <div className="flex flex-col w-full">
             <label htmlFor="car-brand">
-              Brand <span className="text-red-500" aria-label="required">*</span>
+              Brand{" "}
+              <span className="text-red-500" aria-label="required">
+                *
+              </span>
             </label>
             <input
               id="car-brand"
@@ -183,7 +188,10 @@ const AddCar = () => {
 
           <div className="flex flex-col w-full">
             <label htmlFor="car-model">
-              Model <span className="text-red-500" aria-label="required">*</span>
+              Model{" "}
+              <span className="text-red-500" aria-label="required">
+                *
+              </span>
             </label>
             <input
               id="car-model"
@@ -222,9 +230,7 @@ const AddCar = () => {
               required
               className="px-3 py-2 mt-1 border border-borderColor rounded-md outline-none"
               value={car.pricePerDay}
-              onChange={(e) =>
-                setCar({ ...car, pricePerDay: Number(e.target.value) })
-              }
+              onChange={(e) => setCar({ ...car, pricePerDay: Number(e.target.value) })}
             />
           </div>
 
@@ -283,9 +289,7 @@ const AddCar = () => {
               required
               className="px-3 py-2 mt-1 border border-borderColor rounded-md outline-none"
               value={car.seating_capacity}
-              onChange={(e) =>
-                setCar({ ...car, seating_capacity: Number(e.target.value) })
-              }
+              onChange={(e) => setCar({ ...car, seating_capacity: Number(e.target.value) })}
             />
           </div>
         </div>
@@ -372,7 +376,7 @@ const AddCar = () => {
           aria-busy={isLoading}
           className="mt-2 inline-flex items-center justify-center rounded-md px-4 py-2 bg-primary text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50"
         >
-          {isLoading ? 'Listing...' : 'List Your Car'}
+          {isLoading ? "Listing..." : "List Your Car"}
         </button>
       </form>
     </div>

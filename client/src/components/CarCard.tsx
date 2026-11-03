@@ -86,7 +86,7 @@ const CarCard = ({ car }) => {
         </div>
 
         {/* Tags - semantic attributes for future AI similarity matching */}
-        {(car.tags && car.tags.length > 0) && (
+        {car.tags && car.tags.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1.5">
             {(car.tags || []).map((tag, index) => (
               <span

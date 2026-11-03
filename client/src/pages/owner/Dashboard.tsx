@@ -61,7 +61,8 @@ const Dashboard = () => {
         toast.error(errorMessage);
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || "Failed to fetch dashboard data";
+      const errorMessage =
+        error.response?.data?.message || error.message || "Failed to fetch dashboard data";
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -117,40 +118,34 @@ const Dashboard = () => {
               <p className="text-gray-500">Latest customer bookings</p>
               {data.recentBookings.length === 0 ? (
                 <div className="mt-4">
-                  <EmptyState 
-                    title="No recent bookings" 
+                  <EmptyState
+                    title="No recent bookings"
                     message="Recent bookings will appear here"
                   />
                 </div>
               ) : (
                 data.recentBookings.map((booking, index) => (
-            <div key={index} className="mt-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="hidden md:flex items-center justify-center w-12 h-12 rounded-full bg-primary/10">
-                  <img
-                    src={assets.listIconColored}
-                    alt=""
-                    className="h-5 w-5"
-                  />
-                </div>
-              </div>
+                  <div key={index} className="mt-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="hidden md:flex items-center justify-center w-12 h-12 rounded-full bg-primary/10">
+                        <img src={assets.listIconColored} alt="" className="h-5 w-5" />
+                      </div>
+                    </div>
 
-              <p>
-                {booking.car.brand} {booking.car.model}
-              </p>
-              <p className="text-sm text-gray-500">
-                {booking.createdAt?.split("T")[0]}
-              </p>
-              <div className="flex items-center gap-2 font-medium">
-                <p className="text-sm text-gray-500">
-                  {currency}
-                  {booking.price}
-                </p>
-                <p className="px-3 py-0.5 border border-borderColor rounded-full text-sm">
-                  {booking.status}
-                </p>
-                </div>
-              </div>
+                    <p>
+                      {booking.car.brand} {booking.car.model}
+                    </p>
+                    <p className="text-sm text-gray-500">{booking.createdAt?.split("T")[0]}</p>
+                    <div className="flex items-center gap-2 font-medium">
+                      <p className="text-sm text-gray-500">
+                        {currency}
+                        {booking.price}
+                      </p>
+                      <p className="px-3 py-0.5 border border-borderColor rounded-full text-sm">
+                        {booking.status}
+                      </p>
+                    </div>
+                  </div>
                 ))
               )}
             </div>

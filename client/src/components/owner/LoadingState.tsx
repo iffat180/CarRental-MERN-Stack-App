@@ -12,4 +12,3 @@ const LoadingState = ({ message = "Loading..." }) => {
 };
 
 export default LoadingState;
-

@@ -23,15 +23,39 @@ const car = (n: number, brand: string, model: string, over: Record<string, unkno
 /** Same models the home-page slider has cut-outs for, plus a few others. */
 export const CARS = [
   car(17, "Subaru", "Outback"),
-  car(14, "Mazda", "MX-5 Miata", { category: "Convertible", seating_capacity: 2, location: "Los Angeles", trunk_capacity: 130, pricePerDay: 95 }),
-  car(15, "Mercedes-Benz", "E-Class", { category: "Sedan", location: "New York", pricePerDay: 180 }),
+  car(14, "Mazda", "MX-5 Miata", {
+    category: "Convertible",
+    seating_capacity: 2,
+    location: "Los Angeles",
+    trunk_capacity: 130,
+    pricePerDay: 95,
+  }),
+  car(15, "Mercedes-Benz", "E-Class", {
+    category: "Sedan",
+    location: "New York",
+    pricePerDay: 180,
+  }),
   car(12, "KIA", "EV9", { seating_capacity: 7, location: "Chicago", pricePerDay: 135 }),
-  car(13, "Toyota", "Prius", { category: "Sedan", location: "San Francisco", pricePerDay: 55, mpg: 54 }),
-  car(16, "Dodge", "Grand Caravan", { category: "Van", seating_capacity: 7, location: "Chicago", pricePerDay: 85 }),
+  car(13, "Toyota", "Prius", {
+    category: "Sedan",
+    location: "San Francisco",
+    pricePerDay: 55,
+    mpg: 54,
+  }),
+  car(16, "Dodge", "Grand Caravan", {
+    category: "Van",
+    seating_capacity: 7,
+    location: "Chicago",
+    pricePerDay: 85,
+  }),
   car(18, "Ford", "F-150", { category: "Truck", location: "Houston", pricePerDay: 110 }),
 ];
 
-const json = (body: unknown) => ({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
+const json = (body: unknown) => ({
+  status: 200,
+  contentType: "application/json",
+  body: JSON.stringify(body),
+});
 
 /** A syntactically valid JWT that expires far in the future (the app only reads `exp`). */
 const fakeToken = () => {
@@ -42,7 +66,9 @@ const fakeToken = () => {
 /** Mock every API call the public pages make, and stub car photos so no network is needed. */
 export const mockApi = async (page: Page) => {
   await page.route("**/api/user/cars", (r) => r.fulfill(json({ success: true, cars: CARS })));
-  await page.route("**/api/user/cities", (r) => r.fulfill(json({ success: true, cities: ["Chicago", "Denver", "Houston"] })));
+  await page.route("**/api/user/cities", (r) =>
+    r.fulfill(json({ success: true, cities: ["Chicago", "Denver", "Houston"] }))
+  );
   await page.route("**/api/recommendations", (r) =>
     r.fulfill(
       json({
@@ -61,7 +87,14 @@ export const mockApi = async (page: Page) => {
   );
   // external car photos: answer with a 1x1 transparent PNG
   await page.route("https://d3c38yoff69w1u.cloudfront.net/**", (r) =>
-    r.fulfill({ status: 200, contentType: "image/png", body: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64") })
+    r.fulfill({
+      status: 200,
+      contentType: "image/png",
+      body: Buffer.from(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+        "base64"
+      ),
+    })
   );
 };
 
@@ -69,11 +102,22 @@ export const mockApi = async (page: Page) => {
 export const loginAsUser = async (page: Page) => {
   await page.addInitScript((token) => localStorage.setItem("token", token), fakeToken());
   await page.route("**/api/user/data", (r) =>
-    r.fulfill(json({ success: true, user: { _id: "u1", name: "Test User", email: "test@example.com", role: "user" } }))
+    r.fulfill(
+      json({
+        success: true,
+        user: { _id: "u1", name: "Test User", email: "test@example.com", role: "user" },
+      })
+    )
   );
 };
 
 export const test = base.extend<{ api: void }>({
-  api: [async ({ page }, use) => { await mockApi(page); await use(); }, { auto: true }],
+  api: [
+    async ({ page }, use) => {
+      await mockApi(page);
+      await use();
+    },
+    { auto: true },
+  ],
 });
 export { expect };

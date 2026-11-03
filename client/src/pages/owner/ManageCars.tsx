@@ -52,7 +52,8 @@ const ManageCars = () => {
         toast.error(data.message);
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || "Failed to toggle availability";
+      const errorMessage =
+        error.response?.data?.message || error.message || "Failed to toggle availability";
       toast.error(errorMessage);
     } finally {
       setActionLoading(null);
@@ -67,10 +68,10 @@ const ManageCars = () => {
 
   const deleteCar = async () => {
     if (!carToDelete) return;
-    
+
     setActionLoading(carToDelete._id);
     setShowDeleteModal(false);
-    
+
     try {
       const { data } = await axios.post("/api/owner/delete-car", { carId: carToDelete });
       if (data.success) {
@@ -109,8 +110,8 @@ const ManageCars = () => {
 
       {/* Empty State */}
       {!isLoading && !error && cars.length === 0 && (
-        <EmptyState 
-          title="No cars found" 
+        <EmptyState
+          title="No cars found"
           message="You haven't added any cars yet. Start by adding your first car!"
         />
       )}
@@ -131,68 +132,64 @@ const ManageCars = () => {
 
             <tbody>
               {cars.map((car, index) => (
-              <tr key={index} className="border-t border-borderColor">
-                {/* Car cell */}
-                <td className="p-3 flex items-center gap-3">
-                  <img
-                    src={carImage(car.image)}
-                    alt=""
-                    className="h-12 w-12 aspect-square rounded-md object-cover"
-                  />
-                  <div className="max-md:hidden">
-                    <p className="font-medium">
-                      {car.brand} {car.model}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {car.seating_capacity} • {car.transmission}
-                    </p>
-                  </div>
-                </td>
+                <tr key={index} className="border-t border-borderColor">
+                  {/* Car cell */}
+                  <td className="p-3 flex items-center gap-3">
+                    <img
+                      src={carImage(car.image)}
+                      alt=""
+                      className="h-12 w-12 aspect-square rounded-md object-cover"
+                    />
+                    <div className="max-md:hidden">
+                      <p className="font-medium">
+                        {car.brand} {car.model}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {car.seating_capacity} • {car.transmission}
+                      </p>
+                    </div>
+                  </td>
 
-                {/* Category */}
-                <td className="p-3 max-md:hidden">{car.category}</td>
+                  {/* Category */}
+                  <td className="p-3 max-md:hidden">{car.category}</td>
 
-                {/* Price */}
-                <td className="p-3">
-                  {currency}
-                  {car.pricePerDay}/day
-                </td>
+                  {/* Price */}
+                  <td className="p-3">
+                    {currency}
+                    {car.pricePerDay}/day
+                  </td>
 
-                {/* Status */}
-                <td className="p-3 max-md:hidden">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs ${
-                      car.isAvailable
-                        ? "bg-green-100 text-green-500"
-                        : "bg-red-100 text-red-500"
-                    }`}
-                  >
-                    {car.isAvailable ? "Available" : "Unavailable"}
-                  </span>
-                </td>
+                  {/* Status */}
+                  <td className="p-3 max-md:hidden">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs ${
+                        car.isAvailable ? "bg-green-100 text-green-500" : "bg-red-100 text-red-500"
+                      }`}
+                    >
+                      {car.isAvailable ? "Available" : "Unavailable"}
+                    </span>
+                  </td>
 
-                {/* Actions */}
-                <td className="flex items-center p-3">
-                  <img
-                    onClick={() => !actionLoading && toggleAvailablity(car._id)}
-                    src={
-                      car.isAvailable ? assets.eye_close_icon : assets.eye_icon
-                    }
-                    alt=""
-                    className={`cursor-pointer ${
-                      actionLoading === car._id ? "opacity-50 cursor-not-allowed" : ""
-                    }`}
-                  />
-                  <img
-                    onClick={() => !actionLoading && handleDeleteClick(car._id)}
-                    src={assets.delete_icon}
-                    alt=""
-                    className={`cursor-pointer ml-2 ${
-                      actionLoading === car._id ? "opacity-50 cursor-not-allowed" : ""
-                    }`}
-                  />
-                </td>
-              </tr>
+                  {/* Actions */}
+                  <td className="flex items-center p-3">
+                    <img
+                      onClick={() => !actionLoading && toggleAvailablity(car._id)}
+                      src={car.isAvailable ? assets.eye_close_icon : assets.eye_icon}
+                      alt=""
+                      className={`cursor-pointer ${
+                        actionLoading === car._id ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
+                    />
+                    <img
+                      onClick={() => !actionLoading && handleDeleteClick(car._id)}
+                      src={assets.delete_icon}
+                      alt=""
+                      className={`cursor-pointer ml-2 ${
+                        actionLoading === car._id ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
+                    />
+                  </td>
+                </tr>
               ))}
             </tbody>
           </table>

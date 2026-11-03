@@ -57,26 +57,28 @@ export interface AppContextType {
 const decodeToken = (token: string | null): JwtPayload | null => {
   try {
     if (!token) return null;
-    const base64Url = token.split('.')[1];
+    const base64Url = token.split(".")[1];
     if (!base64Url) return null;
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
     const jsonPayload = decodeURIComponent(
       atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
     );
     const decoded = JSON.parse(jsonPayload);
-    
+
     // Protect against prototype pollution (JWT payloads should be simple objects)
-    if (decoded && typeof decoded === 'object' && !Array.isArray(decoded)) {
-      if (Object.prototype.hasOwnProperty.call(decoded, '__proto__') || 
-          Object.prototype.hasOwnProperty.call(decoded, 'constructor') ||
-          Object.prototype.hasOwnProperty.call(decoded, 'prototype')) {
+    if (decoded && typeof decoded === "object" && !Array.isArray(decoded)) {
+      if (
+        Object.prototype.hasOwnProperty.call(decoded, "__proto__") ||
+        Object.prototype.hasOwnProperty.call(decoded, "constructor") ||
+        Object.prototype.hasOwnProperty.call(decoded, "prototype")
+      ) {
         return null; // Reject token with suspicious payload
       }
     }
-    
+
     return decoded;
   } catch {
     return null;
@@ -106,7 +108,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [pickupDate, setPickupDate] = useState("");
   const [returnDate, setReturnDate] = useState("");
 
-  
   // Request state management
   const [isFetchingUser, setIsFetchingUser] = useState(false);
 
@@ -124,20 +125,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const handleTokenExpiry = useCallback(() => {
     // Remove expired token from localStorage
     localStorage.removeItem("token");
-    
+
     // Clear token state
     setToken(null);
-    
+
     // Clear user data
     setUser(null);
     setIsOwner(false);
-    
+
     // Clear axios authorization header
     delete axios.defaults.headers.common["Authorization"];
-    
+
     // Show notification
     toast.error("Your session has expired. Please login again.");
-    
+
     // Navigate to home
     navigate("/");
   }, [navigate]);
@@ -146,13 +147,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const fetchUser = async () => {
     // Check if already fetching
     if (isFetchingUser) return;
-    
+
     // Check token expiry before API call
     if (!token || isTokenExpired(token)) {
       handleTokenExpiry();
       return;
     }
-    
+
     setIsFetchingUser(true);
     try {
       const { data } = await axios.get("/api/user/data");
@@ -198,13 +199,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setToken(null);
     setUser(null);
     setIsOwner(false);
-    
+
     // Clear redirectPath to prevent redirect loops or state leakage
     sessionStorage.removeItem("redirectPath");
-    
+
     // Clear axios authorization header (FIX: was setting it after clearing token)
     delete axios.defaults.headers.common["Authorization"];
-    
+
     navigate("/");
     toast.success("Logged out successfully");
   };
@@ -213,7 +214,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const upgradeToOwner = async () => {
     try {
       const { data } = await axios.post("/api/user/upgrade-to-owner");
-      
+
       if (data.success) {
         // Update user in context with new role
         setUser(data.user);
@@ -223,7 +224,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(data.message || "Failed to upgrade to owner");
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || "Failed to upgrade to owner";
+      const errorMessage =
+        error.response?.data?.message || error.message || "Failed to upgrade to owner";
       throw new Error(errorMessage);
     }
   };
@@ -241,7 +243,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       (error) => {
         if (error.response?.status === 401) {
           const currentToken = tokenRef.current || localStorage.getItem("token");
-          
+
           // Check if token exists and is expired
           if (currentToken && isTokenExpired(currentToken)) {
             // Token expired - handle normally (show toast, navigate home)
@@ -251,7 +253,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             // Store current location for redirect after login
             const currentPath = window.location.pathname + window.location.search;
             sessionStorage.setItem("redirectPath", currentPath);
-            
+
             // Show LoginRequiredModal instead of toast
             setShowLoginRequired(true);
           }
@@ -270,7 +272,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   // useEffect to retrieve the token from localStorage
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
-    
+
     // Validate token before setting it
     if (storedToken && !isTokenExpired(storedToken)) {
       setToken(storedToken);
@@ -289,10 +291,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         handleTokenExpiry();
         return;
       }
-      
+
       // Set authorization header
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      
+
       // Fetch user data
       fetchUser();
     } else {
@@ -305,14 +307,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   // Token expiry monitoring - check periodically
   useEffect(() => {
     if (!token) return;
-    
+
     // Check token expiry every minute
     const interval = setInterval(() => {
       if (isTokenExpired(token)) {
         handleTokenExpiry();
       }
     }, 60000); // Check every minute
-    
+
     return () => clearInterval(interval);
   }, [token, handleTokenExpiry]);
 

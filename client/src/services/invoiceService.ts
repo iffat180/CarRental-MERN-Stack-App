@@ -43,7 +43,10 @@ const invoiceService = {
       if (error.response) {
         // API responded with error status
         const status = error.response.status;
-        const message = error.response.data?.message || error.response.data?.error || "Failed to generate invoice";
+        const message =
+          error.response.data?.message ||
+          error.response.data?.error ||
+          "Failed to generate invoice";
 
         if (status === 404) {
           throw new Error("Booking not found. Please verify the booking ID.");
@@ -56,17 +59,20 @@ const invoiceService = {
         }
       } else if (error.request) {
         // Request was made but no response received
-        throw new Error("Unable to connect to invoice service. Please check your internet connection.");
+        throw new Error(
+          "Unable to connect to invoice service. Please check your internet connection."
+        );
       } else if (error.code === "ECONNABORTED") {
         // Request timeout
         throw new Error("Invoice generation is taking longer than expected. Please try again.");
       } else {
         // Something else happened
-        throw new Error(error.message || "An unexpected error occurred while generating the invoice.");
+        throw new Error(
+          error.message || "An unexpected error occurred while generating the invoice."
+        );
       }
     }
   },
 };
 
 export default invoiceService;
-

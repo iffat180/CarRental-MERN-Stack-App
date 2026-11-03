@@ -38,7 +38,9 @@ describe("useCarsQuery", () => {
     const a = renderHook(() => useCarsQuery(), { wrapper });
     const b = renderHook(() => useCarsQuery(), { wrapper });
 
-    await waitFor(() => expect(a.result.current.isSuccess && b.result.current.isSuccess).toBe(true));
+    await waitFor(() =>
+      expect(a.result.current.isSuccess && b.result.current.isSuccess).toBe(true)
+    );
     expect(get).toHaveBeenCalledTimes(1);
   });
 

@@ -10,7 +10,7 @@ const OwnerOnboardingModal = ({ isOpen, onClose, onBecomeOwner, isSubmitting }) 
       setCurrentScreen(1);
       console.log(`[OwnerOnboardingModal] Modal opened`, {
         screen: 1,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   }, [isOpen]);
@@ -23,7 +23,7 @@ const OwnerOnboardingModal = ({ isOpen, onClose, onBecomeOwner, isSubmitting }) 
         fromScreen: currentScreen,
         toScreen: newScreen,
         action: "next",
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   };
@@ -36,7 +36,7 @@ const OwnerOnboardingModal = ({ isOpen, onClose, onBecomeOwner, isSubmitting }) 
         fromScreen: currentScreen,
         toScreen: newScreen,
         action: "back",
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   };
@@ -44,7 +44,7 @@ const OwnerOnboardingModal = ({ isOpen, onClose, onBecomeOwner, isSubmitting }) 
   const handleBecomeOwnerClick = () => {
     console.log(`[OwnerOnboardingModal] Become owner CTA clicked`, {
       screen: currentScreen,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
     onBecomeOwner();
   };
@@ -56,7 +56,7 @@ const OwnerOnboardingModal = ({ isOpen, onClose, onBecomeOwner, isSubmitting }) 
         onClose();
       }
     };
-    
+
     if (isOpen) {
       document.addEventListener("keydown", handleEscape);
       // Focus trap: focus first focusable element
@@ -65,7 +65,7 @@ const OwnerOnboardingModal = ({ isOpen, onClose, onBecomeOwner, isSubmitting }) 
         firstButton.focus();
       }
     }
-    
+
     return () => {
       document.removeEventListener("keydown", handleEscape);
     };
@@ -109,14 +109,16 @@ const OwnerOnboardingModal = ({ isOpen, onClose, onBecomeOwner, isSubmitting }) 
         {/* Screen 1: Why become an owner? */}
         {currentScreen === 1 && (
           <div className="flex flex-col gap-4 w-full">
-            <h2 id="owner-onboarding-title" className="text-xl font-semibold text-center">Why become an owner?</h2>
+            <h2 id="owner-onboarding-title" className="text-xl font-semibold text-center">
+              Why become an owner?
+            </h2>
             <p id="owner-onboarding-description" className="sr-only">
               Learn about the benefits of becoming a car owner on our platform
             </p>
             <div className="space-y-3 text-gray-600">
               <p>
-                Transform your vehicle into a source of income by listing it on our platform. 
-                Reach thousands of renters looking for quality cars.
+                Transform your vehicle into a source of income by listing it on our platform. Reach
+                thousands of renters looking for quality cars.
               </p>
               <ul className="list-disc list-inside space-y-2 ml-2">
                 <li>Set your own rental prices and availability</li>
@@ -125,7 +127,7 @@ const OwnerOnboardingModal = ({ isOpen, onClose, onBecomeOwner, isSubmitting }) 
                 <li>Access to comprehensive owner dashboard and analytics</li>
               </ul>
             </div>
-            
+
             <div className="flex flex-col gap-3 w-full pt-2">
               <button
                 onClick={handleNext}
@@ -162,33 +164,41 @@ const OwnerOnboardingModal = ({ isOpen, onClose, onBecomeOwner, isSubmitting }) 
                   <span className="text-green-500 font-bold text-lg">✓</span>
                   <div>
                     <p className="font-medium">Easy Car Listing</p>
-                    <p className="text-sm text-gray-500">Add your car in minutes with our simple upload process</p>
+                    <p className="text-sm text-gray-500">
+                      Add your car in minutes with our simple upload process
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <span className="text-green-500 font-bold text-lg">✓</span>
                   <div>
                     <p className="font-medium">Real-time Dashboard</p>
-                    <p className="text-sm text-gray-500">Monitor bookings, earnings, and manage your fleet all in one place</p>
+                    <p className="text-sm text-gray-500">
+                      Monitor bookings, earnings, and manage your fleet all in one place
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <span className="text-green-500 font-bold text-lg">✓</span>
                   <div>
                     <p className="font-medium">Flexible Management</p>
-                    <p className="text-sm text-gray-500">Approve, cancel, or modify bookings with full control</p>
+                    <p className="text-sm text-gray-500">
+                      Approve, cancel, or modify bookings with full control
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <span className="text-green-500 font-bold text-lg">✓</span>
                   <div>
                     <p className="font-medium">Secure Payments</p>
-                    <p className="text-sm text-gray-500">Safe and reliable payment processing for all transactions</p>
+                    <p className="text-sm text-gray-500">
+                      Safe and reliable payment processing for all transactions
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
-            
+
             <div className="flex flex-col gap-3 w-full pt-2">
               <button
                 onClick={handleBecomeOwnerClick}

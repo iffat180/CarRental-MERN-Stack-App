@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {assets } from "../assets/assets";
+import { assets } from "../assets/assets";
 import Title from "../components/Title";
 import toast from "react-hot-toast";
 import { useAppContext } from "../context/AppContext";
@@ -19,8 +19,7 @@ const formatTime = (time24) => {
 };
 
 const MyBookings = () => {
-
-  const { axios, user, currency} = useAppContext();
+  const { axios, user, currency } = useAppContext();
   const navigate = useNavigate();
 
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -33,7 +32,7 @@ const MyBookings = () => {
   const fetchMyBookings = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const { data } = await axios.get(`/api/bookings/user`);
 
@@ -46,10 +45,11 @@ const MyBookings = () => {
         toast.error(errorMessage);
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || "Failed to fetch bookings";
+      const errorMessage =
+        error.response?.data?.message || error.message || "Failed to fetch bookings";
       setError(errorMessage);
       toast.error(errorMessage);
-      setRetryCount(prev => prev + 1);
+      setRetryCount((prev) => prev + 1);
     } finally {
       setIsLoading(false);
     }
@@ -62,7 +62,9 @@ const MyBookings = () => {
 
   const handleCancelBooking = async (bookingId) => {
     // Show confirmation dialog
-    const confirmed = window.confirm("Are you sure you want to cancel this booking? This action cannot be undone.");
+    const confirmed = window.confirm(
+      "Are you sure you want to cancel this booking? This action cannot be undone."
+    );
     if (!confirmed) return;
 
     setCancellingBookingId(bookingId);
@@ -77,7 +79,8 @@ const MyBookings = () => {
         toast.error(data.message || "Failed to cancel booking");
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || "Failed to cancel booking";
+      const errorMessage =
+        error.response?.data?.message || error.message || "Failed to cancel booking";
       toast.error(errorMessage);
     } finally {
       setCancellingBookingId(null);
@@ -95,10 +98,9 @@ const MyBookings = () => {
     const carId = booking.car._id;
     const bookingId = booking._id;
 
-    navigate(
-      `/booking-details/${carId}?pickupDate=${pickupDate}&returnDate=${returnDate}`,
-      { state: { bookingId } }
-    );
+    navigate(`/booking-details/${carId}?pickupDate=${pickupDate}&returnDate=${returnDate}`, {
+      state: { bookingId },
+    });
   };
 
   const handleDownloadInvoice = async (bookingId) => {
@@ -108,10 +110,10 @@ const MyBookings = () => {
     }
 
     setGeneratingInvoiceId(bookingId);
-    
+
     try {
       const { invoiceUrl } = await invoiceService.generateInvoice(bookingId);
-      
+
       if (invoiceUrl) {
         // Open PDF in new tab
         window.open(invoiceUrl, "_blank");
@@ -133,11 +135,7 @@ const MyBookings = () => {
 
   return (
     <div className="a4-page text-sm">
-      <Title
-        title="My Bookings"
-        subTitle="View and manage your all car bookings"
-        align="left"
-      />
+      <Title title="My Bookings" subTitle="View and manage your all car bookings" align="left" />
 
       {/* Loading State */}
       {isLoading && (
@@ -186,200 +184,209 @@ const MyBookings = () => {
       {/* Bookings List */}
       {!isLoading && !error && bookings.length > 0 && (
         <div>
-          {bookings.filter(b => b && b._id).map((booking, index) => (
-          <div
-            key={booking._id}
-            className="grid grid-cols-1 md:grid-cols-4 gap-6 p-6 border border-borderColor rounded-lg mt-5 first:mt-12"
-          >
-            {/* Car Image + Info */}
-            {booking.car ? (
-              <div className="md:col-span-1">
-                <div className="rounded-md overflow-hidden mb-3">
-                  <img
-                    src={carImage(booking.car?.image)}
-                    alt={`${booking.car?.brand} ${booking.car?.model} ${booking.car?.year}`}
-                    className="w-full h-auto aspect-video object-cover"
-                  />
-                </div>
-                <p className="text-lg font-medium mt-2">
-                  {booking.car?.brand} {booking.car?.model}
-                </p>
-                <p className="text-gray-500">
-                  {booking.car?.year} • {booking.car?.category} •{" "}
-                  {booking.car?.location}
-                </p>
-              </div>
-            ) : (
-              <div className="md:col-span-1">
-                <div className="rounded-md overflow-hidden mb-3 bg-gray-100 flex items-center justify-center h-32">
-                  <p className="text-gray-400 text-sm text-center px-4">Car information unavailable</p>
-                </div>
-                <p className="text-lg font-medium mt-2 text-gray-400">Car Details Not Available</p>
-                <p className="text-gray-400 text-sm">Car information could not be loaded</p>
-              </div>
-            )}
-
-            {/* Booking Info */}
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-2">
-                <p className="px-3 py-1.5 bg-light rounded">
-                  Booking #{index + 1}
-                </p>
-                <p
-                  className={`px-3 py-1 text-xs rounded-full ${
-                    booking.status === "confirmed"
-                      ? "bg-green-400/15 text-green-600"
-                      : "bg-red-400/15 text-red-600"
-                  }`}
-                >
-                  {booking.status}
-                </p>
-              </div>
-
-              {/* Rental Period */}
-              <div className="flex items-start gap-2 mt-3">
-                <img
-                  src={assets.calendar_icon_colored}
-                  alt=""
-                  className="w-4 h-4 mt-1"
-                  aria-hidden="true"
-                />
-                <div>
-                  <p className="text-gray-500">Rental Period</p>
-                  <p>
-                    {booking.pickupDate.split("T")[0]} To{" "}
-                    {booking.returnDate.split("T")[0]}
-                  </p>
-                  {booking.pickupDetails?.time && booking.returnDetails?.time && (
-                    <p className="text-sm text-gray-400">
-                      {formatTime(booking.pickupDetails.time)} - {formatTime(booking.returnDetails.time)}
+          {bookings
+            .filter((b) => b && b._id)
+            .map((booking, index) => (
+              <div
+                key={booking._id}
+                className="grid grid-cols-1 md:grid-cols-4 gap-6 p-6 border border-borderColor rounded-lg mt-5 first:mt-12"
+              >
+                {/* Car Image + Info */}
+                {booking.car ? (
+                  <div className="md:col-span-1">
+                    <div className="rounded-md overflow-hidden mb-3">
+                      <img
+                        src={carImage(booking.car?.image)}
+                        alt={`${booking.car?.brand} ${booking.car?.model} ${booking.car?.year}`}
+                        className="w-full h-auto aspect-video object-cover"
+                      />
+                    </div>
+                    <p className="text-lg font-medium mt-2">
+                      {booking.car?.brand} {booking.car?.model}
                     </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Pick-up Location */}
-              {booking.pickupDetails?.address ? (
-                <div className="flex items-start gap-2 mt-3">
-                  <img
-                    src={assets.location_icon_colored}
-                    alt=""
-                    className="w-4 h-4 mt-1"
-                    aria-hidden="true"
-                  />
-                  <div>
-                    <p className="text-gray-500">Pick-up Location</p>
-                    <p>{booking.pickupDetails.address}</p>
-                    {booking.pickupDetails.time && (
-                      <p className="text-sm text-gray-400">{formatTime(booking.pickupDetails.time)}</p>
-                    )}
+                    <p className="text-gray-500">
+                      {booking.car?.year} • {booking.car?.category} • {booking.car?.location}
+                    </p>
                   </div>
-                </div>
-              ) : (
-                <div className="flex items-start gap-2 mt-3">
-                  <img
-                    src={assets.location_icon_colored}
-                    alt=""
-                    className="w-4 h-4 mt-1"
-                    aria-hidden="true"
-                  />
-                  <div>
-                    <p className="text-gray-500">Pick-up Location</p>
-                    <p>{booking.car?.location || "Location not available"}</p>
+                ) : (
+                  <div className="md:col-span-1">
+                    <div className="rounded-md overflow-hidden mb-3 bg-gray-100 flex items-center justify-center h-32">
+                      <p className="text-gray-400 text-sm text-center px-4">
+                        Car information unavailable
+                      </p>
+                    </div>
+                    <p className="text-lg font-medium mt-2 text-gray-400">
+                      Car Details Not Available
+                    </p>
+                    <p className="text-gray-400 text-sm">Car information could not be loaded</p>
                   </div>
-                </div>
-              )}
-
-              {/* Return Location */}
-              {booking.returnDetails?.address && (
-                <div className="flex items-start gap-2 mt-3">
-                  <img
-                    src={assets.location_icon_colored}
-                    alt=""
-                    className="w-4 h-4 mt-1"
-                    aria-hidden="true"
-                  />
-                  <div>
-                    <p className="text-gray-500">Return Location</p>
-                    <p>{booking.returnDetails.address}</p>
-                    {booking.returnDetails.time && (
-                      <p className="text-sm text-gray-400">{formatTime(booking.returnDetails.time)}</p>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Price & Actions */}
-            <div className="md:col-span-1 flex flex-col justify-between gap-6">
-              <div className="text-sm text-gray-500 text-right">
-                <p>Total Price</p>
-                <h1 className="text-2xl font-semibold text-primary">
-                  {currency}
-                  {booking.price}
-                </h1>
-                <p>Booked on {booking.createdAt?.split("T")[0]}</p>
-              </div>
-              
-              {/* Action Buttons */}
-              <div className="flex flex-col gap-2 mt-4">
-                {booking.status !== "cancelled" && (
-                  <button
-                    onClick={() => handleDownloadInvoice(booking._id)}
-                    disabled={generatingInvoiceId === booking._id}
-                    className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 border border-blue-200/30 bg-transparent hover:bg-blue-50/50 hover:border-blue-300/50 transition-all rounded-lg ${
-                      generatingInvoiceId === booking._id ? "opacity-50 cursor-not-allowed" : ""
-                    }`}
-                  >
-                    {generatingInvoiceId === booking._id ? (
-                      <>
-                        <div className="animate-spin rounded-full h-3 w-3 border-2 border-blue-600 border-t-transparent"></div>
-                        <span>Generating...</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                          />
-                        </svg>
-                        <span>Download Invoice</span>
-                      </>
-                    )}
-                  </button>
                 )}
-                {(booking.status === "pending" || booking.status === "confirmed") && (
-                  <>
-                    <button
-                      onClick={() => handleEditBooking(booking)}
-                      className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      Edit Booking
-                    </button>
-                    <button
-                      onClick={() => handleCancelBooking(booking._id)}
-                      disabled={cancellingBookingId === booking._id}
-                      className={`px-4 py-2 text-sm bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors ${
-                        cancellingBookingId === booking._id ? "opacity-50 cursor-not-allowed" : ""
+
+                {/* Booking Info */}
+                <div className="md:col-span-2">
+                  <div className="flex items-center gap-2">
+                    <p className="px-3 py-1.5 bg-light rounded">Booking #{index + 1}</p>
+                    <p
+                      className={`px-3 py-1 text-xs rounded-full ${
+                        booking.status === "confirmed"
+                          ? "bg-green-400/15 text-green-600"
+                          : "bg-red-400/15 text-red-600"
                       }`}
                     >
-                      {cancellingBookingId === booking._id ? "Cancelling..." : "Cancel Booking"}
-                    </button>
-                  </>
-                )}
+                      {booking.status}
+                    </p>
+                  </div>
+
+                  {/* Rental Period */}
+                  <div className="flex items-start gap-2 mt-3">
+                    <img
+                      src={assets.calendar_icon_colored}
+                      alt=""
+                      className="w-4 h-4 mt-1"
+                      aria-hidden="true"
+                    />
+                    <div>
+                      <p className="text-gray-500">Rental Period</p>
+                      <p>
+                        {booking.pickupDate.split("T")[0]} To {booking.returnDate.split("T")[0]}
+                      </p>
+                      {booking.pickupDetails?.time && booking.returnDetails?.time && (
+                        <p className="text-sm text-gray-400">
+                          {formatTime(booking.pickupDetails.time)} -{" "}
+                          {formatTime(booking.returnDetails.time)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Pick-up Location */}
+                  {booking.pickupDetails?.address ? (
+                    <div className="flex items-start gap-2 mt-3">
+                      <img
+                        src={assets.location_icon_colored}
+                        alt=""
+                        className="w-4 h-4 mt-1"
+                        aria-hidden="true"
+                      />
+                      <div>
+                        <p className="text-gray-500">Pick-up Location</p>
+                        <p>{booking.pickupDetails.address}</p>
+                        {booking.pickupDetails.time && (
+                          <p className="text-sm text-gray-400">
+                            {formatTime(booking.pickupDetails.time)}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-start gap-2 mt-3">
+                      <img
+                        src={assets.location_icon_colored}
+                        alt=""
+                        className="w-4 h-4 mt-1"
+                        aria-hidden="true"
+                      />
+                      <div>
+                        <p className="text-gray-500">Pick-up Location</p>
+                        <p>{booking.car?.location || "Location not available"}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Return Location */}
+                  {booking.returnDetails?.address && (
+                    <div className="flex items-start gap-2 mt-3">
+                      <img
+                        src={assets.location_icon_colored}
+                        alt=""
+                        className="w-4 h-4 mt-1"
+                        aria-hidden="true"
+                      />
+                      <div>
+                        <p className="text-gray-500">Return Location</p>
+                        <p>{booking.returnDetails.address}</p>
+                        {booking.returnDetails.time && (
+                          <p className="text-sm text-gray-400">
+                            {formatTime(booking.returnDetails.time)}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Price & Actions */}
+                <div className="md:col-span-1 flex flex-col justify-between gap-6">
+                  <div className="text-sm text-gray-500 text-right">
+                    <p>Total Price</p>
+                    <h1 className="text-2xl font-semibold text-primary">
+                      {currency}
+                      {booking.price}
+                    </h1>
+                    <p>Booked on {booking.createdAt?.split("T")[0]}</p>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-col gap-2 mt-4">
+                    {booking.status !== "cancelled" && (
+                      <button
+                        onClick={() => handleDownloadInvoice(booking._id)}
+                        disabled={generatingInvoiceId === booking._id}
+                        className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 border border-blue-200/30 bg-transparent hover:bg-blue-50/50 hover:border-blue-300/50 transition-all rounded-lg ${
+                          generatingInvoiceId === booking._id ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
+                      >
+                        {generatingInvoiceId === booking._id ? (
+                          <>
+                            <div className="animate-spin rounded-full h-3 w-3 border-2 border-blue-600 border-t-transparent"></div>
+                            <span>Generating...</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                              />
+                            </svg>
+                            <span>Download Invoice</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                    {(booking.status === "pending" || booking.status === "confirmed") && (
+                      <>
+                        <button
+                          onClick={() => handleEditBooking(booking)}
+                          className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                          Edit Booking
+                        </button>
+                        <button
+                          onClick={() => handleCancelBooking(booking._id)}
+                          disabled={cancellingBookingId === booking._id}
+                          className={`px-4 py-2 text-sm bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors ${
+                            cancellingBookingId === booking._id
+                              ? "opacity-50 cursor-not-allowed"
+                              : ""
+                          }`}
+                        >
+                          {cancellingBookingId === booking._id ? "Cancelling..." : "Cancel Booking"}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-          ))}
+            ))}
         </div>
       )}
     </div>
