@@ -12,12 +12,18 @@ const makeApp = (run: any) => {
 
 const ok = jest.fn(async (_messages?: unknown) => ({
   message: { role: "assistant" as const, content: "Try the Outback." },
-  toolCalls: [{ name: "search_cars", arguments: {}, result: {} }],
+  toolCalls: [
+    {
+      name: "search_cars",
+      arguments: {},
+      result: { cars: [{ id: "abc", name: "2023 Subaru Outback", price_per_day_usd: 95 }] },
+    },
+  ],
   finishReason: "stop",
 }));
 
 describe("POST /api/assistant", () => {
-  it("returns the assistant's reply and which tools it used (not the raw tool data)", async () => {
+  it("returns the reply, which tools were used and the cars it looked at (not the raw tool data)", async () => {
     const res = await request(makeApp(ok))
       .post("/api/assistant")
       .send({ messages: [{ role: "user", content: "a car for the mountains" }] });
@@ -27,6 +33,7 @@ describe("POST /api/assistant", () => {
       success: true,
       reply: "Try the Outback.",
       toolsUsed: ["search_cars"],
+      cars: [{ id: "abc", name: "2023 Subaru Outback", price_per_day_usd: 95 }],
     });
   });
 

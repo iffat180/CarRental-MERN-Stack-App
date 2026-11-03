@@ -4,6 +4,7 @@
  */
 import express from "express";
 import { runAssistantConversation } from "../ai/assistantCore.js";
+import { collectCars } from "../ai/tools.js";
 import { userLimiter } from "../middleware/rateLimiters.js";
 import { errMessage } from "../utils/errors.js";
 
@@ -48,6 +49,8 @@ export const createAssistantRouter = (run: Run = runAssistantConversation) => {
         success: true,
         reply: result.message.content,
         toolsUsed: result.toolCalls.map((call) => call.name),
+        // the cars the assistant looked at, so the website can show them as cards
+        cars: collectCars(result.toolCalls),
       });
     } catch (error) {
       console.error("[assistant] failed:", errMessage(error));

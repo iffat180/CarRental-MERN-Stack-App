@@ -1,6 +1,7 @@
 import { describe, it, expect } from "@jest/globals";
 import {
   carTools,
+  collectCars,
   checkCarAvailability,
   estimatePrice,
   getCar,
@@ -223,3 +224,34 @@ function makeDepsCar() {
     reason: "All-wheel drive for mountain conditions.",
   };
 }
+
+describe("collectCars", () => {
+  const card = (id: string, price = 90) => ({ id, name: `Car ${id}`, price_per_day_usd: price });
+
+  it("gathers cars from searches, city lists and single lookups, without repeats, in order", () => {
+    const cars = collectCars([
+      { result: { cars: [card("a"), card("b")] } },
+      { result: card("b") }, // a get_car result is one car, not a list
+      { result: { cars: [card("c")] } },
+    ]);
+    expect(cars.map((c) => c.id)).toEqual(["a", "b", "c"]);
+  });
+
+  it("ignores errors, prices and anything that is not a car", () => {
+    expect(
+      collectCars([
+        { result: { error: "No car with that id." } },
+        { result: { days: 3, total_usd: 285 } },
+        { result: null },
+        { result: "text" },
+        { result: { cars: [{ id: 1 }, null, "x"] } },
+      ])
+    ).toEqual([]);
+  });
+
+  it("caps the list", () => {
+    const many = Array.from({ length: 9 }, (_, i) => card(String(i)));
+    expect(collectCars([{ result: { cars: many } }])).toHaveLength(5);
+    expect(collectCars([{ result: { cars: many } }], 2)).toHaveLength(2);
+  });
+});

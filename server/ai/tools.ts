@@ -233,6 +233,35 @@ export const toOpenAITools = (tools: readonly CarTool<any>[] = carTools) =>
     };
   });
 
+/** The short card for a car, as shown to people next to the assistant's answer. */
+export type CarCard = ReturnType<typeof summarize>;
+
+const isCarCard = (value: unknown): value is CarCard =>
+  typeof value === "object" &&
+  value !== null &&
+  typeof (value as CarCard).id === "string" &&
+  typeof (value as CarCard).name === "string" &&
+  typeof (value as CarCard).price_per_day_usd === "number";
+
+/**
+ * The distinct cars the tools returned during a conversation turn (from searches,
+ * city listings and detail lookups), so the website can show them as cards. Order is
+ * kept, and the list is capped.
+ */
+export const collectCars = (calls: { result: unknown }[], limit = 5): CarCard[] => {
+  const seen = new Map<string, CarCard>();
+  for (const { result } of calls) {
+    if (typeof result !== "object" || result === null) continue;
+    const found = Array.isArray((result as { cars?: unknown }).cars)
+      ? (result as { cars: unknown[] }).cars
+      : [result];
+    for (const item of found) {
+      if (isCarCard(item) && !seen.has(item.id)) seen.set(item.id, item);
+    }
+  }
+  return [...seen.values()].slice(0, limit);
+};
+
 /**
  * Validates the arguments and runs a tool. Never throws for a bad call: it returns
  * { error } so the model can read it and try again.
