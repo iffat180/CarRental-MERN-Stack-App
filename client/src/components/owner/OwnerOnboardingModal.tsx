@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "../ui/dialog";
 
 const OwnerOnboardingModal = ({ isOpen, onClose, onBecomeOwner, isSubmitting }) => {
   const [currentScreen, setCurrentScreen] = useState(1);
@@ -49,45 +50,9 @@ const OwnerOnboardingModal = ({ isOpen, onClose, onBecomeOwner, isSubmitting }) 
     onBecomeOwner();
   };
 
-  // Handle Escape key to close modal
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
-      // Focus trap: focus first focusable element
-      const firstButton = document.querySelector<HTMLElement>('[role="dialog"] button');
-      if (firstButton) {
-        firstButton.focus();
-      }
-    }
-
-    return () => {
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [isOpen, onClose]);
-
-  // Must come after every hook above: returning early before the Escape-key
-  // useEffect changed the hook count when the modal opened and crashed the page.
-  if (!isOpen) return null;
-
   return (
-    <div
-      onClick={onClose}
-      className="fixed top-0 bottom-0 left-0 right-0 z-100 flex items-center text-sm text-gray-600 bg-black/50"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="owner-onboarding-title"
-      aria-describedby="owner-onboarding-description"
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="flex flex-col gap-6 m-auto items-center p-6 w-80 sm:w-[500px] rounded-lg shadow-xl border border-gray-200 bg-white"
-      >
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="items-center gap-6 p-6 w-80 sm:w-[500px]">
         {/* Progress Indicator */}
         <div className="w-full">
           <div className="flex items-center justify-between mb-2">
@@ -109,12 +74,12 @@ const OwnerOnboardingModal = ({ isOpen, onClose, onBecomeOwner, isSubmitting }) 
         {/* Screen 1: Why become an owner? */}
         {currentScreen === 1 && (
           <div className="flex flex-col gap-4 w-full">
-            <h2 id="owner-onboarding-title" className="text-xl font-semibold text-center">
+            <DialogTitle className="text-xl font-semibold text-center">
               Why become an owner?
-            </h2>
-            <p id="owner-onboarding-description" className="sr-only">
+            </DialogTitle>
+            <DialogDescription className="sr-only">
               Learn about the benefits of becoming a car owner on our platform
-            </p>
+            </DialogDescription>
             <div className="space-y-3 text-gray-600">
               <p>
                 Transform your vehicle into a source of income by listing it on our platform. Reach
@@ -134,7 +99,6 @@ const OwnerOnboardingModal = ({ isOpen, onClose, onBecomeOwner, isSubmitting }) 
                 disabled={isSubmitting}
                 aria-disabled={isSubmitting}
                 className="w-full px-4 py-2 bg-primary hover:bg-primary-dull rounded-lg text-white transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                aria-label="Continue to next step"
               >
                 Next
               </button>
@@ -143,7 +107,6 @@ const OwnerOnboardingModal = ({ isOpen, onClose, onBecomeOwner, isSubmitting }) 
                 disabled={isSubmitting}
                 aria-disabled={isSubmitting}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                aria-label="Close dialog"
               >
                 Cancel
               </button>
@@ -154,7 +117,12 @@ const OwnerOnboardingModal = ({ isOpen, onClose, onBecomeOwner, isSubmitting }) 
         {/* Screen 2: Owner registration benefits + CTA */}
         {currentScreen === 2 && (
           <div className="flex flex-col gap-4 w-full">
-            <h2 className="text-xl font-semibold text-center">Owner Registration Benefits</h2>
+            <DialogTitle className="text-xl font-semibold text-center">
+              Owner Registration Benefits
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              What you get as a registered owner, and the button that registers you
+            </DialogDescription>
             <div className="space-y-3 text-gray-600">
               <p className="font-medium text-gray-800">
                 Start your journey as a car owner today and unlock these exclusive benefits:
@@ -217,7 +185,6 @@ const OwnerOnboardingModal = ({ isOpen, onClose, onBecomeOwner, isSubmitting }) 
                   disabled={isSubmitting}
                   aria-disabled={isSubmitting}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                  aria-label="Go back to previous step"
                 >
                   Back
                 </button>
@@ -226,7 +193,6 @@ const OwnerOnboardingModal = ({ isOpen, onClose, onBecomeOwner, isSubmitting }) 
                   disabled={isSubmitting}
                   aria-disabled={isSubmitting}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                  aria-label="Close dialog"
                 >
                   Cancel
                 </button>
@@ -234,8 +200,8 @@ const OwnerOnboardingModal = ({ isOpen, onClose, onBecomeOwner, isSubmitting }) 
             </div>
           </div>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

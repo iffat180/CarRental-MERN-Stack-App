@@ -181,3 +181,8 @@
 .a4 img[src^="data:image/svg+xml"] {
   filter: grayscale(1) brightness(0.3);
 }
+
+/* dialogs: nearly opaque so the text stays readable over the dark backdrop */
+.a4 .a4-modal {
+  background: rgba(255, 255, 255, 0.97);
+}
