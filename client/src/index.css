@@ -1,17 +1,40 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
-
 @import "tailwindcss";
 
-*{
-  font-family: 'Outfit', sans-serif;
+/*
+  Design tokens. Everything (Tailwind classes and the a4-*.css files) reads
+  these, so a colour or font changes in exactly one place.
+  Fonts themselves are loaded by <link> tags in index.html.
+*/
+@theme {
+    /* brand */
+    --color-ink: #14181C;          /* text, buttons, borders */
+    --color-ink-soft: #2A3036;     /* hover state of ink */
+    --color-muted: #3C444D;        /* secondary text */
+    --color-subtle: #4A525B;       /* placeholders */
+    --color-accent: #E4402B;       /* the one red dot */
+    --color-danger: #B3261E;       /* error text */
+    --color-photo: #D3D8DD;        /* placeholder behind photos */
+
+    /* silver ramp, used by the page background */
+    --color-silver-50: #F4F5F7;
+    --color-silver-100: #EEF0F2;
+    --color-silver-200: #E5E8EB;
+    --color-silver-300: #D6DADF;
+    --color-silver-400: #CDD2D8;
+    --color-silver-500: #BFC5CC;
+
+    /* names the older pages already use */
+    --color-primary: var(--color-ink);
+    --color-primary-dull: var(--color-ink-soft);
+    --color-light: var(--color-silver-100);
+    --color-borderColor: #B7BEC6;
+
+    --font-display: "Michroma", sans-serif;
+    --font-body: "Instrument Sans", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
-@theme {
-    --color-primary: #2563EB;
-    --color-primary-dull: #1F58D8;
-    --color-light: #F1F5F9;
-    --color-borderColor: #c4c7d2;
-}
+body { font-family: var(--font-body); }
 
 /* Accessibility: Screen reader only class */
 .sr-only {

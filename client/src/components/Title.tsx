@@ -11,8 +11,8 @@ const Title = ({ title, subTitle, align }: TitleProps) => {
         align === "left" ? " md:items-start md:text-left" : ""
       }`}
     >
-      <h1 className="font-semibold text-4xl md:text-[40px]">{title}</h1>
-      <p className="text-sm md:text-base text-gray-500/90 mt-2 max-w-156">{subTitle}</p>
+      <h1 className="text-3xl md:text-4xl leading-tight">{title}</h1>
+      <p className="text-sm md:text-base text-gray-500 mt-3 max-w-156">{subTitle}</p>
     </div>
   );
 };

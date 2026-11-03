@@ -9,6 +9,7 @@ import EmptyState from "../../components/owner/EmptyState";
 import TableSkeleton from "../../components/owner/TableSkeleton";
 import ConfirmModal from "../../components/owner/ConfirmModal";
 import type { Car } from "../../types";
+import { carImage } from "../../utils/carImage";
 
 const ManageCars = () => {
   const { isOwner, axios, currency } = useAppContext();
@@ -135,7 +136,7 @@ const ManageCars = () => {
                 {/* Car cell */}
                 <td className="p-3 flex items-center gap-3">
                   <img
-                    src={car.image}
+                    src={carImage(car.image)}
                     alt=""
                     className="h-12 w-12 aspect-square rounded-md object-cover"
                   />

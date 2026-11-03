@@ -7,13 +7,16 @@ import { use } from "react";
 import { useEffect } from "react";
 
 const Layout = () => {
-  const { isOwner, navigate } = useAppContext();
+  const { isOwner, user, token, navigate } = useAppContext();
 
   useEffect(() => {
+    // On a page refresh the user is still being loaded from the saved login.
+    // Wait for that, otherwise a real owner gets bounced to the home page.
+    if (!user && localStorage.getItem("token")) return;
     if (!isOwner) {
       navigate("/");
     }
-  }, [isOwner]);
+  }, [isOwner, user, token]);
 
   return (
     <div className="flex flex-col">

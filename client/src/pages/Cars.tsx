@@ -177,13 +177,13 @@ const Cars = () => {
   };
 
   return (
-    <div className="flex flex-col items-center py-20 bg-light max-md:px-4">
+    <div className="a4-page flex flex-col items-center">
       <Title
         title="Available Cars"
         subTitle="Browse our selection of premium vehicles available for your next adventure"
       />
 
-      <div className="flex items-center bg-white px-4 mt-6 max-w-140 w-full h-12 rounded-full shadow">
+      <div className="flex items-center bg-white px-4 mt-6 max-w-140 w-full h-12 rounded-full shadow border border-borderColor">
         <label htmlFor="cars-search" className="sr-only">Search cars by make, model or features</label>
         <img src={assets.search_icon} alt="" className="w-4.5 h-4.5 mr-2" aria-hidden="true" />
         <input
@@ -230,7 +230,7 @@ const Cars = () => {
         </div>
       )}
 
-      <div className="px-6 md:px-16 lg:px-24 xl:px-32 mt-10 w-full">
+      <div className="mt-10 w-full">
         {/* Loading State */}
         {isLoading && (
           <div className="flex items-center justify-center py-20">
@@ -288,13 +288,13 @@ const Cars = () => {
         {/* Cars Grid */}
         {!isLoading && !error && filteredCars.length > 0 && (
           <>
-            <p className="text-gray-500 xl:px-20 max-w-7xl mx-auto">
+            <p className="text-gray-500">
               Showing {startIndex + 1}-{Math.min(endIndex, filteredCars.length)} of {filteredCars.length} Cars
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-4 xl:px-20 max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-4">
               {paginatedCars.map((car) => (
-                <div key={car._id}>
+                <div key={car._id} className="h-full">
                   <CarCard car={car} />
                 </div>
               ))}

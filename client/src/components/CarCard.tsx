@@ -1,6 +1,7 @@
 import React from "react";
 import { assets } from "../assets/assets";
 import { useNavigate } from "react-router-dom";
+import { carImage } from "../utils/carImage";
 
 const CarCard = ({ car }) => {
   const currency = import.meta.env.VITE_CURRENCY;
@@ -19,22 +20,22 @@ const CarCard = ({ car }) => {
       tabIndex={0}
       role="button"
       aria-label={`View details for ${car.brand} ${car.model} ${car.year}`}
-      className="group rounded-xl overflow-hidden shadow-lg hover:-translate-y-1 transition-all duration-500 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+      className="a4-fcard group h-full cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
     >
-      <div className="relative h-48 overflow-hidden">
+      <div className="relative aspect-[16/10] overflow-hidden bg-[#d3d8dd]">
         <img
-          src={car.image}
+          src={carImage(car.image)}
           alt={`${car.brand} ${car.model} ${car.year} - ${car.category}`}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="w-full h-full object-cover object-[center_62%] transition-transform duration-500 group-hover:scale-105"
         />
 
         {car.isAvailable && (
-          <p className="absolute top-4 left-4 bg-primary/90 text-white text-xs px-2.5 py-1 rounded-full">
+          <p className="absolute top-3 left-3 bg-primary/90 text-white text-xs px-2.5 py-1 rounded-full">
             Available Now
           </p>
         )}
 
-        <div className="absolute bottom-4 right-4 bg-black/80 backdrop-blur-sm text-white px-3 py-2 rounded-lg">
+        <div className="absolute bottom-3 right-3 bg-[#14181C]/85 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg">
           <span className="font-semibold">
             {currency}
             {car.pricePerDay}
@@ -46,7 +47,7 @@ const CarCard = ({ car }) => {
       <div className="p-4 sm:p-5">
         <div className="flex justify-between items-start mb-2">
           <div>
-            <h3 className="text-lg font-medium">
+            <h3 className="text-[15px] leading-snug">
               {car.brand} {car.model}
             </h3>
             <p className="text-muted-foreground text-sm">

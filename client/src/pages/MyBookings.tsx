@@ -6,6 +6,7 @@ import { useAppContext } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
 import invoiceService from "../services/invoiceService";
 import type { Booking } from "../types";
+import { carImage } from "../utils/carImage";
 
 // Helper function to format time (HH:MM to 12-hour format)
 const formatTime = (time24) => {
@@ -131,7 +132,7 @@ const MyBookings = () => {
   }, [user]);
 
   return (
-    <div className="px-6 md:px-16 lg:px-24 xl:px-32 2xl:px-48 mt-16 text-sm max-w-7xl">
+    <div className="a4-page text-sm">
       <Title
         title="My Bookings"
         subTitle="View and manage your all car bookings"
@@ -195,7 +196,7 @@ const MyBookings = () => {
               <div className="md:col-span-1">
                 <div className="rounded-md overflow-hidden mb-3">
                   <img
-                    src={booking.car?.image}
+                    src={carImage(booking.car?.image)}
                     alt={`${booking.car?.brand} ${booking.car?.model} ${booking.car?.year}`}
                     className="w-full h-auto aspect-video object-cover"
                   />
