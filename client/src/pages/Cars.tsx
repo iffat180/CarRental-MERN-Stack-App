@@ -15,7 +15,7 @@ const Cars = () => {
   const searchParam = searchParams.get("search");
   const isSearchData = Boolean(pickupLocation && pickupDate && returnDate);
 
-  const { cars, axios, fetchCars } = useAppContext();
+  const { cars, carsLoading, axios, fetchCars } = useAppContext();
   const navigate = useNavigate();
 
   // Base list (either all cars or available cars for a date/location)
@@ -25,7 +25,9 @@ const Cars = () => {
   const [input, setInput] = useState(searchParam || "");
   
   // State management
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSearching, setIsLoading] = useState(false);
+  // spinner while the availability search runs, or while the first load of all cars is in flight
+  const isLoading = isSearching || (!isSearchData && carsLoading);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(9); // 3x3 grid

@@ -11,6 +11,7 @@ import axios, { type AxiosInstance } from "axios";
 import { toast } from "react-hot-toast";
 import { useNavigate, type NavigateFunction } from "react-router-dom";
 import type { Car, User } from "../types";
+import { useCarsQuery } from "../hooks/useCarsQuery";
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
@@ -42,7 +43,7 @@ export interface AppContextType {
   logout: () => void;
   fetchCars: () => Promise<void>;
   cars: Car[];
-  setCars: React.Dispatch<React.SetStateAction<Car[]>>;
+  carsLoading: boolean;
   pickupDate: string;
   setPickupDate: React.Dispatch<React.SetStateAction<string>>;
   returnDate: string;
@@ -112,14 +113,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [pickupDate, setPickupDate] = useState("");
   const [returnDate, setReturnDate] = useState("");
 
-  const [cars, setCars] = useState<Car[]>([]);
   
   // Request state management
   const [isFetchingUser, setIsFetchingUser] = useState(false);
-  const [isFetchingCars, setIsFetchingCars] = useState(false);
-  const [carsCacheTimestamp, setCarsCacheTimestamp] = useState<number | null>(null);
-  const CARS_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-  
+
+  // Cars come from TanStack Query: one shared request, cached for 5 minutes.
+  const carsQuery = useCarsQuery();
+  const cars: Car[] = carsQuery.data ?? [];
+
   // Use ref to access latest token in handleTokenExpiry
   const tokenRef = useRef(token);
   useEffect(() => {
@@ -180,37 +181,23 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Function to fetch all cars from the server
+  // Re-fetch the cars list on demand (used by the "Retry" button)
   const fetchCars = async () => {
-    // Check cache validity
-    const now = Date.now();
-    if (carsCacheTimestamp && (now - carsCacheTimestamp) < CARS_CACHE_DURATION) {
-      return; // Use cached data
-    }
-    
-    // Check if already fetching
-    if (isFetchingCars) return;
-    
-    setIsFetchingCars(true);
-    try {
-      const { data } = await axios.get("/api/user/cars");
-      if (data.success) {
-        setCars(data.cars);
-        setCarsCacheTimestamp(now);
-      } else {
-        toast.error(data.message);
-      }
-    } catch (error: any) {
-      // Handle 401 (Unauthorized) - token expired or invalid
-      if (error.response?.status === 401) {
-        handleTokenExpiry();
-      } else {
-        toast.error(error.response?.data?.message || error.message || "Failed to fetch cars");
-      }
-    } finally {
-      setIsFetchingCars(false);
-    }
+    await carsQuery.refetch();
   };
+
+  // Same error handling the old fetch had: a 401 means the saved login expired,
+  // anything else is shown as a toast.
+  useEffect(() => {
+    const error: any = carsQuery.error;
+    if (!error) return;
+    if (error.response?.status === 401) {
+      handleTokenExpiry();
+    } else {
+      toast.error(error.response?.data?.message || error.message || "Failed to fetch cars");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [carsQuery.error]);
 
   // Function to handle user logout
   const logout = () => {
@@ -300,8 +287,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       toast.error("Your session has expired. Please login again.");
     }
     
-    // Fetch cars (public endpoint, doesn't require token)
-    fetchCars();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -361,7 +346,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     logout,
     fetchCars,
     cars,
-    setCars,
+    carsLoading: carsQuery.isLoading,
     pickupDate,
     setPickupDate,
     returnDate,
