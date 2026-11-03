@@ -63,6 +63,9 @@
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "typescript-eslint": "^8.72.1",
     "vite": "^7.1.0",
-    "vitest": "^4.0.15"
+    "vite-plugin-pwa": "^2.0.0",
+    "vitest": "^4.0.15",
+    "workbox-build": "^7.4.1",
+    "workbox-window": "^7.4.1"
   }
 }

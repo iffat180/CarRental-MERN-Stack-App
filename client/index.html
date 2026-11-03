@@ -11,9 +11,16 @@
       content="Rent a car directly from its owner. Slide through the cars near you, pick your dates, or describe your trip and get matched with the right one."
     />
     <meta name="theme-color" content="#d6dadf" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <!-- The first car on the home page is its largest element. Start fetching it now,
          in parallel with the app code, instead of after the cars have loaded. -->
-    <link rel="preload" as="image" href="/cutouts/outback.webp" type="image/webp" fetchpriority="high" />
+    <link
+      rel="preload"
+      as="image"
+      href="/cutouts/outback.webp"
+      type="image/webp"
+      fetchpriority="high"
+    />
 
     <!-- Defaults for crawlers that do not run JavaScript (Facebook, LinkedIn, Slack). Once the
          app starts, <Seo> removes every tag marked data-seo-default and renders the page's own,
