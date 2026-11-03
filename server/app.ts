@@ -1,10 +1,12 @@
 import express from "express";
+import helmet from "helmet";
 import corsConfig from "./configs/cors.js";
 import userRouter from "./routes/userRoutes.js";
 import ownerRouter from "./routes/ownerRoutes.js";
 import bookingRouter from "./routes/bookingRoutes.js";
 import recommendationRouter from "./routes/recommendation.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { sanitizeBody } from "./middleware/sanitizeBody.js";
 
 // The Express app, with no side effects: it does not listen on a port, connect
 // to the database, or register process handlers. That lets two entry points
@@ -21,6 +23,12 @@ app.set("trust proxy", 1);
 // Middleware
 // ============================================
 
+// Security headers (X-Content-Type-Options, HSTS, frame protection, a strict
+// Content-Security-Policy for the API's own responses, no X-Powered-By).
+// The browser app lives on another origin and reads our images with <img>,
+// so resources must be loadable cross-origin.
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+
 app.use(corsConfig);
 
 app.use((req, res, next) => {
@@ -29,6 +37,9 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
+
+// Remove Mongo operator keys from JSON bodies (NoSQL injection guard)
+app.use(sanitizeBody);
 
 app.use("/uploads", express.static("uploads"));
 
