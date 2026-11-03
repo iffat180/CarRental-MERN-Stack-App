@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { assets } from "../assets/assets";
 import Loader from "../components/Loader";
+import Seo from "../components/Seo";
+import { SITE_URL, snippet } from "../lib/seo";
 import { useAppContext } from "../context/AppContext";
 import { toast } from "react-hot-toast";
 import type { Car } from "../types";
@@ -10,25 +12,25 @@ import { carImage } from "../utils/carImage";
 // Date validation utility function
 const validateDates = (pickupDate, returnDate) => {
   const errors = { pickupDate: "", returnDate: "", general: "" };
-  
+
   if (!pickupDate || !returnDate) {
     return { isValid: false, errors };
   }
-  
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
+
   const pickup = new Date(pickupDate);
   pickup.setHours(0, 0, 0, 0);
-  
+
   const returnD = new Date(returnDate);
   returnD.setHours(0, 0, 0, 0);
-  
+
   // Check if pickup date is in the past
   if (pickup < today) {
     errors.pickupDate = "Pickup date cannot be in the past";
   }
-  
+
   // Check if return date is after pickup date
   if (returnD <= pickup) {
     errors.returnDate = "Return date must be after pickup date";
@@ -40,7 +42,7 @@ const validateDates = (pickupDate, returnDate) => {
       errors.general = "Minimum rental period is 1 day";
     }
   }
-  
+
   return {
     isValid: !errors.pickupDate && !errors.returnDate && !errors.general,
     errors,
@@ -52,7 +54,7 @@ const CarDetails = () => {
   const location = useLocation();
   const { cars, pickupDate, setPickupDate, returnDate, setReturnDate, user, setShowLoginRequired } =
     useAppContext();
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const [car, setCar] = useState<Car | null>(null);
   const [dateErrors, setDateErrors] = useState({
     pickupDate: "",
@@ -60,13 +62,13 @@ const CarDetails = () => {
     general: "",
   });
   const currency = import.meta.env.VITE_CURRENCY;
-  
+
   // Restore dates from query params on mount (only if not already set in context)
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const pickupDateParam = searchParams.get("pickupDate");
     const returnDateParam = searchParams.get("returnDate");
-    
+
     // Only set from URL params if context dates are empty (preserve valid context defaults)
     if (pickupDateParam && !pickupDate) {
       setPickupDate(pickupDateParam);
@@ -74,11 +76,11 @@ const CarDetails = () => {
     if (returnDateParam && !returnDate) {
       setReturnDate(returnDateParam);
     }
-    
+
     // Validate dates if both are present (use URL params if available, otherwise context)
     const effectivePickupDate = pickupDateParam || pickupDate;
     const effectiveReturnDate = returnDateParam || returnDate;
-    
+
     if (effectivePickupDate && effectiveReturnDate) {
       const validation = validateDates(effectivePickupDate, effectiveReturnDate);
       setDateErrors(validation.errors);
@@ -89,7 +91,7 @@ const CarDetails = () => {
   const handlePickupDateChange = (e) => {
     const value = e.target.value;
     setPickupDate(value);
-    
+
     // Validate when both dates are present
     if (value && returnDate) {
       const validation = validateDates(value, returnDate);
@@ -102,7 +104,7 @@ const CarDetails = () => {
   const handleReturnDateChange = (e) => {
     const value = e.target.value;
     setReturnDate(value);
-    
+
     // Validate when both dates are present
     if (pickupDate && value) {
       const validation = validateDates(pickupDate, value);
@@ -115,16 +117,16 @@ const CarDetails = () => {
   const handleBookNow = () => {
     // Validate dates first
     const validation = validateDates(pickupDate, returnDate);
-    
+
     if (!validation.isValid) {
       setDateErrors(validation.errors);
       toast.error("Please correct the date errors before booking");
       return;
     }
-    
+
     // Clear errors if valid
     setDateErrors({ pickupDate: "", returnDate: "", general: "" });
-    
+
     // Check if user is logged in
     if (!user) {
       // Store current path with query params for redirect after login
@@ -134,12 +136,12 @@ const CarDetails = () => {
       });
       const currentPath = `/car-details/${id}?${queryParams.toString()}`;
       sessionStorage.setItem("redirectPath", currentPath);
-      
+
       // Show LoginRequiredModal if not logged in
       setShowLoginRequired(true);
       return;
     }
-    
+
     // If logged in, redirect to booking details page with query params
     const queryParams = new URLSearchParams({
       pickupDate,
@@ -154,6 +156,43 @@ const CarDetails = () => {
 
   return car ? (
     <div className="a4-page">
+      <Seo
+        title={`${car.brand} ${car.model} ${car.year} for rent`}
+        path={`/car-details/${car._id}`}
+        description={snippet(
+          `Rent this ${car.year} ${car.brand} ${car.model} in ${car.location} for ${currency}${car.pricePerDay} a day. ${car.description}`
+        )}
+        image={car.image}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Car",
+          name: `${car.brand} ${car.model}`,
+          brand: { "@type": "Brand", name: car.brand },
+          model: car.model,
+          vehicleModelDate: String(car.year),
+          bodyType: car.category,
+          vehicleSeatingCapacity: car.seating_capacity,
+          fuelType: car.fuel_type,
+          vehicleTransmission: car.transmission,
+          image: car.image,
+          description: car.description,
+          url: `${SITE_URL}/car-details/${car._id}`,
+          offers: {
+            "@type": "Offer",
+            price: car.pricePerDay,
+            priceCurrency: "USD",
+            availability: car.isAvailable
+              ? "https://schema.org/InStock"
+              : "https://schema.org/OutOfStock",
+            priceSpecification: {
+              "@type": "UnitPriceSpecification",
+              price: car.pricePerDay,
+              priceCurrency: "USD",
+              unitText: "DAY",
+            },
+          },
+        }}
+      />
       <button
         onClick={() => navigate(-1)}
         className="flex items-center gap-2 mb-6 text-gray-500 cursor-pointer hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded px-2 py-1"
@@ -169,7 +208,7 @@ const CarDetails = () => {
           <img
             src={carImage(car.image, "large")}
             alt={`${car.brand} ${car.model} ${car.year} - ${car.category}`}
-            className="w-full h-auto md:max-h-100 object-cover rounded-xl mb-6 shadow-md"
+            className="w-full aspect-[16/10] md:aspect-auto md:h-[25rem] object-cover rounded-xl mb-6 shadow-md"
           />
           <div className="space-y-6">
             <header>
@@ -207,7 +246,7 @@ const CarDetails = () => {
             </div>
 
             {/* Tags - semantic attributes for future AI similarity matching */}
-            {(car.tags && car.tags.length > 0) && (
+            {car.tags && car.tags.length > 0 && (
               <div className="pt-2">
                 <p className="text-sm text-gray-500 mb-2">Features & Tags</p>
                 <div className="flex flex-wrap gap-2">
@@ -235,24 +274,23 @@ const CarDetails = () => {
           <section>
             <h2 className="text-lg mb-3 mt-8">Features</h2>
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {[
-                "360 Camera",
-                "Bluetooth",
-                "GPS",
-                "Heated Seats",
-                "Rear View Mirror",
-              ].map((item) => (
-                <li key={item} className="flex items-center text-gray-500">
-                  <img src={assets.check_icon} className="h-4 mr-2" alt="" aria-hidden="true" />
-                  {item}
-                </li>
-              ))}
+              {["360 Camera", "Bluetooth", "GPS", "Heated Seats", "Rear View Mirror"].map(
+                (item) => (
+                  <li key={item} className="flex items-center text-gray-500">
+                    <img src={assets.check_icon} className="h-4 mr-2" alt="" aria-hidden="true" />
+                    {item}
+                  </li>
+                )
+              )}
             </ul>
           </section>
         </article>
 
         {/* Right: Booking Form */}
-        <aside className="bg-white border border-borderColor shadow-lg h-max sticky top-6 rounded-xl p-6 space-y-6 text-gray-500" aria-label="Booking information">
+        <aside
+          className="bg-white border border-borderColor shadow-lg h-max sticky top-6 rounded-xl p-6 space-y-6 text-gray-500"
+          aria-label="Booking information"
+        >
           <div className="flex items-center justify-between text-2xl text-gray-800 font-semibold">
             <span className="sr-only">Price per day:</span>
             {currency}
@@ -262,12 +300,21 @@ const CarDetails = () => {
 
           <hr className="border-borderColor my-6" aria-hidden="true" />
 
-          <form onSubmit={(e) => { e.preventDefault(); handleBookNow(); }} noValidate>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleBookNow();
+            }}
+            noValidate
+          >
             <fieldset className="border-0 p-0 m-0 space-y-6">
               <legend className="sr-only">Booking dates</legend>
               <div className="flex flex-col gap-2">
                 <label htmlFor="car-pickup-date">
-                  Pickup Date <span className="text-red-500" aria-label="required">*</span>
+                  Pickup Date{" "}
+                  <span className="text-red-500" aria-label="required">
+                    *
+                  </span>
                 </label>
                 <input
                   value={pickupDate}
@@ -291,7 +338,10 @@ const CarDetails = () => {
               </div>
               <div className="flex flex-col gap-2">
                 <label htmlFor="car-return-date">
-                  Return Date <span className="text-red-500" aria-label="required">*</span>
+                  Return Date{" "}
+                  <span className="text-red-500" aria-label="required">
+                    *
+                  </span>
                 </label>
                 <input
                   value={returnDate}
@@ -305,7 +355,13 @@ const CarDetails = () => {
                   min={pickupDate || new Date().toISOString().split("T")[0]}
                   aria-required="true"
                   aria-invalid={dateErrors.returnDate ? "true" : "false"}
-                  aria-describedby={dateErrors.returnDate ? "car-return-date-error" : dateErrors.general ? "car-date-general-error" : undefined}
+                  aria-describedby={
+                    dateErrors.returnDate
+                      ? "car-return-date-error"
+                      : dateErrors.general
+                        ? "car-date-general-error"
+                        : undefined
+                  }
                 />
                 {dateErrors.returnDate && (
                   <p id="car-return-date-error" className="text-red-500 text-xs" role="alert">
@@ -321,23 +377,25 @@ const CarDetails = () => {
             </fieldset>
             <div className="mt-6">
               <button
-              type="submit"
-              disabled={!pickupDate || !returnDate || !validateDates(pickupDate, returnDate).isValid}
-              aria-disabled={!pickupDate || !returnDate || !validateDates(pickupDate, returnDate).isValid}
-              className={`w-full bg-primary hover:bg-primary-dull transition-all py-3 font-medium text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-                !pickupDate || !returnDate || !validateDates(pickupDate, returnDate).isValid
-                  ? "opacity-50 cursor-not-allowed"
-                  : "cursor-pointer"
-              }`}
-            >
-              Book Now
-            </button>
+                type="submit"
+                disabled={
+                  !pickupDate || !returnDate || !validateDates(pickupDate, returnDate).isValid
+                }
+                aria-disabled={
+                  !pickupDate || !returnDate || !validateDates(pickupDate, returnDate).isValid
+                }
+                className={`w-full bg-primary hover:bg-primary-dull transition-all py-3 font-medium text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                  !pickupDate || !returnDate || !validateDates(pickupDate, returnDate).isValid
+                    ? "opacity-50 cursor-not-allowed"
+                    : "cursor-pointer"
+                }`}
+              >
+                Book Now
+              </button>
             </div>
           </form>
 
-          <p className="text-center text-sm">
-            No credit card required to reserve
-          </p>
+          <p className="text-center text-sm">No credit card required to reserve</p>
         </aside>
       </div>
     </div>

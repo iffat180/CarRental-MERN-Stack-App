@@ -54,8 +54,12 @@ describe("validateBookingDates", () => {
   });
 
   it("rejects a return date not after pickup", () => {
-    expect(validateBookingDates(future(5), future(5))).toBe("Return date must be after pickup date");
-    expect(validateBookingDates(future(5), future(3))).toBe("Return date must be after pickup date");
+    expect(validateBookingDates(future(5), future(5))).toBe(
+      "Return date must be after pickup date"
+    );
+    expect(validateBookingDates(future(5), future(3))).toBe(
+      "Return date must be after pickup date"
+    );
   });
 
   it("rejects unparseable dates", () => {

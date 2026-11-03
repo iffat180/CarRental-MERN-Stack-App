@@ -53,3 +53,12 @@ LEARNING_ROADMAP.md
 leetcode-practice/
 _archive/
 _notes/
+
+# Playwright
+client/playwright-report/
+client/test-results/
+
+# Storybook
+client/storybook-static/
+client/playwright-report-stories/
+client/.lighthouseci/

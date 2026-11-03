@@ -6,7 +6,15 @@
 import express from "express";
 import { protect } from "../middleware/auth.js";
 import { requireOwner } from "../middleware/requireOwner.js";
-import { addCar, changeRoleToOwner, deleteCar, getDashboardData, getOwnerCars, toggleCarAvailability, updateUserImage } from "../controllers/ownerController.js";
+import {
+  addCar,
+  changeRoleToOwner,
+  deleteCar,
+  getDashboardData,
+  getOwnerCars,
+  toggleCarAvailability,
+  updateUserImage,
+} from "../controllers/ownerController.js";
 import upload from "../middleware/multer.js";
 import { ownerLimiter } from "../middleware/rateLimiters.js";
 import { validateCarData, validateObjectId } from "../middleware/validators.js";
@@ -24,7 +32,7 @@ const ownerRouter = express.Router();
  * Change user role to owner (legacy endpoint)
  * Middleware: ownerLimiter → protect → requireOwner → changeRoleToOwner
  */
-ownerRouter.post("/change-role", ownerLimiter, protect, requireOwner, changeRoleToOwner)
+ownerRouter.post("/change-role", ownerLimiter, protect, requireOwner, changeRoleToOwner);
 
 // --- Car Management ---
 
@@ -33,7 +41,15 @@ ownerRouter.post("/change-role", ownerLimiter, protect, requireOwner, changeRole
  * Add a new car to owner's inventory
  * Middleware: ownerLimiter → protect → requireOwner → upload → validateCarData → addCar
  */
-ownerRouter.post("/add-car", ownerLimiter, protect, requireOwner, upload.single("image"), validateCarData, addCar);
+ownerRouter.post(
+  "/add-car",
+  ownerLimiter,
+  protect,
+  requireOwner,
+  upload.single("image"),
+  validateCarData,
+  addCar
+);
 
 /**
  * GET /api/owner/cars
@@ -47,14 +63,28 @@ ownerRouter.get("/cars", ownerLimiter, protect, requireOwner, getOwnerCars);
  * Toggle car availability status
  * Middleware: ownerLimiter → protect → requireOwner → validateObjectId → toggleCarAvailability
  */
-ownerRouter.post("/toggle-cars", ownerLimiter, protect, requireOwner, validateObjectId("carId"), toggleCarAvailability)
+ownerRouter.post(
+  "/toggle-cars",
+  ownerLimiter,
+  protect,
+  requireOwner,
+  validateObjectId("carId"),
+  toggleCarAvailability
+);
 
 /**
  * POST /api/owner/delete-car
  * Soft delete a car (removes owner reference)
  * Middleware: ownerLimiter → protect → requireOwner → validateObjectId → deleteCar
  */
-ownerRouter.post("/delete-car", ownerLimiter, protect, requireOwner, validateObjectId("carId"), deleteCar);
+ownerRouter.post(
+  "/delete-car",
+  ownerLimiter,
+  protect,
+  requireOwner,
+  validateObjectId("carId"),
+  deleteCar
+);
 
 // --- Dashboard & Profile ---
 
@@ -70,6 +100,13 @@ ownerRouter.get("/dashboard", ownerLimiter, protect, requireOwner, getDashboardD
  * Update owner's profile image
  * Middleware: ownerLimiter → protect → requireOwner → upload → updateUserImage
  */
-ownerRouter.post("/update-image", ownerLimiter, protect, requireOwner, upload.single("image"), updateUserImage)
+ownerRouter.post(
+  "/update-image",
+  ownerLimiter,
+  protect,
+  requireOwner,
+  upload.single("image"),
+  updateUserImage
+);
 
 export default ownerRouter;

@@ -9,7 +9,10 @@
  */
 const SEEDED = /^https:\/\/d3c38yoff69w1u\.cloudfront\.net\/cars\/car(\d+)\.(?:jpg|png)$/;
 
-export const carImage = (url: string | undefined | null, size: "card" | "large" = "card"): string => {
+export const carImage = (
+  url: string | undefined | null,
+  size: "card" | "large" = "card"
+): string => {
   if (!url) return "";
   const match = SEEDED.exec(url);
   if (!match) return url;

@@ -12,7 +12,8 @@
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "test:integration": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.integration.config.js --runInBand",
     "test:all": "npm test && npm run test:integration",
-    "db:sync-booking-indexes": "tsx scripts/sync-booking-indexes.ts"
+    "db:sync-booking-indexes": "tsx scripts/sync-booking-indexes.ts",
+    "mcp": "tsx mcp/stdio.ts"
   },
   "keywords": [],
   "author": "",
@@ -23,7 +24,9 @@
     "@aws-sdk/client-secrets-manager": "^3.943.0",
     "@aws-sdk/lib-storage": "^3.946.0",
     "@aws-sdk/s3-request-presigner": "^3.946.0",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "@pinecone-database/pinecone": "^3.0.0",
+    "@sentry/node": "^11.10.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
@@ -35,7 +38,9 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.17.1",
     "multer": "^2.0.2",
-    "openai": "^4.0.0"
+    "openai": "^4.0.0",
+    "ws": "^8.22.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@jest/globals": "^30.2.0",
@@ -47,6 +52,8 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.2.0",
     "@types/node": "^22.20.2",
+    "@types/supertest": "^7.2.1",
+    "@types/ws": "^8.18.2",
     "jest": "^30.2.0",
     "mongodb-memory-server": "^11.2.0",
     "supertest": "^7.1.4",

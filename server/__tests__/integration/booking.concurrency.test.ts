@@ -23,7 +23,10 @@ beforeAll(async () => {
     await Booking.syncIndexes(); // build the partial unique index
     dbReady = true;
   } catch (err) {
-    console.warn("[booking.concurrency] skipping — could not start in-memory replica set:", errMessage(err));
+    console.warn(
+      "[booking.concurrency] skipping — could not start in-memory replica set:",
+      errMessage(err)
+    );
   }
 }, 120_000);
 
@@ -64,10 +67,14 @@ beforeEach(async () => {
 const future = (days: number): Date => new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 
 const maybe = (name: string, fn: () => Promise<void>, timeout: number) =>
-  it(name, async () => {
-    if (!dbReady) return; // environment can't run transactions — treated as skipped
-    await fn();
-  }, timeout);
+  it(
+    name,
+    async () => {
+      if (!dbReady) return; // environment can't run transactions — treated as skipped
+      await fn();
+    },
+    timeout
+  );
 
 describe("createBookingAtomic — concurrency guarantee", () => {
   maybe(

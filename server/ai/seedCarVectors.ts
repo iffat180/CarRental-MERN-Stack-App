@@ -1,16 +1,16 @@
 /**
  * Pinecone Vector Seeder
- * 
+ *
  * Seeds car embeddings into Pinecone vector database for semantic similarity search.
- * 
+ *
  * This script:
  * 1. Fetches all available cars from MongoDB
  * 2. Generates embeddings for each car's story (brand, model, specs, tags, description)
  * 3. Upserts vectors to Pinecone index "car-recommendations"
- * 
+ *
  * SEEDING TEST CASES:
  * After running this script, these searches should work:
- * 
+ *
  * 1. "mountain 4WD SUV" → Should find Jeep Grand Cherokee, Toyota RAV4
  * 2. "electric city car" → Should find Tesla Model 3, Ford Focus, KIA EV9
  * 3. "luxury sedan" → Should find BMW M5, Mercedes A-Class, Audi A5
@@ -27,12 +27,12 @@ import Car from "../models/Car.js";
 
 /**
  * Builds a descriptive story text from car attributes for embedding generation.
- * 
+ *
  * Combines: brand, model, year, category, seating, fuel_type, transmission,
  * trunk_capacity, mpg, tags, and description.
- * 
+ *
  * Excludes: pricePerDay, location, owner, _id, image (these go in metadata only)
- * 
+ *
  * @param {Object} car - Car document from MongoDB
  * @returns {string} Descriptive story text for embedding
  */
@@ -51,7 +51,9 @@ function buildCarStory(car: any): string {
 
   // Seating capacity
   if (car.seating_capacity) {
-    parts.push(`Seating: ${car.seating_capacity} passenger${car.seating_capacity !== 1 ? 's' : ''}.`);
+    parts.push(
+      `Seating: ${car.seating_capacity} passenger${car.seating_capacity !== 1 ? "s" : ""}.`
+    );
   }
 
   // Fuel type
@@ -90,7 +92,7 @@ function buildCarStory(car: any): string {
 
 /**
  * Main function to seed car vectors into Pinecone.
- * 
+ *
  * Steps:
  * 1. Connect to MongoDB
  * 2. Fetch all available cars
@@ -102,7 +104,7 @@ async function seedCarVectors() {
   try {
     // Step 1: Connect to MongoDB
     const mongoURI = process.env.MONGODB_URI;
-    
+
     if (!mongoURI) {
       throw new Error("MONGODB_URI environment variable is not set");
     }
@@ -117,7 +119,7 @@ async function seedCarVectors() {
     // Step 2: Fetch all available cars
     console.log("📦 Fetching cars from MongoDB...");
     const cars = await Car.find({ isAvailable: true }).lean();
-    
+
     if (!cars || cars.length === 0) {
       console.log("⚠️ No available cars found. Nothing to seed.");
       return;
@@ -135,7 +137,7 @@ async function seedCarVectors() {
 
         // Build car story text
         const story = buildCarStory(car);
-        
+
         if (!story || story.trim().length === 0) {
           console.warn(`⚠️ Skipping ${car.brand} ${car.model}: empty story text`);
           continue;
@@ -167,17 +169,16 @@ async function seedCarVectors() {
             trunk_capacity: car.trunk_capacity || 0,
             mpg: car.mpg || 0,
             tags: car.tags || [],
-            isAvailable: car.isAvailable !== undefined ? car.isAvailable : true
-          }
+            isAvailable: car.isAvailable !== undefined ? car.isAvailable : true,
+          },
         };
 
         vectors.push(vector);
         console.log(`  ✅ Generated embedding (${embedding.length} dimensions)`);
-
       } catch (error) {
         console.error(`❌ Error processing ${car.brand} ${car.model}:`, {
           message: error instanceof Error ? error.message : String(error),
-          name: error instanceof Error ? error.name : "Error"
+          name: error instanceof Error ? error.name : "Error",
         });
         // Continue with next car instead of failing entire batch
         continue;
@@ -195,27 +196,27 @@ async function seedCarVectors() {
     try {
       const pinecone = getPineconeClient();
       const index = pinecone.index("car-recommendations");
-      
+
       // Upsert all vectors at once using default namespace
       await index.namespace("default").upsert(vectors);
-      
-      console.log(`✅ Successfully upserted ${vectors.length} vector(s) to Pinecone index "car-recommendations"`);
-      console.log("✅ Seeding complete!");
 
+      console.log(
+        `✅ Successfully upserted ${vectors.length} vector(s) to Pinecone index "car-recommendations"`
+      );
+      console.log("✅ Seeding complete!");
     } catch (error) {
       console.error("❌ Error upserting to Pinecone:", {
         message: error instanceof Error ? error.message : String(error),
-        name: error instanceof Error ? error.name : "Error"
+        name: error instanceof Error ? error.name : "Error",
       });
       throw error;
     }
-
   } catch (error) {
     // Log structured errors (no API keys in logs)
     console.error("❌ Seeding failed:", {
       message: error instanceof Error ? error.message : String(error),
       name: error instanceof Error ? error.name : "Error",
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
     throw error;
   } finally {
@@ -229,8 +230,8 @@ async function seedCarVectors() {
 
 // Execute seeding (only runs when script is executed directly, not on import)
 // Check if this file is being run directly (not imported)
-const isMainModule = import.meta.url === `file://${process.argv[1]}` || 
-                     process.argv[1]?.endsWith('seedCarVectors.js');
+const isMainModule =
+  import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith("seedCarVectors.js");
 
 if (isMainModule) {
   seedCarVectors()
@@ -245,4 +246,3 @@ if (isMainModule) {
 }
 
 export default seedCarVectors;
-

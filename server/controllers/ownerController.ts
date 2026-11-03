@@ -4,6 +4,7 @@ import Booking from "../models/Booking.js";
 import type { Request, Response } from "express";
 import { uploadToS3, uploadCarImageToS3, deleteFromS3 } from "../configs/aws.js";
 import { errCode, errMessage, errName } from "../utils/errors.js";
+import { fillMonthlyRevenue, revenueWindowStart, type RevenueGroupRow } from "../utils/revenue.js";
 
 export const changeRoleToOwner = async (req: Request, res: Response) => {
   try {
@@ -17,8 +18,9 @@ export const changeRoleToOwner = async (req: Request, res: Response) => {
     console.error(`[changeRoleToOwner] Error:`, {
       message: errMessage(error),
       name: errName(error),
-      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
+      stack:
+        process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
     });
     res.status(500).json({ success: false, message: "Failed to update user role." });
   }
@@ -31,38 +33,40 @@ export const addCar = async (req: Request, res: Response) => {
       userId: req.user?._id?.toString(),
       hasFile: !!req.file,
       hasCarData: !!req.body?.carData,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     const { _id } = req.user!;
-    
+
     // Parse carData with prototype pollution protection
     let car: any;
     try {
       car = JSON.parse(req.body.carData);
-      if (car && typeof car === 'object' && !Array.isArray(car)) {
-        if (car.constructor && car.constructor.name !== 'Object') {
+      if (car && typeof car === "object" && !Array.isArray(car)) {
+        if (car.constructor && car.constructor.name !== "Object") {
           return res.status(400).json({
             success: false,
-            message: "Invalid car data structure"
+            message: "Invalid car data structure",
           });
         }
-        if (Object.prototype.hasOwnProperty.call(car, '__proto__') || 
-            Object.prototype.hasOwnProperty.call(car, 'constructor') ||
-            Object.prototype.hasOwnProperty.call(car, 'prototype')) {
+        if (
+          Object.prototype.hasOwnProperty.call(car, "__proto__") ||
+          Object.prototype.hasOwnProperty.call(car, "constructor") ||
+          Object.prototype.hasOwnProperty.call(car, "prototype")
+        ) {
           return res.status(400).json({
             success: false,
-            message: "Invalid car data: prototype pollution detected"
+            message: "Invalid car data: prototype pollution detected",
           });
         }
       }
     } catch (parseError) {
       return res.status(400).json({
         success: false,
-        message: "Invalid JSON format in carData"
+        message: "Invalid JSON format in carData",
       });
     }
-    
+
     const imageFile = req.file;
 
     if (!imageFile) {
@@ -72,30 +76,42 @@ export const addCar = async (req: Request, res: Response) => {
     // Validate car data against model schema
     const validationErrors: string[] = [];
 
-    if (!car.year || typeof car.year !== 'number' || car.year < 1900 || car.year > new Date().getFullYear() + 1) {
-      validationErrors.push("Year must be a number between 1900 and " + (new Date().getFullYear() + 1));
+    if (
+      !car.year ||
+      typeof car.year !== "number" ||
+      car.year < 1900 ||
+      car.year > new Date().getFullYear() + 1
+    ) {
+      validationErrors.push(
+        "Year must be a number between 1900 and " + (new Date().getFullYear() + 1)
+      );
     }
 
-    const validCategories = ['Sedan', 'SUV', 'Van'];
+    const validCategories = ["Sedan", "SUV", "Van"];
     if (!car.category || !validCategories.includes(car.category)) {
-      validationErrors.push(`Category must be one of: ${validCategories.join(', ')}`);
+      validationErrors.push(`Category must be one of: ${validCategories.join(", ")}`);
     }
 
-    const validFuelTypes = ['Petrol', 'Diesel', 'Electric', 'Hybrid', 'Gas'];
+    const validFuelTypes = ["Petrol", "Diesel", "Electric", "Hybrid", "Gas"];
     if (!car.fuel_type || !validFuelTypes.includes(car.fuel_type)) {
-      validationErrors.push(`Fuel type must be one of: ${validFuelTypes.join(', ')}`);
+      validationErrors.push(`Fuel type must be one of: ${validFuelTypes.join(", ")}`);
     }
 
-    const validTransmissions = ['Automatic', 'Manual', 'Semi-Automatic'];
+    const validTransmissions = ["Automatic", "Manual", "Semi-Automatic"];
     if (!car.transmission || !validTransmissions.includes(car.transmission)) {
-      validationErrors.push(`Transmission must be one of: ${validTransmissions.join(', ')}`);
+      validationErrors.push(`Transmission must be one of: ${validTransmissions.join(", ")}`);
     }
 
-    if (!car.seating_capacity || typeof car.seating_capacity !== 'number' || car.seating_capacity < 1 || car.seating_capacity > 20) {
+    if (
+      !car.seating_capacity ||
+      typeof car.seating_capacity !== "number" ||
+      car.seating_capacity < 1 ||
+      car.seating_capacity > 20
+    ) {
       validationErrors.push("Seating capacity must be a number between 1 and 20");
     }
 
-    if (!car.pricePerDay || typeof car.pricePerDay !== 'number' || car.pricePerDay < 1) {
+    if (!car.pricePerDay || typeof car.pricePerDay !== "number" || car.pricePerDay < 1) {
       validationErrors.push("Price per day must be a number greater than 0");
     }
 
@@ -103,18 +119,18 @@ export const addCar = async (req: Request, res: Response) => {
       return res.status(400).json({
         success: false,
         message: "Validation failed",
-        errors: validationErrors
+        errors: validationErrors,
       });
     }
 
     if (!imageFile.buffer) {
       console.error(`[addCar] No file buffer available`, {
         userId: _id?.toString(),
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
-      return res.status(400).json({ 
-        success: false, 
-        message: "Image file data is missing" 
+      return res.status(400).json({
+        success: false,
+        message: "Image file data is missing",
       });
     }
 
@@ -125,16 +141,16 @@ export const addCar = async (req: Request, res: Response) => {
       imageFile.mimetype
     );
 
-    console.log('💾 Saving car to MongoDB with optimized image URL...');
+    console.log("💾 Saving car to MongoDB with optimized image URL...");
 
     // Save car data to database with OPTIMIZED S3 URL
-    await Car.create({ 
-      ...car, 
-      owner: _id, 
-      image: optimizedUrl  // ✅ Using optimized URL
+    await Car.create({
+      ...car,
+      owner: _id,
+      image: optimizedUrl, // ✅ Using optimized URL
     });
-    
-    console.log('✅ Car added successfully with optimized image');
+
+    console.log("✅ Car added successfully with optimized image");
 
     res.json({ success: true, message: "Car added successfully" });
   } catch (error) {
@@ -142,13 +158,14 @@ export const addCar = async (req: Request, res: Response) => {
       message: errMessage(error),
       name: errName(error),
       code: errCode(error),
-      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
+      stack:
+        process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
       userId: req.user?._id?.toString(),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-    res.status(500).json({ 
-      success: false, 
-      message: errMessage(error) || "Failed to add car. Please try again." 
+    res.status(500).json({
+      success: false,
+      message: errMessage(error) || "Failed to add car. Please try again.",
     });
   }
 };
@@ -163,8 +180,9 @@ export const getOwnerCars = async (req: Request, res: Response) => {
     console.error(`[getOwnerCars] Error:`, {
       message: errMessage(error),
       name: errName(error),
-      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
+      stack:
+        process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
     });
     res.status(500).json({ success: false, message: "Failed to retrieve cars." });
   }
@@ -194,8 +212,9 @@ export const toggleCarAvailability = async (req: Request, res: Response) => {
     console.error(`[toggleCarAvailability] Error:`, {
       message: errMessage(error),
       name: errName(error),
-      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
+      stack:
+        process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
     });
     res.status(500).json({ success: false, message: "Failed to update car availability." });
   }
@@ -219,7 +238,7 @@ export const deleteCar = async (req: Request, res: Response) => {
 
     // Optional: Delete image from S3
     // Only delete if it's not a seed car image
-    if (car.image && !car.image.includes('/cars/car')) {
+    if (car.image && !car.image.includes("/cars/car")) {
       await deleteFromS3(car.image);
     }
 
@@ -232,8 +251,9 @@ export const deleteCar = async (req: Request, res: Response) => {
     console.error(`[deleteCar] Error:`, {
       message: errMessage(error),
       name: errName(error),
-      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
+      stack:
+        process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
     });
     res.status(500).json({ success: false, message: "Failed to delete car." });
   }
@@ -249,9 +269,7 @@ export const getDashboardData = async (req: Request, res: Response) => {
     }
 
     const cars = await Car.find({ owner: _id });
-    const bookings = await Booking.find({ owner: _id })
-      .populate("car")
-      .sort({ createdAt: -1 });
+    const bookings = await Booking.find({ owner: _id }).populate("car").sort({ createdAt: -1 });
 
     const pendingBookings = await Booking.find({
       owner: _id,
@@ -262,11 +280,28 @@ export const getDashboardData = async (req: Request, res: Response) => {
       status: "completed",
     });
 
-    // Calculate monthlyRevenue from bookings where status is confirmed
-    const monthlyRevenue = bookings
-      .slice()
-      .filter((booking) => booking.status === "confirmed")
-      .reduce((acc, booking) => acc + booking.price, 0);
+    // Revenue per month for the last 6 months (confirmed + completed bookings,
+    // attributed to the pickup month), computed by MongoDB.
+    const now = new Date();
+    const grouped = await Booking.aggregate<RevenueGroupRow>([
+      {
+        $match: {
+          owner: _id,
+          status: { $in: ["confirmed", "completed"] },
+          pickupDate: { $gte: revenueWindowStart(now, 6) },
+        },
+      },
+      {
+        $group: {
+          _id: { y: { $year: "$pickupDate" }, m: { $month: "$pickupDate" } },
+          revenue: { $sum: "$price" },
+          bookings: { $sum: 1 },
+        },
+      },
+    ]);
+    const revenueByMonth = fillMonthlyRevenue(grouped, now, 6);
+    // the current month is the last entry
+    const monthlyRevenue = revenueByMonth[revenueByMonth.length - 1].revenue;
 
     const dashboardData = {
       totalCars: cars.length,
@@ -275,6 +310,7 @@ export const getDashboardData = async (req: Request, res: Response) => {
       completedBookings: completedBookings.length,
       recentBookings: bookings.slice(0, 3),
       monthlyRevenue,
+      revenueByMonth,
     };
 
     res.json({ success: true, dashboardData });
@@ -282,8 +318,9 @@ export const getDashboardData = async (req: Request, res: Response) => {
     console.error(`[getDashboardData] Error:`, {
       message: errMessage(error),
       name: errName(error),
-      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
+      stack:
+        process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
     });
     res.status(500).json({ success: false, message: "Failed to retrieve dashboard data." });
   }
@@ -309,11 +346,11 @@ export const updateUserImage = async (req: Request, res: Response) => {
           size: imageFile.size,
           hasBuffer: !!imageFile.buffer,
         },
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
-      return res.status(400).json({ 
-        success: false, 
-        message: "Image file data is missing" 
+      return res.status(400).json({
+        success: false,
+        message: "Image file data is missing",
       });
     }
 
@@ -325,7 +362,7 @@ export const updateUserImage = async (req: Request, res: Response) => {
     const imageUrl = await uploadToS3(
       imageFile.buffer,
       imageFile.originalname,
-      'users',
+      "users",
       imageFile.mimetype
     );
 
@@ -333,7 +370,11 @@ export const updateUserImage = async (req: Request, res: Response) => {
     await User.findByIdAndUpdate(_id, { image: imageUrl });
 
     // Delete old image from S3 (if exists and not default)
-    if (oldImageUrl && process.env.AWS_S3_BUCKET_NAME && oldImageUrl.includes(process.env.AWS_S3_BUCKET_NAME)) {
+    if (
+      oldImageUrl &&
+      process.env.AWS_S3_BUCKET_NAME &&
+      oldImageUrl.includes(process.env.AWS_S3_BUCKET_NAME)
+    ) {
       await deleteFromS3(oldImageUrl);
     }
 
@@ -342,8 +383,9 @@ export const updateUserImage = async (req: Request, res: Response) => {
     console.error(`[updateUserImage] Error:`, {
       message: errMessage(error),
       name: errName(error),
-      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
+      stack:
+        process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
     });
     res.status(500).json({ success: false, message: "Failed to update user image." });
   }

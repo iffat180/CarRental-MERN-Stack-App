@@ -38,10 +38,20 @@ async function main() {
       problems++;
       continue;
     }
-    console.log(`${p.brand} ${p.model} (${found[0].location}): $${found[0].pricePerDay} -> $${p.price}`);
-    if (apply) await Car.updateOne({ _id: found[0]._id }, { $set: { pricePerDay: p.price } }, { runValidators: true });
+    console.log(
+      `${p.brand} ${p.model} (${found[0].location}): $${found[0].pricePerDay} -> $${p.price}`
+    );
+    if (apply)
+      await Car.updateOne(
+        { _id: found[0]._id },
+        { $set: { pricePerDay: p.price } },
+        { runValidators: true }
+      );
   }
   console.log(apply ? `\nDone, ${problems} problem(s).` : `\nDry run, ${problems} problem(s).`);
   await mongoose.disconnect();
 }
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

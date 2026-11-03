@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, lazy, Suspense } from "react";
 import { toast } from "react-hot-toast";
 import { useAppContext } from "../../context/AppContext";
-import OwnerOnboardingModal from "../owner/OwnerOnboardingModal";
+const OwnerOnboardingModal = lazy(() => import("../owner/OwnerOnboardingModal"));
 
 // Same "List your car" behaviour the old Navbar had:
 //  - logged out  -> remember where to go, open the login modal
@@ -42,9 +42,17 @@ export const useListYourCar = () => {
     }
   };
 
-  const modal = (
-    <OwnerOnboardingModal isOpen={open} onClose={() => setOpen(false)} onBecomeOwner={becomeOwner} isSubmitting={busy} />
-  );
+  // only created (and downloaded) once someone opens it
+  const modal = open ? (
+    <Suspense fallback={null}>
+      <OwnerOnboardingModal
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        onBecomeOwner={becomeOwner}
+        isSubmitting={busy}
+      />
+    </Suspense>
+  ) : null;
 
   return { listYourCar, modal };
 };

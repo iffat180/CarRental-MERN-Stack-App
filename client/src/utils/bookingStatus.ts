@@ -42,7 +42,7 @@ export const getStatusOptions = (currentStatus) => {
   const allowedTransitions = STATUS_TRANSITIONS[currentStatus] || [];
   return [
     { value: currentStatus, label: STATUS_CONFIG[currentStatus]?.label || currentStatus },
-    ...allowedTransitions.map(status => ({
+    ...allowedTransitions.map((status) => ({
       value: status,
       label: STATUS_CONFIG[status]?.label || status,
     })),
@@ -55,4 +55,3 @@ export const getStatusBadgeClasses = (status) => {
   if (!config) return "bg-gray-100 text-gray-600";
   return `${config.bgColor} ${config.textColor}`;
 };
-

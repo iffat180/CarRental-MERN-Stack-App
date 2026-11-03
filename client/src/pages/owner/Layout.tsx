@@ -3,7 +3,6 @@ import NavbarOwner from "../../components/owner/NavbarOwner";
 import Sidebar from "../../components/owner/Sidebar";
 import { Outlet } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
-import { use } from "react";
 import { useEffect } from "react";
 
 const Layout = () => {
@@ -16,7 +15,7 @@ const Layout = () => {
     if (!isOwner) {
       navigate("/");
     }
-  }, [isOwner, user, token]);
+  }, [isOwner, user, token, navigate]);
 
   return (
     <div className="flex flex-col">

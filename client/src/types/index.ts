@@ -92,3 +92,19 @@ export interface ApiResponse<T = unknown> {
   message?: string;
   data?: T;
 }
+
+/** One month of the owner dashboard's revenue chart. */
+export interface MonthlyRevenue {
+  /** "2026-11" */
+  month: string;
+  /** "Nov" */
+  label: string;
+  revenue: number;
+  bookings: number;
+}
+
+/** A live update pushed to an owner over the WebSocket. */
+export interface RealtimeEvent {
+  type: "booking.created" | "booking.updated" | "booking.cancelled";
+  bookingId: string;
+}

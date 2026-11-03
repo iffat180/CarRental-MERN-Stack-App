@@ -11,6 +11,7 @@ import axios, { type AxiosInstance } from "axios";
 import { toast } from "react-hot-toast";
 import { useNavigate, type NavigateFunction } from "react-router-dom";
 import type { Car, User } from "../types";
+import { useCarsQuery } from "../hooks/useCarsQuery";
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
@@ -42,7 +43,7 @@ export interface AppContextType {
   logout: () => void;
   fetchCars: () => Promise<void>;
   cars: Car[];
-  setCars: React.Dispatch<React.SetStateAction<Car[]>>;
+  carsLoading: boolean;
   pickupDate: string;
   setPickupDate: React.Dispatch<React.SetStateAction<string>>;
   returnDate: string;
@@ -56,28 +57,30 @@ export interface AppContextType {
 const decodeToken = (token: string | null): JwtPayload | null => {
   try {
     if (!token) return null;
-    const base64Url = token.split('.')[1];
+    const base64Url = token.split(".")[1];
     if (!base64Url) return null;
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
     const jsonPayload = decodeURIComponent(
       atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
     );
     const decoded = JSON.parse(jsonPayload);
-    
+
     // Protect against prototype pollution (JWT payloads should be simple objects)
-    if (decoded && typeof decoded === 'object' && !Array.isArray(decoded)) {
-      if (Object.prototype.hasOwnProperty.call(decoded, '__proto__') || 
-          Object.prototype.hasOwnProperty.call(decoded, 'constructor') ||
-          Object.prototype.hasOwnProperty.call(decoded, 'prototype')) {
+    if (decoded && typeof decoded === "object" && !Array.isArray(decoded)) {
+      if (
+        Object.prototype.hasOwnProperty.call(decoded, "__proto__") ||
+        Object.prototype.hasOwnProperty.call(decoded, "constructor") ||
+        Object.prototype.hasOwnProperty.call(decoded, "prototype")
+      ) {
         return null; // Reject token with suspicious payload
       }
     }
-    
+
     return decoded;
-  } catch (error: any) {
+  } catch {
     return null;
   }
 };
@@ -88,13 +91,6 @@ const isTokenExpired = (token: string | null): boolean => {
   if (!decoded || !decoded.exp) return true;
   const currentTime = Date.now() / 1000;
   return decoded.exp < currentTime;
-};
-
-const getTokenExpiryTime = (token: string | null): number | null => {
-  if (!token) return null;
-  const decoded = decodeToken(token);
-  if (!decoded || !decoded.exp) return null;
-  return decoded.exp * 1000; // Convert to milliseconds
 };
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -112,14 +108,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [pickupDate, setPickupDate] = useState("");
   const [returnDate, setReturnDate] = useState("");
 
-  const [cars, setCars] = useState<Car[]>([]);
-  
   // Request state management
   const [isFetchingUser, setIsFetchingUser] = useState(false);
-  const [isFetchingCars, setIsFetchingCars] = useState(false);
-  const [carsCacheTimestamp, setCarsCacheTimestamp] = useState<number | null>(null);
-  const CARS_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-  
+
+  // Cars come from TanStack Query: one shared request, cached for 5 minutes.
+  const carsQuery = useCarsQuery();
+  const cars: Car[] = carsQuery.data ?? [];
+
   // Use ref to access latest token in handleTokenExpiry
   const tokenRef = useRef(token);
   useEffect(() => {
@@ -130,20 +125,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const handleTokenExpiry = useCallback(() => {
     // Remove expired token from localStorage
     localStorage.removeItem("token");
-    
+
     // Clear token state
     setToken(null);
-    
+
     // Clear user data
     setUser(null);
     setIsOwner(false);
-    
+
     // Clear axios authorization header
     delete axios.defaults.headers.common["Authorization"];
-    
+
     // Show notification
     toast.error("Your session has expired. Please login again.");
-    
+
     // Navigate to home
     navigate("/");
   }, [navigate]);
@@ -152,13 +147,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const fetchUser = async () => {
     // Check if already fetching
     if (isFetchingUser) return;
-    
+
     // Check token expiry before API call
     if (!token || isTokenExpired(token)) {
       handleTokenExpiry();
       return;
     }
-    
+
     setIsFetchingUser(true);
     try {
       const { data } = await axios.get("/api/user/data");
@@ -180,37 +175,23 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Function to fetch all cars from the server
+  // Re-fetch the cars list on demand (used by the "Retry" button)
   const fetchCars = async () => {
-    // Check cache validity
-    const now = Date.now();
-    if (carsCacheTimestamp && (now - carsCacheTimestamp) < CARS_CACHE_DURATION) {
-      return; // Use cached data
-    }
-    
-    // Check if already fetching
-    if (isFetchingCars) return;
-    
-    setIsFetchingCars(true);
-    try {
-      const { data } = await axios.get("/api/user/cars");
-      if (data.success) {
-        setCars(data.cars);
-        setCarsCacheTimestamp(now);
-      } else {
-        toast.error(data.message);
-      }
-    } catch (error: any) {
-      // Handle 401 (Unauthorized) - token expired or invalid
-      if (error.response?.status === 401) {
-        handleTokenExpiry();
-      } else {
-        toast.error(error.response?.data?.message || error.message || "Failed to fetch cars");
-      }
-    } finally {
-      setIsFetchingCars(false);
-    }
+    await carsQuery.refetch();
   };
+
+  // Same error handling the old fetch had: a 401 means the saved login expired,
+  // anything else is shown as a toast.
+  useEffect(() => {
+    const error: any = carsQuery.error;
+    if (!error) return;
+    if (error.response?.status === 401) {
+      handleTokenExpiry();
+    } else {
+      toast.error(error.response?.data?.message || error.message || "Failed to fetch cars");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [carsQuery.error]);
 
   // Function to handle user logout
   const logout = () => {
@@ -218,13 +199,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setToken(null);
     setUser(null);
     setIsOwner(false);
-    
+
     // Clear redirectPath to prevent redirect loops or state leakage
     sessionStorage.removeItem("redirectPath");
-    
+
     // Clear axios authorization header (FIX: was setting it after clearing token)
     delete axios.defaults.headers.common["Authorization"];
-    
+
     navigate("/");
     toast.success("Logged out successfully");
   };
@@ -233,7 +214,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const upgradeToOwner = async () => {
     try {
       const { data } = await axios.post("/api/user/upgrade-to-owner");
-      
+
       if (data.success) {
         // Update user in context with new role
         setUser(data.user);
@@ -243,7 +224,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(data.message || "Failed to upgrade to owner");
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || "Failed to upgrade to owner";
+      const errorMessage =
+        error.response?.data?.message || error.message || "Failed to upgrade to owner";
       throw new Error(errorMessage);
     }
   };
@@ -261,7 +243,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       (error) => {
         if (error.response?.status === 401) {
           const currentToken = tokenRef.current || localStorage.getItem("token");
-          
+
           // Check if token exists and is expired
           if (currentToken && isTokenExpired(currentToken)) {
             // Token expired - handle normally (show toast, navigate home)
@@ -271,7 +253,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             // Store current location for redirect after login
             const currentPath = window.location.pathname + window.location.search;
             sessionStorage.setItem("redirectPath", currentPath);
-            
+
             // Show LoginRequiredModal instead of toast
             setShowLoginRequired(true);
           }
@@ -290,7 +272,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   // useEffect to retrieve the token from localStorage
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
-    
+
     // Validate token before setting it
     if (storedToken && !isTokenExpired(storedToken)) {
       setToken(storedToken);
@@ -299,10 +281,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       localStorage.removeItem("token");
       toast.error("Your session has expired. Please login again.");
     }
-    
-    // Fetch cars (public endpoint, doesn't require token)
-    fetchCars();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // useEffect to fetch user data when token is available
@@ -313,10 +291,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         handleTokenExpiry();
         return;
       }
-      
+
       // Set authorization header
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      
+
       // Fetch user data
       fetchUser();
     } else {
@@ -329,14 +307,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   // Token expiry monitoring - check periodically
   useEffect(() => {
     if (!token) return;
-    
+
     // Check token expiry every minute
     const interval = setInterval(() => {
       if (isTokenExpired(token)) {
         handleTokenExpiry();
       }
     }, 60000); // Check every minute
-    
+
     return () => clearInterval(interval);
   }, [token, handleTokenExpiry]);
 
@@ -361,7 +339,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     logout,
     fetchCars,
     cars,
-    setCars,
+    carsLoading: carsQuery.isLoading,
     pickupDate,
     setPickupDate,
     returnDate,

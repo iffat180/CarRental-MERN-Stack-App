@@ -1,6 +1,6 @@
 import React from "react";
 
-const TableSkeleton = ({ rows = 5, columns = 5 }) => {
+const TableSkeleton = ({ rows = 5 }) => {
   return (
     <div className="max-w-3xl w-full rounded-md overflow-hidden border border-borderColor mt-6">
       <div className="animate-pulse">
@@ -16,4 +16,3 @@ const TableSkeleton = ({ rows = 5, columns = 5 }) => {
 };
 
 export default TableSkeleton;
-

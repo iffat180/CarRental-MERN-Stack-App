@@ -1,25 +1,16 @@
 import React from "react";
 import { assets } from "../assets/assets";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { carImage } from "../utils/carImage";
 
 const CarCard = ({ car }) => {
   const currency = import.meta.env.VITE_CURRENCY;
-  const navigate = useNavigate();
 
+  // A real link: it is keyboard- and screen-reader-friendly with no extra ARIA, and its
+  // accessible name is simply the card's visible text (WCAG "label in name").
   return (
-    <article 
-      onClick={() => {navigate(`/car-details/${car._id}`); scrollTo(0, 0)}}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          navigate(`/car-details/${car._id}`);
-          scrollTo(0, 0);
-        }
-      }}
-      tabIndex={0}
-      role="button"
-      aria-label={`View details for ${car.brand} ${car.model} ${car.year}`}
+    <Link
+      to={`/car-details/${car._id}`}
       className="a4-fcard group h-full cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-[#d3d8dd]">
@@ -47,9 +38,9 @@ const CarCard = ({ car }) => {
       <div className="p-4 sm:p-5">
         <div className="flex justify-between items-start mb-2">
           <div>
-            <h3 className="text-[15px] leading-snug">
+            <h2 className="text-[15px] leading-snug">
               {car.brand} {car.model}
-            </h3>
+            </h2>
             <p className="text-muted-foreground text-sm">
               {car.category} • {car.year}
             </p>
@@ -95,7 +86,7 @@ const CarCard = ({ car }) => {
         </div>
 
         {/* Tags - semantic attributes for future AI similarity matching */}
-        {(car.tags && car.tags.length > 0) && (
+        {car.tags && car.tags.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1.5">
             {(car.tags || []).map((tag, index) => (
               <span
@@ -108,7 +99,7 @@ const CarCard = ({ car }) => {
           </div>
         )}
       </div>
-    </article>
+    </Link>
   );
 };
 

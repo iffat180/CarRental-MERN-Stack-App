@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import Title from "../components/Title";
+import Seo from "../components/Seo";
 import { assets } from "../assets/assets";
 import CarCard from "../components/CarCard";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -15,7 +16,7 @@ const Cars = () => {
   const searchParam = searchParams.get("search");
   const isSearchData = Boolean(pickupLocation && pickupDate && returnDate);
 
-  const { cars, axios, fetchCars } = useAppContext();
+  const { cars, carsLoading, axios, fetchCars } = useAppContext();
   const navigate = useNavigate();
 
   // Base list (either all cars or available cars for a date/location)
@@ -23,19 +24,21 @@ const Cars = () => {
   // What we actually render after filtering by the search box
   const [filteredCars, setFilteredCars] = useState<CarWithAvailability[]>([]);
   const [input, setInput] = useState(searchParam || "");
-  
+
   // State management
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSearching, setIsLoading] = useState(false);
+  // spinner while the availability search runs, or while the first load of all cars is in flight
+  const isLoading = isSearching || (!isSearchData && carsLoading);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(9); // 3x3 grid
-  
+
   const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  
+
   const resetPagination = useCallback(() => {
     setCurrentPage(1);
   }, []);
-  
+
   // Validate cars array from context
   const isValidCarsArray = cars && Array.isArray(cars) && cars.length >= 0;
 
@@ -62,7 +65,8 @@ const Cars = () => {
         setBaseCars([]); // fail safe
       }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || "Failed to check availability";
+      const errorMessage =
+        err.response?.data?.message || err.message || "Failed to check availability";
       setError(errorMessage);
       toast.error(errorMessage);
       setBaseCars([]);
@@ -98,43 +102,40 @@ const Cars = () => {
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
     }
-    
+
     // Validate cars array - only show error for actual context failure
     if (!isValidCarsArray) {
       setError("Cars data is not available");
       setFilteredCars([]);
       return;
     }
-    
+
     // Debounce filtering
     debounceTimeoutRef.current = setTimeout(() => {
       const q = input.trim().toLowerCase();
-      
+
       // Empty search shows all cars (no error, no pagination reset)
       if (!q) {
         setFilteredCars(baseCars);
         return;
       }
-      
+
       // Reset pagination only for non-empty trimmed query (inside debounced block)
       resetPagination();
-      
+
       const next = baseCars.filter((car) => {
         const brand = (car.brand || "").toLowerCase();
         const model = (car.model || "").toLowerCase();
         const category = (car.category || "").toLowerCase();
         const transmission = (car.transmission || "").toLowerCase();
         return (
-          brand.includes(q) ||
-          model.includes(q) ||
-          category.includes(q) ||
-          transmission.includes(q)
+          brand.includes(q) || model.includes(q) || category.includes(q) || transmission.includes(q)
         );
       });
-      
+
       setFilteredCars(next);
     }, 300);
-    
+
     // Cleanup timeout on unmount or dependency change
     return () => {
       if (debounceTimeoutRef.current) {
@@ -152,7 +153,7 @@ const Cars = () => {
   // Pagination handlers
   const handlePageChange = (page) => {
     setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handlePreviousPage = () => {
@@ -178,13 +179,20 @@ const Cars = () => {
 
   return (
     <div className="a4-page flex flex-col items-center">
+      <Seo
+        title="Cars for rent"
+        path="/cars"
+        description="Browse every car on Wayfarer, from SUVs and sedans to convertibles and trucks, each rented directly by its owner."
+      />
       <Title
         title="Available Cars"
         subTitle="Browse our selection of premium vehicles available for your next adventure"
       />
 
       <div className="flex items-center bg-white px-4 mt-6 max-w-140 w-full h-12 rounded-full shadow border border-borderColor">
-        <label htmlFor="cars-search" className="sr-only">Search cars by make, model or features</label>
+        <label htmlFor="cars-search" className="sr-only">
+          Search cars by make, model or features
+        </label>
         <img src={assets.search_icon} alt="" className="w-4.5 h-4.5 mr-2" aria-hidden="true" />
         <input
           id="cars-search"
@@ -289,7 +297,8 @@ const Cars = () => {
         {!isLoading && !error && filteredCars.length > 0 && (
           <>
             <p className="text-gray-500">
-              Showing {startIndex + 1}-{Math.min(endIndex, filteredCars.length)} of {filteredCars.length} Cars
+              Showing {startIndex + 1}-{Math.min(endIndex, filteredCars.length)} of{" "}
+              {filteredCars.length} Cars
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-4">
@@ -316,7 +325,7 @@ const Cars = () => {
                 >
                   Previous
                 </button>
-                
+
                 <div className="flex items-center gap-2">
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                     <button
@@ -334,7 +343,7 @@ const Cars = () => {
                     </button>
                   ))}
                 </div>
-                
+
                 <button
                   onClick={handleNextPage}
                   disabled={currentPage === totalPages}

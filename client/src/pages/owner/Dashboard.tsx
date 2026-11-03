@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import type { Booking } from "../../types";
+import React, { useEffect, useState, useCallback } from "react";
+import type { Booking, MonthlyRevenue } from "../../types";
 import Title from "../../components/Title";
 import { assets } from "../../assets/assets";
 import toast from "react-hot-toast";
@@ -7,6 +7,8 @@ import { useAppContext } from "../../context/AppContext";
 import LoadingState from "../../components/owner/LoadingState";
 import ErrorState from "../../components/owner/ErrorState";
 import EmptyState from "../../components/owner/EmptyState";
+import RevenueChart from "../../components/owner/RevenueChart";
+import { useOwnerLiveRefresh } from "../../hooks/useOwnerLiveRefresh";
 
 const Dashboard = () => {
   const { axios, isOwner, currency } = useAppContext();
@@ -18,6 +20,7 @@ const Dashboard = () => {
     completedBookings: number;
     recentBookings: Booking[];
     monthlyRevenue: number;
+    revenueByMonth: MonthlyRevenue[];
   }>({
     totalCars: 0,
     totalBookings: 0,
@@ -25,6 +28,7 @@ const Dashboard = () => {
     completedBookings: 0,
     recentBookings: [],
     monthlyRevenue: 0,
+    revenueByMonth: [],
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,38 +46,54 @@ const Dashboard = () => {
       icon: assets.cautionIconColored,
     },
     {
-      title: "Confirmed",
+      title: "Completed",
       value: data.completedBookings,
       icon: assets.listIconColored,
     },
   ];
 
-  const fetchDashboardData = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const { data } = await axios.get("/api/owner/dashboard");
-      if (data.success) {
-        setData(data.dashboardData);
-      } else {
-        const errorMessage = data.message || "Failed to fetch dashboard data";
-        setError(errorMessage);
-        toast.error(errorMessage);
+  // `silent` refreshes (live updates and polling) keep the page as it is: no spinner,
+  // no error toast.
+  const fetchDashboardData = useCallback(
+    async (silent = false) => {
+      if (!silent) {
+        setIsLoading(true);
+        setError(null);
       }
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || "Failed to fetch dashboard data";
-      setError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      try {
+        const { data } = await axios.get("/api/owner/dashboard");
+        if (data.success) {
+          setData(data.dashboardData);
+        } else {
+          if (!silent) {
+            const errorMessage = data.message || "Failed to fetch dashboard data";
+            setError(errorMessage);
+            toast.error(errorMessage);
+          }
+        }
+      } catch (error: any) {
+        if (!silent) {
+          const errorMessage =
+            error.response?.data?.message || error.message || "Failed to fetch dashboard data";
+          setError(errorMessage);
+          toast.error(errorMessage);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [axios]
+  );
 
   useEffect(() => {
     if (isOwner) {
       fetchDashboardData();
     }
-  }, [isOwner]);
+  }, [isOwner, fetchDashboardData]);
+
+  // live updates over a WebSocket, or polling when the server cannot hold one
+  useOwnerLiveRefresh(() => fetchDashboardData(true));
+
   return (
     <div className="px-4 pt-10 md:px-10 flex-1">
       <Title
@@ -86,7 +106,7 @@ const Dashboard = () => {
 
       {/* Error State */}
       {error && !isLoading && (
-        <ErrorState error={error} onRetry={fetchDashboardData} retryLabel="Retry" />
+        <ErrorState error={error} onRetry={() => fetchDashboardData()} retryLabel="Retry" />
       )}
 
       {/* Dashboard Content */}
@@ -117,40 +137,34 @@ const Dashboard = () => {
               <p className="text-gray-500">Latest customer bookings</p>
               {data.recentBookings.length === 0 ? (
                 <div className="mt-4">
-                  <EmptyState 
-                    title="No recent bookings" 
+                  <EmptyState
+                    title="No recent bookings"
                     message="Recent bookings will appear here"
                   />
                 </div>
               ) : (
                 data.recentBookings.map((booking, index) => (
-            <div key={index} className="mt-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="hidden md:flex items-center justify-center w-12 h-12 rounded-full bg-primary/10">
-                  <img
-                    src={assets.listIconColored}
-                    alt=""
-                    className="h-5 w-5"
-                  />
-                </div>
-              </div>
+                  <div key={index} className="mt-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="hidden md:flex items-center justify-center w-12 h-12 rounded-full bg-primary/10">
+                        <img src={assets.listIconColored} alt="" className="h-5 w-5" />
+                      </div>
+                    </div>
 
-              <p>
-                {booking.car.brand} {booking.car.model}
-              </p>
-              <p className="text-sm text-gray-500">
-                {booking.createdAt?.split("T")[0]}
-              </p>
-              <div className="flex items-center gap-2 font-medium">
-                <p className="text-sm text-gray-500">
-                  {currency}
-                  {booking.price}
-                </p>
-                <p className="px-3 py-0.5 border border-borderColor rounded-full text-sm">
-                  {booking.status}
-                </p>
-                </div>
-              </div>
+                    <p>
+                      {booking.car.brand} {booking.car.model}
+                    </p>
+                    <p className="text-sm text-gray-500">{booking.createdAt?.split("T")[0]}</p>
+                    <div className="flex items-center gap-2 font-medium">
+                      <p className="text-sm text-gray-500">
+                        {currency}
+                        {booking.price}
+                      </p>
+                      <p className="px-3 py-0.5 border border-borderColor rounded-full text-sm">
+                        {booking.status}
+                      </p>
+                    </div>
+                  </div>
                 ))
               )}
             </div>
@@ -165,6 +179,12 @@ const Dashboard = () => {
               </p>
             </div>
           </div>
+
+          <section className="p-4 md:p-6 mb-8 border border-borderColor rounded-md w-full max-w-3xl">
+            <h2 className="text-lg">Revenue by month</h2>
+            <p className="text-gray-500 mb-4">Confirmed and completed bookings, last 6 months</p>
+            <RevenueChart data={data.revenueByMonth} currency={currency} />
+          </section>
         </>
       )}
     </div>

@@ -19,4 +19,3 @@ export const requireOwner: RequestHandler = (req, res, next) => {
   // User is owner, proceed
   next();
 };
-

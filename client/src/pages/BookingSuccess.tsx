@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { assets } from "../assets/assets";
 import Loader from "../components/Loader";
 import { useAppContext } from "../context/AppContext";
@@ -42,11 +42,11 @@ const calculateDays = (pickupDate, returnDate) => {
 const BookingSuccess = () => {
   const { bookingId } = useParams();
   const { axios, navigate, currency } = useAppContext();
-  
+
   const [booking, setBooking] = useState<Booking | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
-  
+
   // Fetch booking data
   useEffect(() => {
     const fetchBooking = async () => {
@@ -60,26 +60,27 @@ const BookingSuccess = () => {
           navigate("/my-bookings");
         }
       } catch (error: any) {
-        const errorMessage = error.response?.data?.message || error.message || "Failed to load booking details";
+        const errorMessage =
+          error.response?.data?.message || error.message || "Failed to load booking details";
         toast.error(errorMessage);
         navigate("/my-bookings");
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     if (bookingId) {
       fetchBooking();
     }
   }, [bookingId, axios, navigate]);
-  
+
   if (isLoading || !booking) {
     return <Loader />;
   }
-  
+
   const rentalDays = calculateDays(booking.pickupDate, booking.returnDate);
   const totalCost = booking.price || (booking.car?.pricePerDay || 0) * rentalDays;
-  
+
   // Handle invoice download
   const handleDownloadInvoice = async () => {
     if (!bookingId) {
@@ -88,10 +89,10 @@ const BookingSuccess = () => {
     }
 
     setIsGeneratingInvoice(true);
-    
+
     try {
       const { invoiceUrl } = await invoiceService.generateInvoice(bookingId);
-      
+
       if (invoiceUrl) {
         // Open PDF in new tab
         window.open(invoiceUrl, "_blank");
@@ -105,7 +106,7 @@ const BookingSuccess = () => {
       setIsGeneratingInvoice(false);
     }
   };
-  
+
   return (
     <div className="a4-page">
       <div className="max-w-3xl mx-auto">
@@ -116,10 +117,11 @@ const BookingSuccess = () => {
           </div>
           <h1 className="text-3xl font-bold mb-2">Booking Confirmed!</h1>
           <p className="text-gray-500">
-            Your booking has been confirmed. Booking ID: <span className="font-semibold">{bookingId}</span>
+            Your booking has been confirmed. Booking ID:{" "}
+            <span className="font-semibold">{bookingId}</span>
           </p>
         </div>
-        
+
         <div className="space-y-6 mb-8">
           {/* Car Details */}
           <div className="bg-white rounded-xl p-6 shadow-md border border-borderColor">
@@ -142,7 +144,7 @@ const BookingSuccess = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Rental Period */}
           <div className="bg-white rounded-xl p-6 shadow-md border border-borderColor">
             <h2 className="text-xl font-semibold mb-4">Rental Period</h2>
@@ -165,7 +167,7 @@ const BookingSuccess = () => {
                   </div>
                 )}
               </div>
-              
+
               <div>
                 <div className="flex items-start gap-3 mb-4">
                   <img src={assets.calendar_icon_colored} alt="" className="w-5 h-5 mt-1" />
@@ -185,14 +187,15 @@ const BookingSuccess = () => {
                 )}
               </div>
             </div>
-            
+
             <div className="mt-4 pt-4 border-t border-borderColor">
               <p className="text-gray-600">
-                <span className="font-semibold">Duration:</span> {rentalDays} {rentalDays === 1 ? "day" : "days"}
+                <span className="font-semibold">Duration:</span> {rentalDays}{" "}
+                {rentalDays === 1 ? "day" : "days"}
               </p>
             </div>
           </div>
-          
+
           {/* Renter Details */}
           {booking.userDetails && (
             <div className="bg-white rounded-xl p-6 shadow-md border border-borderColor">
@@ -219,7 +222,7 @@ const BookingSuccess = () => {
               </div>
             </div>
           )}
-          
+
           {/* Price Summary */}
           <div className="bg-white rounded-xl p-6 shadow-md border border-borderColor">
             <h2 className="text-xl font-semibold mb-4">Total Amount</h2>
@@ -232,7 +235,7 @@ const BookingSuccess = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Action Buttons */}
         <div className="text-center pb-8 space-y-4">
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -284,4 +287,3 @@ const BookingSuccess = () => {
 };
 
 export default BookingSuccess;
-

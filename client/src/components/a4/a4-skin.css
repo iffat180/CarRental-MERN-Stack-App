@@ -7,19 +7,37 @@
 */
 
 /* headings use the display face; Michroma only has one weight */
-.a4 h1, .a4 h2, .a4 h3 {
+.a4 h1,
+.a4 h2,
+.a4 h3 {
   font-family: var(--font-display);
   font-weight: 400;
   letter-spacing: -0.005em;
 }
-.a4 h4, .a4 h5 { font-weight: 600; }
-.a4 .font-semibold, .a4 .font-bold { font-weight: 600; }
-.a4 h1.font-semibold, .a4 h2.font-semibold, .a4 h3.font-semibold,
-.a4 h1.font-bold, .a4 h2.font-bold, .a4 h3.font-bold,
-.a4 h1.font-medium, .a4 h2.font-medium, .a4 h3.font-medium { font-weight: 400; }
+.a4 h4,
+.a4 h5 {
+  font-weight: 600;
+}
+.a4 .font-semibold,
+.a4 .font-bold {
+  font-weight: 600;
+}
+.a4 h1.font-semibold,
+.a4 h2.font-semibold,
+.a4 h3.font-semibold,
+.a4 h1.font-bold,
+.a4 h2.font-bold,
+.a4 h3.font-bold,
+.a4 h1.font-medium,
+.a4 h2.font-medium,
+.a4 h3.font-medium {
+  font-weight: 400;
+}
 
 /* page background: let the brushed-silver show through old page wrappers */
-.a4 .bg-light { background: transparent; }
+.a4 .bg-light {
+  background: transparent;
+}
 
 /* white cards become frosted glass */
 .a4 .bg-white {
@@ -27,46 +45,115 @@
   backdrop-filter: blur(18px) saturate(1.25);
   -webkit-backdrop-filter: blur(18px) saturate(1.25);
 }
-.a4 .bg-gray-50 { background: rgba(255, 255, 255, 0.4); }
-.a4 .bg-gray-100 { background: rgba(255, 255, 255, 0.5); }
-.a4 .bg-gray-200 { background: rgba(20, 24, 28, 0.1); }
-.a4 .hover\:bg-gray-50:hover { background: rgba(255, 255, 255, 0.8); }
-.a4 .hover\:bg-gray-300:hover { background: rgba(20, 24, 28, 0.16); }
+.a4 .bg-gray-50 {
+  background: rgba(255, 255, 255, 0.4);
+}
+.a4 .bg-gray-100 {
+  background: rgba(255, 255, 255, 0.5);
+}
+.a4 .bg-gray-200 {
+  background: rgba(20, 24, 28, 0.1);
+}
+.a4 .hover\:bg-gray-50:hover {
+  background: rgba(255, 255, 255, 0.8);
+}
+.a4 .hover\:bg-gray-300:hover {
+  background: rgba(20, 24, 28, 0.16);
+}
 
 /* shadows and corners */
-.a4 .shadow, .a4 .shadow-sm, .a4 .shadow-md, .a4 .shadow-lg, .a4 .shadow-xl {
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 16px 40px rgba(20, 24, 28, 0.12);
+.a4 .shadow,
+.a4 .shadow-sm,
+.a4 .shadow-md,
+.a4 .shadow-lg,
+.a4 .shadow-xl {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 16px 40px rgba(20, 24, 28, 0.12);
 }
-.a4 .rounded-xl { border-radius: 20px; }
-.a4 .rounded-lg { border-radius: 14px; }
-.a4 .rounded-md { border-radius: 12px; }
-.a4 .border-borderColor, .a4 .border-gray-200, .a4 .border-gray-300 { border-color: rgba(20, 24, 28, 0.16); }
+.a4 .rounded-xl {
+  border-radius: 20px;
+}
+.a4 .rounded-lg {
+  border-radius: 14px;
+}
+.a4 .rounded-md {
+  border-radius: 12px;
+}
+.a4 .border-borderColor,
+.a4 .border-gray-200,
+.a4 .border-gray-300 {
+  border-color: rgba(20, 24, 28, 0.16);
+}
 
 /* text colours (the old greys are too faint on silver) */
-.a4 .text-gray-400 { color: var(--color-muted); }
-.a4 .text-gray-500, .a4 .text-gray-500\/90, .a4 .text-muted-foreground { color: var(--color-muted); }
-.a4 .text-gray-600 { color: var(--color-muted); }
-.a4 .text-gray-700, .a4 .text-gray-800, .a4 .text-gray-900 { color: var(--color-ink); }
-.a4 .text-red-500 { color: var(--color-danger); }
+.a4 .text-gray-400 {
+  color: var(--color-muted);
+}
+.a4 .text-gray-500,
+.a4 .text-gray-500\/90,
+.a4 .text-muted-foreground {
+  color: var(--color-muted);
+}
+.a4 .text-gray-600 {
+  color: var(--color-muted);
+}
+.a4 .text-gray-700,
+.a4 .text-gray-800,
+.a4 .text-gray-900 {
+  color: var(--color-ink);
+}
+.a4 .text-red-500 {
+  color: var(--color-danger);
+}
 
 /* buttons that use the primary colour (now graphite) */
-.a4 .bg-primary { background: var(--color-ink); }
-.a4 .hover\:bg-primary-dull:hover { background: var(--color-ink-soft); }
-.a4 .text-primary { color: var(--color-ink); }
-.a4 .bg-primary\/10 { background: rgba(20, 24, 28, 0.08); }
-.a4 .border-primary { border-color: var(--color-ink); }
-.a4 .focus\:ring-primary:focus { --tw-ring-color: var(--color-ink); }
+.a4 .bg-primary {
+  background: var(--color-ink);
+}
+.a4 .hover\:bg-primary-dull:hover {
+  background: var(--color-ink-soft);
+}
+.a4 .text-primary {
+  color: var(--color-ink);
+}
+.a4 .bg-primary\/10 {
+  background: rgba(20, 24, 28, 0.08);
+}
+.a4 .border-primary {
+  border-color: var(--color-ink);
+}
+.a4 .focus\:ring-primary:focus {
+  --tw-ring-color: var(--color-ink);
+}
 
 /* form fields */
-.a4 input::placeholder, .a4 textarea::placeholder { color: var(--color-subtle); }
-.a4 input[type="text"], .a4 input[type="email"], .a4 input[type="password"], .a4 input[type="tel"],
-.a4 input[type="date"], .a4 input[type="number"], .a4 select, .a4 textarea {
+.a4 input::placeholder,
+.a4 textarea::placeholder {
+  color: var(--color-subtle);
+}
+.a4 input[type="text"],
+.a4 input[type="email"],
+.a4 input[type="password"],
+.a4 input[type="tel"],
+.a4 input[type="date"],
+.a4 input[type="number"],
+.a4 select,
+.a4 textarea {
   color: var(--color-ink);
 }
 
 /* page wrappers that were full-bleed: keep them inside the narrower column */
-.a4 .a4-page { max-width: 1040px; margin: 0 auto; padding: 56px 48px 24px; }
-@media (max-width: 720px) { .a4 .a4-page { padding: 32px 20px 16px; } }
+.a4 .a4-page {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 56px 48px 24px;
+}
+@media (max-width: 720px) {
+  .a4 .a4-page {
+    padding: 32px 20px 16px;
+  }
+}
 
 /* fieldset titles: a native <legend> sits on the border line and collides with
    the card. Make it a normal block heading inside the card instead. */
@@ -80,9 +167,22 @@
   font-weight: 400;
   line-height: 1.3;
 }
-.a4 fieldset > legend + * { clear: both; }
-.a4 fieldset > legend.sr-only { float: none; width: 1px; margin: -1px; }
+.a4 fieldset > legend + * {
+  clear: both;
+}
+.a4 fieldset > legend.sr-only {
+  float: none;
+  width: 1px;
+  margin: -1px;
+}
 
 /* The old icon set has blue "Colored" variants (and Vite inlines the small SVGs as
    data: URIs). Turn every small SVG icon graphite so none of the old blue shows. */
-.a4 img[src^="data:image/svg+xml"] { filter: grayscale(1) brightness(0.3); }
+.a4 img[src^="data:image/svg+xml"] {
+  filter: grayscale(1) brightness(0.3);
+}
+
+/* dialogs: nearly opaque so the text stays readable over the dark backdrop */
+.a4 .a4-modal {
+  background: rgba(255, 255, 255, 0.97);
+}

@@ -9,7 +9,7 @@ import { errMessage, errName } from "../utils/errors.js";
 const generateToken = (userId: string, role: string): string => {
   const payload = {
     userId: userId,
-    role: role
+    role: role,
   };
   const options: SignOptions = { expiresIn: "7d" };
   return jwt.sign(payload, process.env.JWT_SECRET, options);
@@ -37,8 +37,9 @@ export const registerUser = async (req: Request, res: Response) => {
     console.error(`[registerUser] Error:`, {
       message: errMessage(error),
       name: errName(error),
-      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
+      stack:
+        process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
     });
     res.status(500).json({ success: false, message: "Registration failed. Please try again." });
   }
@@ -64,25 +65,26 @@ export const loginUser = async (req: Request, res: Response) => {
     console.error(`[loginUser] Error:`, {
       message: errMessage(error),
       name: errName(error),
-      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
+      stack:
+        process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
     });
     return res.status(500).json({ success: false, message: "Login failed. Please try again." });
   }
 };
 
-
 //Get User Data using JWT
 export const getUserData = async (req: Request, res: Response) => {
   try {
     const { user } = req;
-    res.json ({ success: true, user })
+    res.json({ success: true, user });
   } catch (error) {
     console.error(`[getUserData] Error:`, {
       message: errMessage(error),
       name: errName(error),
-      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
+      stack:
+        process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
     });
     res.status(500).json({ success: false, message: "Failed to retrieve user data." });
   }
@@ -96,105 +98,109 @@ export const upgradeToOwner = async (req: Request, res: Response) => {
     // Check if user is already an owner
     if (user.role === "owner") {
       const updatedUser = await User.findById(user._id).select("-password");
-      return res.status(200).json({ 
-        success: true, 
+      return res.status(200).json({
+        success: true,
         message: "You are already an owner",
-        user: updatedUser
+        user: updatedUser,
       });
     }
-    
+
     // Upgrade user to owner
     user.role = "owner";
     await user.save();
-    
+
     // Return updated user (without password)
     const updatedUser = await User.findById(user._id).select("-password");
-    
+
     res.status(200).json({
       success: true,
       message: "You are now an owner",
-      user: updatedUser
+      user: updatedUser,
     });
   } catch (error) {
     console.error(`[upgradeToOwner] Error:`, {
       message: errMessage(error),
       name: errName(error),
-      stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
+      stack:
+        process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
     });
-    res.status(500).json({ 
-      success: false, 
-      message: "Failed to upgrade to owner. Please try again." 
+    res.status(500).json({
+      success: false,
+      message: "Failed to upgrade to owner. Please try again.",
     });
   }
 };
 
 // Get All Cars for the Frontend
 export const getCars = async (req: Request, res: Response) => {
-    try {
-        // Fetch all cars that are marked as available from the database
-        const cars = await Car.find({ isAvailable: true });
+  try {
+    // Fetch all cars that are marked as available from the database
+    const cars = await Car.find({ isAvailable: true });
 
-        // Send success response with the list of cars
-        res.json({ success: true, cars });
-    } catch (error) {
-        console.error(`[getCars] Error:`, {
-          message: errMessage(error),
-          name: errName(error),
-          stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
-          timestamp: new Date().toISOString()
-        });
-        res.status(500).json({ success: false, message: "Failed to retrieve cars." });
-    }
-}
+    // Send success response with the list of cars
+    res.json({ success: true, cars });
+  } catch (error) {
+    console.error(`[getCars] Error:`, {
+      message: errMessage(error),
+      name: errName(error),
+      stack:
+        process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
+    });
+    res.status(500).json({ success: false, message: "Failed to retrieve cars." });
+  }
+};
 
 // Get Single Car by ID
 export const getCarById = async (req: Request, res: Response) => {
-    try {
-        const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-        // Find car by ID
-        const car = await Car.findById(id);
+    // Find car by ID
+    const car = await Car.findById(id);
 
-        if (!car) {
-            return res.status(404).json({
-                success: false,
-                message: "Car not found"
-            });
-        }
-
-        res.json({ success: true, car });
-    } catch (error) {
-        console.error(`[getCarById] Error:`, {
-          message: errMessage(error),
-          name: errName(error),
-          stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
-          timestamp: new Date().toISOString()
-        });
-        res.status(500).json({ success: false, message: "Failed to retrieve car." });
+    if (!car) {
+      return res.status(404).json({
+        success: false,
+        message: "Car not found",
+      });
     }
-}
+
+    res.json({ success: true, car });
+  } catch (error) {
+    console.error(`[getCarById] Error:`, {
+      message: errMessage(error),
+      name: errName(error),
+      stack:
+        process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
+    });
+    res.status(500).json({ success: false, message: "Failed to retrieve car." });
+  }
+};
 
 // Get Available Cities
 export const getCities = async (req: Request, res: Response) => {
-    try {
-        // Fetch distinct location values from cars that are available
-        const cities = await Car.distinct("location", { isAvailable: true });
-        
-        // Sort cities alphabetically
-        const sortedCities = cities.sort();
-        
-        res.json({ success: true, cities: sortedCities });
-    } catch (error) {
-        console.error(`[getCities] Error:`, {
-          message: errMessage(error),
-          name: errName(error),
-          stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
-          timestamp: new Date().toISOString()
-        });
-        res.status(500).json({ success: false, message: "Failed to retrieve cities." });
-    }
-}
+  try {
+    // Fetch distinct location values from cars that are available
+    const cities = await Car.distinct("location", { isAvailable: true });
+
+    // Sort cities alphabetically
+    const sortedCities = cities.sort();
+
+    res.json({ success: true, cities: sortedCities });
+  } catch (error) {
+    console.error(`[getCities] Error:`, {
+      message: errMessage(error),
+      name: errName(error),
+      stack:
+        process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
+    });
+    res.status(500).json({ success: false, message: "Failed to retrieve cities." });
+  }
+};
 
 // Newsletter Subscription (Simple in-memory storage for now)
 // In production, this should be stored in a database
@@ -202,38 +208,39 @@ const newsletterSubscribers: string[] = [];
 
 // Subscribe to Newsletter
 export const subscribeNewsletter = async (req: Request, res: Response) => {
-    try {
-        const { email } = req.body;
+  try {
+    const { email } = req.body;
 
-        if (!email) {
-            return res.status(400).json({ success: false, message: "Email is required" });
-        }
-
-        // Basic email validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            return res.status(400).json({ success: false, message: "Invalid email format" });
-        }
-
-        // Check if email already subscribed
-        if (newsletterSubscribers.includes(email.toLowerCase())) {
-            return res.status(400).json({ success: false, message: "Email already subscribed" });
-        }
-
-        // Add email to subscribers list
-        newsletterSubscribers.push(email.toLowerCase());
-
-        res.json({ 
-            success: true, 
-            message: "Successfully subscribed to newsletter!" 
-        });
-    } catch (error) {
-        console.error(`[subscribeNewsletter] Error:`, {
-          message: errMessage(error),
-          name: errName(error),
-          stack: process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
-          timestamp: new Date().toISOString()
-        });
-        res.status(500).json({ success: false, message: "Failed to subscribe. Please try again." });
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Email is required" });
     }
-}
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ success: false, message: "Invalid email format" });
+    }
+
+    // Check if email already subscribed
+    if (newsletterSubscribers.includes(email.toLowerCase())) {
+      return res.status(400).json({ success: false, message: "Email already subscribed" });
+    }
+
+    // Add email to subscribers list
+    newsletterSubscribers.push(email.toLowerCase());
+
+    res.json({
+      success: true,
+      message: "Successfully subscribed to newsletter!",
+    });
+  } catch (error) {
+    console.error(`[subscribeNewsletter] Error:`, {
+      message: errMessage(error),
+      name: errName(error),
+      stack:
+        process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
+    });
+    res.status(500).json({ success: false, message: "Failed to subscribe. Please try again." });
+  }
+};

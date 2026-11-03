@@ -33,9 +33,7 @@ export const validateRegister = [
     .isEmail()
     .withMessage("Invalid email format")
     .normalizeEmail(),
-  body("password")
-    .notEmpty()
-    .withMessage("Password is required"),
+  body("password").notEmpty().withMessage("Password is required"),
   handleValidationErrors,
 ];
 
@@ -49,9 +47,7 @@ export const validateLogin = [
     .isEmail()
     .withMessage("Invalid email format")
     .normalizeEmail(),
-  body("password")
-    .notEmpty()
-    .withMessage("Password is required"),
+  body("password").notEmpty().withMessage("Password is required"),
   handleValidationErrors,
 ];
 
@@ -97,10 +93,7 @@ export const validateCheckAvailability = [
 ];
 
 // Validate Create Booking
-export const validateCreateBooking = [
-  ...validateObjectId("car"),
-  ...validateDateRange,
-];
+export const validateCreateBooking = [...validateObjectId("car"), ...validateDateRange];
 
 // Validate Change Booking Status
 export const validateChangeBookingStatus = [
@@ -129,19 +122,21 @@ export const validateCarData = [
     .custom((value: any) => {
       try {
         const car = JSON.parse(value);
-        
+
         // Protect against prototype pollution
-        if (car && typeof car === 'object' && !Array.isArray(car)) {
-          if (car.constructor && car.constructor.name !== 'Object') {
+        if (car && typeof car === "object" && !Array.isArray(car)) {
+          if (car.constructor && car.constructor.name !== "Object") {
             throw new Error("Invalid car data structure");
           }
-          if (Object.prototype.hasOwnProperty.call(car, '__proto__') || 
-              Object.prototype.hasOwnProperty.call(car, 'constructor') ||
-              Object.prototype.hasOwnProperty.call(car, 'prototype')) {
+          if (
+            Object.prototype.hasOwnProperty.call(car, "__proto__") ||
+            Object.prototype.hasOwnProperty.call(car, "constructor") ||
+            Object.prototype.hasOwnProperty.call(car, "prototype")
+          ) {
             throw new Error("Invalid car data: prototype pollution detected");
           }
         }
-        
+
         if (!car.brand || typeof car.brand !== "string") {
           throw new Error("Brand is required and must be a string");
         }
@@ -185,7 +180,7 @@ const validateTimeRange = (value: string) => {
   const hourInMinutes = hours * 60 + minutes;
   const minTime = 8 * 60; // 8:00 AM = 480 minutes
   const maxTime = 22 * 60; // 10:00 PM = 1320 minutes
-  
+
   if (hourInMinutes < minTime || hourInMinutes > maxTime) {
     throw new Error("Time must be between 08:00 and 22:00");
   }
@@ -197,7 +192,7 @@ export const validateCreateBookingDetails = [
   // Validate car ObjectId and date range (reuse existing validators)
   ...validateObjectId("car"),
   ...validateDateRange,
-  
+
   // Validate userDetails nested object (all required)
   body("userDetails.fullName")
     .trim()
@@ -261,7 +256,7 @@ export const validateCreateBookingDetails = [
     .withMessage("License country is required")
     .isString()
     .withMessage("License country must be a string"),
-  
+
   // Validate pickupDetails nested object (all required)
   body("pickupDetails.address")
     .trim()
@@ -279,7 +274,7 @@ export const validateCreateBookingDetails = [
     .matches(/^\d{2}:\d{2}$/)
     .withMessage("Pickup time must be in HH:MM format")
     .custom(validateTimeRange),
-  
+
   // Validate returnDetails nested object (all required)
   body("returnDetails.address")
     .trim()
@@ -297,19 +292,12 @@ export const validateCreateBookingDetails = [
     .matches(/^\d{2}:\d{2}$/)
     .withMessage("Return time must be in HH:MM format")
     .custom(validateTimeRange),
-  
+
   // Validate extras nested object (optional)
-  body("extras.extraDriver")
-    .optional()
-    .isBoolean()
-    .withMessage("Extra driver must be a boolean"),
-  
+  body("extras.extraDriver").optional().isBoolean().withMessage("Extra driver must be a boolean"),
+
   // Validate notes (optional)
-  body("notes")
-    .optional()
-    .isString()
-    .withMessage("Notes must be a string"),
-  
+  body("notes").optional().isString().withMessage("Notes must be a string"),
+
   handleValidationErrors,
 ];
-
