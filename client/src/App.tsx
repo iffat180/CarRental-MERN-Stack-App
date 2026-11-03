@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect } from "react";
+import React, { lazy, Suspense, useEffect, useState } from "react";
 import A4Header from "./components/a4/A4Header";
 import A4Footer from "./components/a4/A4Footer";
 import "./components/a4/a4.css";
@@ -31,6 +31,8 @@ const loadMotionFeatures = () => import("./motionFeatures").then((mod) => mod.de
 // The dialogs (and the Radix code behind them) are only downloaded when one is opened.
 const Login = lazy(() => import("./components/Login"));
 const LoginRequiredModal = lazy(() => import("./components/LoginRequiredModal"));
+// The chat is loaded after the page is up, not with it.
+const AssistantChat = lazy(() => import("./assistant/AssistantChat"));
 const MyBookings = lazy(() => import("./pages/MyBookings"));
 const BookingDetails = lazy(() => import("./pages/BookingDetails"));
 const BookingSummary = lazy(() => import("./pages/BookingSummary"));
@@ -47,6 +49,17 @@ const App = () => {
   const { showLogin, showLoginRequired, setShowLoginRequired } = useAppContext();
   const { pathname, hash } = useLocation();
   const location = useLocation();
+  // start fetching the chat only once the browser is idle, so it never competes with the page
+  const [chatReady, setChatReady] = useState(false);
+  useEffect(() => {
+    const start = () => setChatReady(true);
+    if ("requestIdleCallback" in window) {
+      const id = window.requestIdleCallback(start, { timeout: 3000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const t = setTimeout(start, 1500);
+    return () => clearTimeout(t);
+  }, []);
   const isOwnerPath = pathname.startsWith("/owner");
   // Pages fade when the route changes. The whole owner area counts as one page, so
   // moving between its tabs does not re-animate the sidebar.
@@ -71,6 +84,11 @@ const App = () => {
           {privateTitle && <Seo title={privateTitle} path={pathname} noindex />}
           <Toaster />
           <OfflineBanner />
+          {chatReady && !isOwnerPath && (
+            <Suspense fallback={null}>
+              <AssistantChat />
+            </Suspense>
+          )}
           <PwaPrompt />
           {/* Skip to main content link for keyboard navigation */}
           <a

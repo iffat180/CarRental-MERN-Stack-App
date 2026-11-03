@@ -76,7 +76,25 @@ export const MockApp = ({
     upgradeToOwner: async () => ({ success: true }),
     axios: {
       get: async () => ({ data: { success: true, cities: ["Chicago", "Denver", "Los Angeles"] } }),
-      post: async () => ({ data: { success: true, recommendations: [] } }),
+      post: async (url: string) =>
+        url === "/api/assistant"
+          ? {
+              data: {
+                success: true,
+                reply:
+                  "The 2023 Subaru Outback in Denver is a good fit: all-wheel drive and plenty of room for skis. It's $95 a day, so about $285 for 3 days.",
+                toolsUsed: ["search_cars"],
+                cars: [
+                  {
+                    id: "car17",
+                    name: "2023 Subaru Outback",
+                    city: "Denver",
+                    price_per_day_usd: 95,
+                  },
+                ],
+              },
+            }
+          : { data: { success: true, recommendations: [] } },
     },
   };
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
