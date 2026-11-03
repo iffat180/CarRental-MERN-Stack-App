@@ -194,6 +194,33 @@ describe("booking journey over HTTP", () => {
     expect(rebook.status).toBe(200);
   });
 
+  maybe(
+    "a booking whose pickup date has already passed can still be cancelled or completed",
+    async () => {
+      const old = await Booking.collection.insertOne({
+        car: new mongoose.Types.ObjectId(carId),
+        user: (await User.findOne({ email: "rita@test.com" }))!._id,
+        owner: (await Car.findById(carId))!.owner,
+        pickupDate: new Date(Date.now() - 5 * day),
+        returnDate: new Date(Date.now() - 2 * day),
+        status: "confirmed",
+        price: 150,
+      });
+      const id = String(old.insertedId);
+
+      const cancel = await request(app).post(`/api/bookings/${id}/cancel`).set(bearer(renterToken));
+      expect(cancel.status).toBe(200);
+      expect((await Booking.findById(id))?.status).toBe("cancelled");
+
+      const done = await request(app)
+        .post(`/api/bookings/change-status/${id}`)
+        .set(bearer(ownerToken))
+        .send({ status: "completed" });
+      expect(done.status).toBe(200);
+      expect((await Booking.findById(id))?.status).toBe("completed");
+    }
+  );
+
   maybe("a completed booking cannot be cancelled", async () => {
     await Booking.updateOne({ _id: bookingId }, { status: "completed" });
     const res = await request(app)
