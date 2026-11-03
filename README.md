@@ -1,6 +1,6 @@
 # 🚗 Car Rental Platform
 
-A full-stack car rental platform built with the MERN stack, featuring AI-powered search, serverless architecture, and WCAG 2.1 Level AA accessibility compliance.     
+A full-stack car rental platform built with the MERN stack, featuring AI-powered search, serverless architecture, and WCAG 2.1 Level AA accessibility compliance.
 
 [![CI/CD Pipeline](https://github.com/iffat180/CarRental-MERN-Stack-App/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/iffat180/CarRental-MERN-Stack-App/actions)
 [![Accessibility](https://img.shields.io/badge/WCAG-2.1%20Level%20AA-green.svg)](https://www.w3.org/WAI/WCAG21/quickref/)
@@ -14,27 +14,33 @@ A full-stack car rental platform built with the MERN stack, featuring AI-powered
 ## 📸 Screenshots
 
 ### Home Page
+
 ![Home Page](./docs/screenshots/home.png)
 
 ### Car Search with AI
+
 ![AI Search](./docs/screenshots/search.png)
 
 ### Booking Process
+
 ![Booking](./docs/screenshots/booking.png)
 
 ### Owner Dashboard
+
 ![Dashboard](./docs/screenshots/dashboard.png)
 
 ### Invoice Generation
+
 ![Invoice](./docs/screenshots/invoice.png)
 
 ### Lighthouse Score
-![Lighthouse](./docs/screenshots/lighthouse.png)
 
+![Lighthouse](./docs/screenshots/lighthouse.png)
 
 ## ✨ Key Features
 
 ### User Features
+
 - 🔍 **AI-Powered Semantic Search** - Find cars using natural language queries
 - 📅 **Smart Booking System** - Real-time availability checking with date validation
 - 📄 **Automated Invoice Generation** - Professional PDF invoices with CloudFront delivery
@@ -43,12 +49,14 @@ A full-stack car rental platform built with the MERN stack, featuring AI-powered
 - 🔐 **Secure Authentication** - JWT-based auth with role-based access control
 
 ### Owner Features
+
 - 🚙 **Car Management** - Easy car listing with image uploads
 - 📊 **Dashboard Analytics** - Track bookings, revenue, and car performance
 - 🖼️ **Automatic Image Optimization** - AWS Lambda processes uploads automatically
 - 💰 **Revenue Tracking** - Real-time earnings and booking statistics
 
 ### Technical Features
+
 - ⚡ **Serverless Architecture** - AWS Lambda for scalable, cost-effective processing
 - 🌐 **Global CDN** - CloudFront distribution across 400+ edge locations
 - 🧪 **Automated Testing** - 119 tests with 100% pass rate in CI/CD pipeline
@@ -56,6 +64,7 @@ A full-stack car rental platform built with the MERN stack, featuring AI-powered
 - 🎯 **Vector Search** - Pinecone database for semantic similarity matching
 
 ## 🏗️ Architecture
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    CLIENT (React + Vite)                    │
@@ -110,6 +119,7 @@ A full-stack car rental platform built with the MERN stack, featuring AI-powered
 ## 🛠️ Tech Stack
 
 ### Frontend
+
 - **Framework**: React 19 with Vite
 - **Styling**: Tailwind CSS 4
 - **State Management**: Context API
@@ -118,6 +128,7 @@ A full-stack car rental platform built with the MERN stack, featuring AI-powered
 - **Notifications**: React Hot Toast
 
 ### Backend
+
 - **Runtime**: Node.js 20
 - **Framework**: Express.js
 - **Database**: MongoDB with Mongoose ODM
@@ -126,6 +137,7 @@ A full-stack car rental platform built with the MERN stack, featuring AI-powered
 - **Validation**: Express Validator
 
 ### AWS Services
+
 - **Lambda**: Serverless compute for image processing and PDF generation
 - **S3**: Object storage for images and documents
 - **CloudFront**: Global CDN with 400+ edge locations
@@ -133,16 +145,19 @@ A full-stack car rental platform built with the MERN stack, featuring AI-powered
 - **IAM**: Security and access management
 
 ### AI/ML
+
 - **OpenAI API**: Text embeddings (text-embedding-3-small) and GPT-4
 - **Pinecone**: Vector database for semantic search
 
 ### DevOps & Testing
+
 - **CI/CD**: GitHub Actions
 - **Testing**: Jest (Backend - 46 tests), Vitest (Frontend - 93 tests)
 - **Code Quality**: ESLint
 - **Deployment**: Vercel (Frontend), Render (Backend)
 
 ### Accessibility
+
 - **Standards**: WCAG 2.1 Level AA
 - **Testing**: Lighthouse, axe DevTools
 - **Features**: ARIA landmarks, keyboard navigation, screen reader support
@@ -150,6 +165,7 @@ A full-stack car rental platform built with the MERN stack, featuring AI-powered
 ## 📦 Installation & Setup
 
 ### Prerequisites
+
 - Node.js 20+
 - MongoDB Atlas account
 - AWS account
@@ -157,12 +173,14 @@ A full-stack car rental platform built with the MERN stack, featuring AI-powered
 - Pinecone account
 
 ### 1. Clone Repository
+
 ```bash
 git clone https://github.com/iffat180/car-rental-platform.git
 cd car-rental-platform
 ```
 
 ### 2. Backend Setup
+
 ```bash
 cd server
 npm install
@@ -195,6 +213,7 @@ npm run dev
 ```
 
 ### 3. Frontend Setup
+
 ```bash
 cd client
 npm install
@@ -211,6 +230,7 @@ npm run dev
 ```
 
 ### 4. Lambda Functions Setup
+
 ```bash
 # Image Optimizer
 cd lambda/image-optimizer
@@ -225,9 +245,51 @@ zip -r function.zip .
 # Upload to AWS Lambda console
 ```
 
+## 🤖 AI Assistant & MCP Server
+
+Besides the semantic search, the backend exposes the same five **read-only** car tools in two ways:
+
+| Tool                 | What it does                                                                         |
+| -------------------- | ------------------------------------------------------------------------------------ |
+| `search_cars`        | Finds cars for a trip described in plain words (embeddings + Pinecone + boost rules) |
+| `list_cars_in_city`  | Lists the cars available in a city                                                   |
+| `get_car`            | Full details of one car                                                              |
+| `check_availability` | Whether a car is free for a date range                                               |
+| `estimate_price`     | Daily price × days                                                                   |
+
+None of them can create or change a booking; booking stays a deliberate action on the website.
+
+**1. Chat assistant** (`POST /api/assistant`). OpenAI function calling over those tools: the model asks for a tool, the server runs it, the result goes back to the model, and it answers in words. It is limited to 5 model calls per question, only accepts `user`/`assistant` messages (no `system` message from a browser), and is rate limited. Set `OPENAI_CHAT_MODEL` to change the model (default `gpt-4o-mini`).
+
+```bash
+curl -X POST http://localhost:3000/api/assistant \
+  -H 'Content-Type: application/json' \
+  -d '{"messages":[{"role":"user","content":"A car for 4 people and skis, 3 days from 2026-12-03?"}]}'
+```
+
+**2. MCP server** (`npm run mcp` in `server/`). [Model Context Protocol](https://modelcontextprotocol.io) lets desktop AI apps and other MCP clients call the same tools. It talks over stdio and uses the same `MONGODB_URI`, OpenAI and Pinecone keys as the API. Example MCP client configuration (the exact file depends on the app):
+
+```json
+{
+  "mcpServers": {
+    "wayfarer-cars": {
+      "command": "npm",
+      "args": [
+        "--prefix",
+        "/absolute/path/to/CarRental-MERN-Stack-App/server",
+        "run",
+        "mcp",
+        "--silent"
+      ]
+    }
+  }
+}
+```
+
 ## 🧪 Testing
 
 ### Run All Tests
+
 ```bash
 # Backend tests (46 tests)
 cd server
@@ -241,12 +303,15 @@ npm test
 ```
 
 ### Test Coverage
+
 - **Backend**: Validation logic, business rules, model constraints
 - **Frontend**: Utility functions, booking calculations, form validation
 - **Accessibility**: WCAG 2.1 Level AA compliance
 
 ### CI/CD Pipeline
+
 Every push to `main` triggers:
+
 1. ✅ Install dependencies
 2. ✅ Run all 139 tests
 3. ✅ Auto-deploy frontend (Vercel)
@@ -255,16 +320,19 @@ Every push to `main` triggers:
 ## 🚀 Deployment
 
 ### Frontend (Vercel)
+
 - Connected to GitHub repository
 - Auto-deploys on push to `main`
 - Environment variables configured in Vercel dashboard
 
 ### Backend (Render)
+
 - Connected to GitHub repository
 - Auto-deploys on push to `main`
 - Environment variables configured in Render dashboard
 
 ### Lambda Functions
+
 - Deployed via AWS Lambda Console
 - Image Optimizer: S3 trigger on `uploads/` folder
 - Invoice Generator: API Gateway trigger
@@ -300,12 +368,14 @@ Every push to `main` triggers:
 - Render: $0 (free tier)
 
 **AI Services** (pay-per-use):
+
 - OpenAI API: ~$5-10/month (depending on usage)
 - Pinecone: $0 (free tier: 100K vectors)
 
 ## ♿ Accessibility Features
 
 ### WCAG 2.1 Level AA Compliance
+
 - ✅ Keyboard navigation throughout entire application
 - ✅ Screen reader support with ARIA landmarks and labels
 - ✅ Skip navigation link for keyboard users
@@ -318,6 +388,7 @@ Every push to `main` triggers:
 - ✅ ARIA live regions for dynamic content
 
 ### Testing Tools Used
+
 - Lighthouse accessibility audits
 - axe DevTools
 - Keyboard-only navigation testing
@@ -364,6 +435,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 👤 Author
 
 **Your Name**
+
 - GitHub: [@iffat180](https://github.com/iffat180)
 - LinkedIn: [LinkedIn](https://linkedin.com/in/iffatmohd)
 - Portfolio: [Portfolio](https://iffat180.github.io/)
