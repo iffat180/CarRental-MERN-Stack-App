@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { lazy, Suspense, useEffect } from "react";
 import A4Header from "./components/a4/A4Header";
 import A4Footer from "./components/a4/A4Footer";
 import "./components/a4/a4.css";
@@ -7,15 +7,19 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import HomeA4 from "./pages/HomeA4";
 import CarDetails from "./pages/CarDetails";
 import Cars from "./pages/Cars";
-import MyBookings from "./pages/MyBookings";
-import BookingDetails from "./pages/BookingDetails";
-import BookingSummary from "./pages/BookingSummary";
-import BookingSuccess from "./pages/BookingSuccess";
-import Layout from "./pages/owner/Layout";
-import Dashboard from "./pages/owner/Dashboard";
-import AddCar from "./pages/owner/AddCar";
-import ManageCars from "./pages/owner/ManageCars";
-import ManageBookings from "./pages/owner/ManageBookings";
+import Loader from "./components/Loader";
+
+// Loaded on demand, so the home page does not download the booking form (zod, React
+// Hook Form) or the owner area (Recharts) until someone actually opens them.
+const MyBookings = lazy(() => import("./pages/MyBookings"));
+const BookingDetails = lazy(() => import("./pages/BookingDetails"));
+const BookingSummary = lazy(() => import("./pages/BookingSummary"));
+const BookingSuccess = lazy(() => import("./pages/BookingSuccess"));
+const Layout = lazy(() => import("./pages/owner/Layout"));
+const Dashboard = lazy(() => import("./pages/owner/Dashboard"));
+const AddCar = lazy(() => import("./pages/owner/AddCar"));
+const ManageCars = lazy(() => import("./pages/owner/ManageCars"));
+const ManageBookings = lazy(() => import("./pages/owner/ManageBookings"));
 import Login from "./components/Login";
 import LoginRequiredModal from "./components/LoginRequiredModal";
 import { Toaster } from "react-hot-toast";
@@ -58,22 +62,24 @@ const App = () => {
       {!isOwnerPath && <A4Header />}
 
       <main id="main-content" role="main">
-        <Routes>
-          <Route path="/" element={<HomeA4 />} />
-          <Route path="/preview" element={<Navigate to="/" replace />} />
-          <Route path="/car-details/:id" element={<CarDetails />} />
-          <Route path="/cars" element={<Cars />} />
-          <Route path="/my-bookings" element={<MyBookings />} />
-          <Route path="/booking-details/:carId" element={<BookingDetails />} />
-          <Route path="/booking-summary/:bookingId" element={<BookingSummary />} />
-          <Route path="/booking-success/:bookingId" element={<BookingSuccess />} />
-          <Route path="/owner" element={<Layout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="add-car" element={<AddCar />} />
-            <Route path="manage-cars" element={<ManageCars />} />
-            <Route path="manage-bookings" element={<ManageBookings />} />
-          </Route>
-        </Routes>
+        <Suspense fallback={<Loader />}>
+          <Routes>
+            <Route path="/" element={<HomeA4 />} />
+            <Route path="/preview" element={<Navigate to="/" replace />} />
+            <Route path="/car-details/:id" element={<CarDetails />} />
+            <Route path="/cars" element={<Cars />} />
+            <Route path="/my-bookings" element={<MyBookings />} />
+            <Route path="/booking-details/:carId" element={<BookingDetails />} />
+            <Route path="/booking-summary/:bookingId" element={<BookingSummary />} />
+            <Route path="/booking-success/:bookingId" element={<BookingSuccess />} />
+            <Route path="/owner" element={<Layout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="add-car" element={<AddCar />} />
+              <Route path="manage-cars" element={<ManageCars />} />
+              <Route path="manage-bookings" element={<ManageBookings />} />
+            </Route>
+          </Routes>
+        </Suspense>
       </main>
 
       {!isOwnerPath && <A4Footer />}
