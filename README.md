@@ -59,7 +59,7 @@ A full-stack car rental platform built with the MERN stack, featuring AI-powered
 
 - ⚡ **Serverless Architecture** - AWS Lambda for scalable, cost-effective processing
 - 🌐 **Global CDN** - CloudFront distribution across 400+ edge locations
-- 🧪 **Automated Testing** - 119 tests with 100% pass rate in CI/CD pipeline
+- 🧪 **Automated Testing** - unit, integration, end-to-end, accessibility and component tests, all run in CI
 - 🔄 **Continuous Deployment** - Auto-deploy on every push to main branch
 - 🎯 **Vector Search** - Pinecone database for semantic similarity matching
 
@@ -152,8 +152,8 @@ A full-stack car rental platform built with the MERN stack, featuring AI-powered
 ### DevOps & Testing
 
 - **CI/CD**: GitHub Actions
-- **Testing**: Jest (Backend - 46 tests), Vitest (Frontend - 93 tests)
-- **Code Quality**: ESLint
+- **Testing**: Jest + Supertest (server), Vitest + Testing Library (client), Playwright with axe (end to end and accessibility), Storybook (component tests)
+- **Code Quality**: TypeScript, ESLint, Prettier, Lighthouse CI
 - **Deployment**: Vercel (Frontend), Render (Backend)
 
 ### Accessibility
@@ -291,21 +291,26 @@ curl -X POST http://localhost:3000/api/assistant \
 ### Run All Tests
 
 ```bash
-# Backend tests (46 tests)
+# Server: 116 unit tests plus 6 integration tests
 cd server
 npm test
 
-# Frontend tests (73 tests)
+# Client: 158 unit and component tests
 cd client
 npm test
 
-# Total: 119 tests
+# Client: 51 end-to-end tests (desktop, mobile, installable app)
+npx playwright test
+
+# Client: 25 Storybook component tests
+npm run e2e:stories
 ```
 
 ### Test Coverage
 
 - **Backend**: Validation logic, business rules, model constraints
-- **Frontend**: Utility functions, booking calculations, form validation
+- **Frontend**: Utility functions, booking calculations, form validation, the chat assistant
+- **End to end**: Search, booking, the chat window and offline use in a real browser
 - **Accessibility**: WCAG 2.1 Level AA compliance
 
 ### CI/CD Pipeline
@@ -313,7 +318,7 @@ npm test
 Every push to `main` triggers:
 
 1. ✅ Install dependencies
-2. ✅ Run all 139 tests
+2. ✅ Typecheck, lint, format check, all tests, end-to-end and Lighthouse
 3. ✅ Auto-deploy frontend (Vercel)
 4. ✅ Auto-deploy backend (Render)
 
