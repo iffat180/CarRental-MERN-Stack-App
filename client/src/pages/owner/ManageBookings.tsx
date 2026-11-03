@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Title from "../../components/owner/Title";
 import { useAppContext } from "../../context/AppContext";
@@ -40,33 +40,36 @@ const ManageBookings = () => {
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null); // Track which booking action is loading
 
-  const fetchOwnerBookings = async (silent = false) => {
-    if (!silent) {
-      setIsLoading(true);
-      setError(null);
-    }
-    try {
-      const { data } = await axios.get("/api/bookings/owner");
-      if (data.success) {
-        setBookings(data.bookings);
-      } else {
+  const fetchOwnerBookings = useCallback(
+    async (silent = false) => {
+      if (!silent) {
+        setIsLoading(true);
+        setError(null);
+      }
+      try {
+        const { data } = await axios.get("/api/bookings/owner");
+        if (data.success) {
+          setBookings(data.bookings);
+        } else {
+          if (!silent) {
+            const errorMessage = data.message || "Failed to fetch bookings";
+            setError(errorMessage);
+            toast.error(errorMessage);
+          }
+        }
+      } catch (error: any) {
         if (!silent) {
-          const errorMessage = data.message || "Failed to fetch bookings";
+          const errorMessage =
+            error.response?.data?.message || error.message || "Failed to fetch bookings";
           setError(errorMessage);
           toast.error(errorMessage);
         }
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error: any) {
-      if (!silent) {
-        const errorMessage =
-          error.response?.data?.message || error.message || "Failed to fetch bookings";
-        setError(errorMessage);
-        toast.error(errorMessage);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+    [axios]
+  );
 
   const handleViewBooking = (bookingId) => {
     console.log(`[ManageBookings] View booking clicked`, {
@@ -178,7 +181,7 @@ const ManageBookings = () => {
 
   useEffect(() => {
     fetchOwnerBookings();
-  }, []);
+  }, [fetchOwnerBookings]);
 
   // live updates over a WebSocket, or polling when the server cannot hold one
   useOwnerLiveRefresh(() => fetchOwnerBookings(true));

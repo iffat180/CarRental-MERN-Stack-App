@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import type { Booking, MonthlyRevenue } from "../../types";
 import Title from "../../components/Title";
 import { assets } from "../../assets/assets";
@@ -54,39 +54,42 @@ const Dashboard = () => {
 
   // `silent` refreshes (live updates and polling) keep the page as it is: no spinner,
   // no error toast.
-  const fetchDashboardData = async (silent = false) => {
-    if (!silent) {
-      setIsLoading(true);
-      setError(null);
-    }
-    try {
-      const { data } = await axios.get("/api/owner/dashboard");
-      if (data.success) {
-        setData(data.dashboardData);
-      } else {
+  const fetchDashboardData = useCallback(
+    async (silent = false) => {
+      if (!silent) {
+        setIsLoading(true);
+        setError(null);
+      }
+      try {
+        const { data } = await axios.get("/api/owner/dashboard");
+        if (data.success) {
+          setData(data.dashboardData);
+        } else {
+          if (!silent) {
+            const errorMessage = data.message || "Failed to fetch dashboard data";
+            setError(errorMessage);
+            toast.error(errorMessage);
+          }
+        }
+      } catch (error: any) {
         if (!silent) {
-          const errorMessage = data.message || "Failed to fetch dashboard data";
+          const errorMessage =
+            error.response?.data?.message || error.message || "Failed to fetch dashboard data";
           setError(errorMessage);
           toast.error(errorMessage);
         }
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error: any) {
-      if (!silent) {
-        const errorMessage =
-          error.response?.data?.message || error.message || "Failed to fetch dashboard data";
-        setError(errorMessage);
-        toast.error(errorMessage);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+    [axios]
+  );
 
   useEffect(() => {
     if (isOwner) {
       fetchDashboardData();
     }
-  }, [isOwner]);
+  }, [isOwner, fetchDashboardData]);
 
   // live updates over a WebSocket, or polling when the server cannot hold one
   useOwnerLiveRefresh(() => fetchDashboardData(true));

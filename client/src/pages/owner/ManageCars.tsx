@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { assets } from "../../assets/assets";
 import Title from "../../components/owner/Title";
 import { useAppContext } from "../../context/AppContext";
@@ -20,7 +20,7 @@ const ManageCars = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [carToDelete, setCarToDelete] = useState<Car | null>(null);
 
-  const fetchOwnerCars = async () => {
+  const fetchOwnerCars = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -39,7 +39,7 @@ const ManageCars = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [axios]);
 
   const toggleAvailablity = async (carId) => {
     setActionLoading(carId);
@@ -91,7 +91,7 @@ const ManageCars = () => {
 
   useEffect(() => {
     if (isOwner) fetchOwnerCars();
-  }, [isOwner]);
+  }, [isOwner, fetchOwnerCars]);
 
   return (
     <div className="px-4 pt-10 md:px-10 w-full">

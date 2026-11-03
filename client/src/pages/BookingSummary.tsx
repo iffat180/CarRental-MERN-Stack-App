@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { assets } from "../assets/assets";
 import Loader from "../components/Loader";
@@ -58,7 +58,7 @@ const BookingSummary = () => {
   };
 
   // Fetch booking data with structured logging
-  const fetchBooking = async () => {
+  const fetchBooking = useCallback(async () => {
     setIsLoading(true);
     setFetchError(null);
 
@@ -111,14 +111,14 @@ const BookingSummary = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [axios, bookingId]);
 
   // Initial fetch on mount
   useEffect(() => {
     if (bookingId) {
       fetchBooking();
     }
-  }, [bookingId]);
+  }, [bookingId, fetchBooking]);
 
   // Polling effect for booking status
   useEffect(() => {
@@ -201,7 +201,10 @@ const BookingSummary = () => {
       clearInterval(pollInterval);
       setIsPolling(false);
     };
-  }, [booking?.status, bookingId, axios]); // Only depend on status change, not booking object
+    // Deliberately depends on the status only: listing `booking` or `pollingAttempts` would
+    // restart the interval on every poll and it would never fire.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [booking?.status, bookingId, axios]);
 
   // Handle confirm booking with structured logging
   const handleConfirm = async () => {

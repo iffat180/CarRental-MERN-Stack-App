@@ -15,7 +15,7 @@ const Layout = () => {
     if (!isOwner) {
       navigate("/");
     }
-  }, [isOwner, user, token]);
+  }, [isOwner, user, token, navigate]);
 
   return (
     <div className="flex flex-col">
