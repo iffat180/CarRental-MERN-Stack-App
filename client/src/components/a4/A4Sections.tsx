@@ -95,7 +95,7 @@ const SAMPLE_MATCHES = [
     name: "Jeep Grand Cherokee",
     meta: "Chicago · SUV · 5 seats · 780 L",
     why: "Recommended for mountain and off-road conditions, with a large 780 L trunk for family and luggage.",
-    price: 130,
+    price: 105,
   },
   {
     rank: 2,
@@ -109,7 +109,7 @@ const SAMPLE_MATCHES = [
     name: "Toyota RAV4",
     meta: "New York · SUV · 5 seats · 1000 L",
     why: "Recommended for mountain and off-road conditions, with 1000 L of cargo space for the whole trip.",
-    price: 220,
+    price: 85,
   },
 ];
 
