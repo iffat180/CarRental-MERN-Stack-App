@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import type { Car, CarRecommendation } from "../../types";
 import { simplifyQuery } from "../../utils/simplifyQuery";
+import { m } from "motion/react";
+import A4Track from "./A4Track";
 
 // The slider shows cut-out photos (static files in /public/cutouts). We only have
 // cut-outs for these models, so the slider shows the live cars that match them.
@@ -155,32 +157,13 @@ const A4Stage = () => {
         aria-roledescription="carousel"
         aria-label="Cars available to rent"
         className="a4-stage"
+        onKeyDown={(e) => {
+          // arrow keys change the car while focus is on the slider or its buttons
+          if (e.key === "ArrowRight") go(i + 1)();
+          if (e.key === "ArrowLeft") go(i - 1)();
+        }}
       >
-        <div className="a4-track" style={{ transform: `translateX(calc(19% - ${i * 62}%))` }}>
-          {slides.map((s, idx) => {
-            const d = idx - i;
-            const near = Math.abs(d) === 1;
-            return (
-              <div
-                key={s.name}
-                className="a4-slide"
-                aria-hidden={d !== 0}
-                style={{
-                  opacity: d === 0 ? 1 : near ? 0.55 : 0.18,
-                  transform: `scale(${d === 0 ? 1 : 0.8})`,
-                }}
-              >
-                <div className="shadow" aria-hidden="true" />
-                <div className="car">
-                  <img src={s.img} alt={`${s.year} ${s.name}`} decoding="async" />
-                </div>
-                <div className="mirror" aria-hidden="true">
-                  <img src={s.img} alt="" />
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <A4Track slides={slides} index={i} onChange={setI} />
 
         <div className="a4-floor" aria-hidden="true" />
 
@@ -229,7 +212,13 @@ const A4Stage = () => {
       {/* SELECTED CAR */}
       <div className="a4-selwrap">
         <div aria-live="polite" className="a4-sel">
-          <div className="info">
+          <m.div
+            key={cur.id}
+            className="info"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25 }}
+          >
             <p className="avail mono">
               <span className="a4-dot" aria-hidden="true" />
               Available · {cur.city}
@@ -238,8 +227,14 @@ const A4Stage = () => {
             <p className="a4-muted" style={{ marginTop: 6, fontSize: 15 }}>
               {cur.year} · {cur.cat}
             </p>
-          </div>
-          <dl className="mono">
+          </m.div>
+          <m.dl
+            key={`${cur.id}-specs`}
+            className="mono"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: 0.04 }}
+          >
             <div>
               <dt>Seats</dt>
               <dd>{cur.seats}</dd>
@@ -252,12 +247,18 @@ const A4Stage = () => {
               <dt>Trunk</dt>
               <dd>{cur.trunk} L</dd>
             </div>
-          </dl>
-          <p className="price disp">
+          </m.dl>
+          <m.p
+            key={`${cur.id}-price`}
+            className="price disp"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: 0.08 }}
+          >
             {currency}
             {cur.price}
             <small> / day</small>
-          </p>
+          </m.p>
         </div>
         <div className="a4-dots">
           {slides.map((s, idx) => (

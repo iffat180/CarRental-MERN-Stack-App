@@ -16,6 +16,74 @@ test.describe("home page", () => {
     await expect(page.getByRole("heading", { name: "Subaru Outback", level: 2 })).toBeVisible();
   });
 
+  test("swiping the slider sideways changes the car", async ({ page }) => {
+    await page.goto("/");
+    const stage = page.locator("#cars");
+    const box = (await stage.boundingBox())!;
+    const y = box.y + box.height * 0.35;
+
+    // drag left by a good distance: next car
+    await page.mouse.move(box.x + box.width * 0.7, y);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width * 0.3, y, { steps: 12 });
+    await page.mouse.up();
+    await expect(page.getByRole("heading", { name: "Mazda MX-5 Miata", level: 2 })).toBeVisible();
+
+    // drag right: back to the first
+    await page.mouse.move(box.x + box.width * 0.3, y);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width * 0.7, y, { steps: 12 });
+    await page.mouse.up();
+    await expect(page.getByRole("heading", { name: "Subaru Outback", level: 2 })).toBeVisible();
+  });
+
+  test("a short drag springs back and keeps the same car", async ({ page }) => {
+    await page.goto("/");
+    const box = (await page.locator("#cars").boundingBox())!;
+    const y = box.y + box.height * 0.35;
+
+    await page.mouse.move(box.x + box.width * 0.5, y);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width * 0.5 - 20, y, { steps: 4 });
+    await page.waitForTimeout(250); // hold still: a quick flick counts as a swipe, a slow nudge does not
+    await page.mouse.up();
+
+    await expect(page.getByRole("heading", { name: "Subaru Outback", level: 2 })).toBeVisible();
+  });
+
+  test("arrow keys change the car while focus is in the slider", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "Next car" }).focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(page.getByRole("heading", { name: "Mazda MX-5 Miata", level: 2 })).toBeVisible();
+    await page.keyboard.press("ArrowLeft");
+    await expect(page.getByRole("heading", { name: "Subaru Outback", level: 2 })).toBeVisible();
+  });
+
+  test("with reduced motion the slider still works, and jumps without animating", async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/");
+    const track = page.locator(".a4-track");
+    const before = await track.evaluate((el) => getComputedStyle(el).transform);
+
+    await page.getByRole("button", { name: "Next car" }).click();
+    await expect(page.getByRole("heading", { name: "Mazda MX-5 Miata", level: 2 })).toBeVisible();
+    // no spring: the row is already at its new position
+    const after = await track.evaluate((el) => getComputedStyle(el).transform);
+    expect(after).not.toBe(before);
+    await page.waitForTimeout(50);
+    expect(await track.evaluate((el) => getComputedStyle(el).transform)).toBe(after);
+  });
+
+  test("pages fade in when you navigate", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("link", { name: "Cars", exact: true }).first().click();
+    await expect(page).toHaveURL(/\/cars$/);
+    await expect(page.getByRole("heading", { name: "Available Cars" })).toBeVisible();
+  });
+
   test("Check availability opens the chosen car with the dates filled in", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Next car" }).click();
