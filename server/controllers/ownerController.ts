@@ -4,6 +4,7 @@ import Booking from "../models/Booking.js";
 import type { Request, Response } from "express";
 import { uploadToS3, uploadCarImageToS3, deleteFromS3 } from "../configs/aws.js";
 import { errCode, errMessage, errName } from "../utils/errors.js";
+import { fillMonthlyRevenue, revenueWindowStart, type RevenueGroupRow } from "../utils/revenue.js";
 
 export const changeRoleToOwner = async (req: Request, res: Response) => {
   try {
@@ -279,11 +280,28 @@ export const getDashboardData = async (req: Request, res: Response) => {
       status: "completed",
     });
 
-    // Calculate monthlyRevenue from bookings where status is confirmed
-    const monthlyRevenue = bookings
-      .slice()
-      .filter((booking) => booking.status === "confirmed")
-      .reduce((acc, booking) => acc + booking.price, 0);
+    // Revenue per month for the last 6 months (confirmed + completed bookings,
+    // attributed to the pickup month), computed by MongoDB.
+    const now = new Date();
+    const grouped = await Booking.aggregate<RevenueGroupRow>([
+      {
+        $match: {
+          owner: _id,
+          status: { $in: ["confirmed", "completed"] },
+          pickupDate: { $gte: revenueWindowStart(now, 6) },
+        },
+      },
+      {
+        $group: {
+          _id: { y: { $year: "$pickupDate" }, m: { $month: "$pickupDate" } },
+          revenue: { $sum: "$price" },
+          bookings: { $sum: 1 },
+        },
+      },
+    ]);
+    const revenueByMonth = fillMonthlyRevenue(grouped, now, 6);
+    // the current month is the last entry
+    const monthlyRevenue = revenueByMonth[revenueByMonth.length - 1].revenue;
 
     const dashboardData = {
       totalCars: cars.length,
@@ -292,6 +310,7 @@ export const getDashboardData = async (req: Request, res: Response) => {
       completedBookings: completedBookings.length,
       recentBookings: bookings.slice(0, 3),
       monthlyRevenue,
+      revenueByMonth,
     };
 
     res.json({ success: true, dashboardData });
