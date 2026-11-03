@@ -5,6 +5,7 @@ import Loader from "../components/Loader";
 import { useAppContext } from "../context/AppContext";
 import { toast } from "react-hot-toast";
 import type { Booking } from "../types";
+import { carImage } from "../utils/carImage";
 
 // Helper function to format date
 const formatDate = (dateString) => {
@@ -235,7 +236,7 @@ const BookingSummary = () => {
   // Error state with retry button
   if (fetchError && !booking) {
     return (
-      <div className="px-6 md:px-16 lg:px-24 xl:px-32 mt-16">
+      <div className="a4-page">
         <div className="max-w-4xl mx-auto text-center py-20">
           <h2 className="text-2xl font-bold mb-4">Failed to Load Booking</h2>
           <p className="text-gray-500 mb-6">{fetchError}</p>
@@ -293,7 +294,7 @@ const BookingSummary = () => {
   };
   
   return (
-    <div className="px-6 md:px-16 lg:px-24 xl:px-32 mt-16">
+    <div className="a4-page">
       <button
         onClick={() => navigate(-1)}
         className="flex items-center gap-2 mb-6 text-gray-500 cursor-pointer"
@@ -317,7 +318,7 @@ const BookingSummary = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="md:col-span-1">
                   <img
-                    src={booking.car?.image || ""}
+                    src={carImage(booking.car?.image)}
                     alt={`${booking.car?.brand || ""} ${booking.car?.model || ""}`}
                     className="w-full h-auto rounded-lg object-cover"
                     onError={(e: any) => {

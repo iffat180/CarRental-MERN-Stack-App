@@ -6,6 +6,7 @@ import { useAppContext } from "../context/AppContext";
 import { toast } from "react-hot-toast";
 import invoiceService from "../services/invoiceService";
 import type { Booking } from "../types";
+import { carImage } from "../utils/carImage";
 
 // Helper function to format date
 const formatDate = (dateString) => {
@@ -106,7 +107,7 @@ const BookingSuccess = () => {
   };
   
   return (
-    <div className="px-6 md:px-16 lg:px-24 xl:px-32 mt-16">
+    <div className="a4-page">
       <div className="max-w-3xl mx-auto">
         {/* Success Header */}
         <div className="text-center mb-8">
@@ -126,7 +127,7 @@ const BookingSuccess = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="md:col-span-1">
                 <img
-                  src={booking.car?.image}
+                  src={carImage(booking.car?.image)}
                   alt={`${booking.car?.brand} ${booking.car?.model}`}
                   className="w-full h-auto rounded-lg object-cover"
                 />

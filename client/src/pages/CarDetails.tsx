@@ -5,6 +5,7 @@ import Loader from "../components/Loader";
 import { useAppContext } from "../context/AppContext";
 import { toast } from "react-hot-toast";
 import type { Car } from "../types";
+import { carImage } from "../utils/carImage";
 
 // Date validation utility function
 const validateDates = (pickupDate, returnDate) => {
@@ -152,7 +153,7 @@ const CarDetails = () => {
   }, [cars, id]);
 
   return car ? (
-    <div className="px-6 md:px-16 lg:px-24 xl:px-32 mt-16">
+    <div className="a4-page">
       <button
         onClick={() => navigate(-1)}
         className="flex items-center gap-2 mb-6 text-gray-500 cursor-pointer hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded px-2 py-1"
@@ -166,13 +167,13 @@ const CarDetails = () => {
         {/* Left: Car Image & Details */}
         <article className="lg:col-span-2">
           <img
-            src={car.image}
+            src={carImage(car.image, "large")}
             alt={`${car.brand} ${car.model} ${car.year} - ${car.category}`}
             className="w-full h-auto md:max-h-100 object-cover rounded-xl mb-6 shadow-md"
           />
           <div className="space-y-6">
             <header>
-              <h1 className="text-3xl font-bold">
+              <h1 className="text-2xl md:text-3xl">
                 {car.brand} {car.model}
               </h1>
               <p className="text-gray-500 text-lg">
@@ -226,13 +227,13 @@ const CarDetails = () => {
 
           {/* Description */}
           <section>
-            <h2 className="text-xl font-medium mb-3">Description</h2>
+            <h2 className="text-lg mb-3">Description</h2>
             <p className="text-gray-500">{car.description}</p>
           </section>
 
           {/* Features */}
           <section>
-            <h2 className="text-xl font-medium mb-3">Features</h2>
+            <h2 className="text-lg mb-3 mt-8">Features</h2>
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {[
                 "360 Camera",
@@ -251,7 +252,7 @@ const CarDetails = () => {
         </article>
 
         {/* Right: Booking Form */}
-        <aside className="shadow-lg h-max sticky top-18 rounded-xl p-6 space-y-6 text-gray-500" aria-label="Booking information">
+        <aside className="bg-white border border-borderColor shadow-lg h-max sticky top-6 rounded-xl p-6 space-y-6 text-gray-500" aria-label="Booking information">
           <div className="flex items-center justify-between text-2xl text-gray-800 font-semibold">
             <span className="sr-only">Price per day:</span>
             {currency}

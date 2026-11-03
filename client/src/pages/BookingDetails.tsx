@@ -353,7 +353,7 @@ const BookingDetails = () => {
   }
   
   return (
-    <div className="px-6 md:px-16 lg:px-24 xl:px-32 mt-16">
+    <div className="a4-page">
       <button
         onClick={() => navigate(-1)}
         className="flex items-center gap-2 mb-6 text-gray-500 cursor-pointer hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded px-2 py-1"
