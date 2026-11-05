@@ -431,7 +431,8 @@ export const changeBookingStatus = async (req: Request, res: Response) => {
     }
 
     booking.status = status;
-    await booking.save();
+    // Same as cancelling: a booking in progress or finished must still accept a new status
+    await booking.save({ validateModifiedOnly: true });
     notifyOwner(booking.owner, { type: "booking.updated", bookingId: String(booking._id) });
 
     res.json({ success: true, message: "Status Updated" });
@@ -639,7 +640,9 @@ export const cancelBooking = async (req: Request, res: Response) => {
 
     // Cancel the booking
     booking.status = "cancelled";
-    await booking.save();
+    // Only check what changed: the pickup-date rule ("not in the past") must not block
+    // cancelling a booking whose pickup date has since passed.
+    await booking.save({ validateModifiedOnly: true });
     notifyOwner(booking.owner, { type: "booking.cancelled", bookingId: String(booking._id) });
 
     console.log(`[cancelBooking] Booking cancelled successfully`, {
