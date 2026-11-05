@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import type { Car, CarRecommendation } from "../../types";
 import { simplifyQuery } from "../../utils/simplifyQuery";
-import { m } from "motion/react";
+import { m, useMotionValueEvent, useReducedMotion, useScroll } from "motion/react";
 import A4Track from "./A4Track";
 
 // The slider shows cut-out photos (static files in /public/cutouts). We only have
@@ -53,7 +53,28 @@ const parseTripDays = (text: string) => {
   return 3;
 };
 
+/**
+ * The stage stays pinned while the page scrolls, and the car card and booking box (frosted
+ * glass) slide up over it. As that happens the car grows a little and softens, so it reads
+ * as sitting behind the glass. The numbers go to the CSS as variables (--car-zoom,
+ * --car-fade), so the row can still slide and be dragged without fighting this. Left alone
+ * for reduced motion.
+ */
+const useCarBehindGlass = (stage: React.RefObject<HTMLDivElement | null>) => {
+  const reduceMotion = useReducedMotion();
+  const { scrollY } = useScroll();
+  useMotionValueEvent(scrollY, "change", (y) => {
+    const el = stage.current;
+    if (!el || reduceMotion) return;
+    const t = Math.min(1, Math.max(0, y / 600));
+    el.style.setProperty("--car-zoom", String(1 + 0.15 * t));
+    el.style.setProperty("--car-fade", String(1 - 0.7 * t));
+  });
+};
+
 const A4Stage = () => {
+  const stageRef = useRef<HTMLDivElement>(null);
+  useCarBehindGlass(stageRef);
   const { axios, navigate, cars, setPickupDate, setReturnDate } = useAppContext();
   const currency = import.meta.env.VITE_CURRENCY || "$";
 
@@ -149,10 +170,11 @@ const A4Stage = () => {
   };
 
   return (
-    <>
+    <div className="a4-hero">
       {/* STAGE */}
       <div
         id="cars"
+        ref={stageRef}
         role="group"
         aria-roledescription="carousel"
         aria-label="Cars available to rent"
@@ -480,7 +502,7 @@ const A4Stage = () => {
           )}
         </div>
       </section>
-    </>
+    </div>
   );
 };
 
